@@ -147,14 +147,19 @@ O binário do plugin será gerado em:
 
 ## 🔌 Instalação no Grasshopper
 
-1. Baixe o arquivo `Glaux_Tools.gha` na aba [Releases](https://github.com/jeffersonfreireribeiro-hash/glaux_tools/releases).
+### Método 1: Instalação Automática em 1 Clique (Recomendado)
+1. Dê um duplo-clique no arquivo [`INSTALAR.bat`](INSTALAR.bat) na raiz do repositório (ou execute `./install.ps1` no PowerShell).
+2. O instalador detecta automaticamente sua pasta do Grasshopper (`%APPDATA%\Grasshopper\Libraries\Glaux\`), instala o binário oficial [`dist/Glaux_Tools.gha`](dist/Glaux_Tools.gha) com suporte a swap a quente e realiza o desbloqueio de segurança (`Unblock-File`) no Windows.
+3. Abra o **Rhino 8** e inicie o **Grasshopper**. A aba **Glaux Tools** estará pronta para uso!
+
+### Método 2: Instalação Manual
+1. Baixe o arquivo pre-compilado [`dist/Glaux_Tools.gha`](dist/Glaux_Tools.gha) ou acesse a aba [Releases](https://github.com/jeffersonfreireribeiro-hash/glaux_tools/releases).
 2. Copie o arquivo para a pasta oficial de componentes do Grasshopper:
    ```text
    %APPDATA%\Grasshopper\Libraries\Glaux\
    ```
 3. Clique com o botão direito no arquivo `Glaux_Tools.gha`, selecione **Propriedades** e marque a caixa **Desbloquear** (*Unblock*), caso esteja visível.
 4. Inicie o **Rhino 8** e abra o **Grasshopper**.
-5. A aba **Glaux Tools** estará disponível no menu superior com todos os componentes categorizados.
 
 ---
 
