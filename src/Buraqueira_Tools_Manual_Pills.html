@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Buraqueira Tools - Manual de Referência e Dicionário de Pilhas</title>
+<style>
+  @page {
+    size: A4;
+    margin: 18mm 16mm 18mm 16mm;
+    @bottom-right {
+      content: counter(page);
+    }
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: #1e293b;
+    line-height: 1.55;
+    font-size: 10.5pt;
+    margin: 0;
+    padding: 0;
+    background: #fff;
+  }
+
+  /* Capa */
+  .cover {
+    page-break-after: always;
+    text-align: center;
+    padding-top: 80px;
+    padding-bottom: 60px;
+  }
+  .cover-badge {
+    display: inline-block;
+    background: #9333ea;
+    color: white;
+    font-weight: 800;
+    font-size: 11pt;
+    letter-spacing: 2px;
+    padding: 6px 18px;
+    border-radius: 20px;
+    margin-bottom: 25px;
+    text-transform: uppercase;
+  }
+  .cover h1 {
+    font-size: 28pt;
+    font-weight: 900;
+    color: #0f172a;
+    margin: 0 0 10px 0;
+    letter-spacing: -0.5px;
+  }
+  .cover h2 {
+    font-size: 15pt;
+    font-weight: 600;
+    color: #64748b;
+    margin: 0 0 40px 0;
+  }
+  .cover-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 24px;
+    max-width: 520px;
+    margin: 0 auto 50px auto;
+    text-align: left;
+    font-size: 10pt;
+    color: #334155;
+  }
+  .cover-card ul {
+    margin: 8px 0 0 20px;
+    padding: 0;
+  }
+  .cover-card li {
+    margin-bottom: 6px;
+  }
+  .cover-meta {
+    font-size: 9pt;
+    color: #94a3b8;
+  }
+
+  /* Sumário */
+  .toc {
+    page-break-after: always;
+    padding-top: 20px;
+  }
+  .toc h2 {
+    font-size: 18pt;
+    border-bottom: 2px solid #e2e8f0;
+    padding-bottom: 8px;
+    color: #0f172a;
+  }
+  .toc ul {
+    list-style: none;
+    padding: 0;
+    margin: 15px 0;
+  }
+  .toc li {
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    border-bottom: 1px dotted #cbd5e1;
+    padding-bottom: 2px;
+  }
+  .toc a {
+    text-decoration: none;
+    color: #3b82f6;
+    font-weight: 600;
+  }
+  .toc .chapter-num {
+    color: #9333ea;
+    margin-right: 8px;
+  }
+
+  /* Títulos */
+  h1, h2, h3, h4 {
+    color: #0f172a;
+    page-break-after: avoid;
+  }
+  h1 {
+    font-size: 18pt;
+    border-bottom: 2px solid #9333ea;
+    padding-bottom: 6px;
+    margin-top: 35px;
+    margin-bottom: 16px;
+  }
+  h2 {
+    font-size: 13.5pt;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 4px;
+    margin-top: 24px;
+    margin-bottom: 12px;
+    color: #1e293b;
+  }
+  h3 {
+    font-size: 11.5pt;
+    margin-top: 18px;
+    margin-bottom: 8px;
+  }
+
+  /* Badges e Pílulas */
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 700;
+    font-size: 8pt;
+    color: white;
+    text-transform: uppercase;
+    vertical-align: middle;
+  }
+  .badge-geo { background: #2eaf64; }
+  .badge-acu { background: #00b4d8; }
+  .badge-mat { background: #eb823c; }
+  .badge-sim { background: #aa46d2; }
+  .badge-cfg { background: #3c78f0; }
+  .badge-out { background: #e64650; }
+  .badge-in  { background: #70c1b3; }
+  .badge-vault { background: #9333ea; }
+  .badge-cache { background: #9d4edd; }
+
+  .type-badge {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-weight: 700;
+    font-size: 7.5pt;
+    text-transform: lowercase;
+  }
+  .type-flt { background: #e0f2fe; color: #0369a1; }
+  .type-int { background: #fef3c7; color: #b45309; }
+  .type-bool { background: #d1fae5; color: #047857; }
+  .type-btn { background: #fef3c7; color: #b45309; }
+  .type-dom { background: #ccfbf1; color: #0f766e; }
+  .type-list { background: #ede9fe; color: #6d28d9; }
+  .type-str { background: #f3e8ff; color: #6d28d9; }
+
+  /* Tabelas */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0 20px 0;
+    font-size: 9.2pt;
+    page-break-inside: avoid;
+  }
+  th, td {
+    padding: 7px 10px;
+    border: 1px solid #cbd5e1;
+    text-align: left;
+  }
+  th {
+    background: #f1f5f9;
+    font-weight: 700;
+    color: #334155;
+  }
+  tr:nth-child(even) td {
+    background: #f8fafc;
+  }
+
+  /* Caixas de Destaque / Callouts */
+  .callout {
+    border-left: 4px solid #3b82f6;
+    background: #eff6ff;
+    padding: 10px 14px;
+    border-radius: 0 6px 6px 0;
+    margin: 14px 0;
+    font-size: 9.5pt;
+  }
+  .callout.warning {
+    border-left-color: #f59e0b;
+    background: #fffbeb;
+  }
+  .callout.success {
+    border-left-color: #10b981;
+    background: #ecfdf5;
+  }
+  .callout.purple {
+    border-left-color: #9333ea;
+    background: #faf5ff;
+  }
+  .callout strong {
+    color: #0f172a;
+  }
+
+  /* Blocos de Código e Sintaxe */
+  pre, code {
+    font-family: "Cascadia Code", Consolas, "Courier New", monospace;
+  }
+  pre {
+    background: #0f172a;
+    color: #f8fafc;
+    padding: 12px 14px;
+    border-radius: 6px;
+    font-size: 8.8pt;
+    line-height: 1.45;
+    overflow-x: auto;
+    page-break-inside: avoid;
+  }
+  code {
+    background: #f1f5f9;
+    color: #0f172a;
+    padding: 1px 4px;
+    border-radius: 3px;
+    font-size: 8.8pt;
+  }
+  pre code {
+    background: transparent;
+    color: inherit;
+    padding: 0;
+  }
+
+  .page-break {
+    page-break-before: always;
+  }
+
+  .footer-note {
+    font-size: 8pt;
+    color: #94a3b8;
+    text-align: center;
+    margin-top: 30px;
+    border-top: 1px solid #e2e8f0;
+    padding-top: 8px;
+  }
+</style>
+</head>
+<body>
+
+<!-- CAPA -->
+<div class="cover">
+  <div class="cover-badge">Buraqueira Tools • Documentação Oficial</div>
+  <h1>MANUAL DE REFERÊNCIA & DICIONÁRIO DE PILHAS</h1>
+  <h2>Guia Completo do Ecossistema "Pills" para Grasshopper</h2>
+
+  <div class="cover-card">
+    <strong>Conteúdo Abrangente:</strong>
+    <ul>
+      <li><strong>Barramento Sem Fios (PillHub):</strong> arquitetura, categorias e cores padronizadas.</li>
+      <li><strong>Pill Slider Pool:</strong> concentrador vertical com 7 tipos de dados, botões de pulso, value lists e proteção anti-travamento <code>[r]</code>.</li>
+      <li><strong>Pill Preset Vault:</strong> cofre de variantes com cabos estilo Galapagos, duplo-clique para gerenciador, sobrescrita rápida e persistência completa em <code>.gh</code>.</li>
+      <li><strong>Transmissão & Recepção:</strong> Pill Transmitter, Pill Receiver, Pill Relay e Pill Catalog.</li>
+      <li><strong>Otimização & Inteligência:</strong> Pill Compute Cache (com fingerprint profundo) e Pill Disabler.</li>
+      <li><strong>Estruturas de Dados:</strong> Pill Bundle Pack & Unpack, serialização JSON e fluxos recomendados.</li>
+    </ul>
+  </div>
+
+  <div class="cover-meta">
+    Versão 2026.1 • Para Rhinoceros 7 e 8 (Windows) • Autor: Equipe Buraqueira Tools
+  </div>
+</div>
+
+<!-- SUMÁRIO -->
+<div class="toc">
+  <h2>Sumário de Conteúdos</h2>
+  <ul>
+    <li><span><span class="chapter-num">Cap. 1</span> Arquitetura do Barramento Sem Fios (PillHub)</span> <span>03</span></li>
+    <li><span><span class="chapter-num">Cap. 2</span> Pill Slider Pool (Banco Concentrador de Parâmetros)</span> <span>04</span></li>
+    <li><span><span class="chapter-num">Cap. 3</span> Pill Preset Vault (Cofre de Variantes & Estudos)</span> <span>07</span></li>
+    <li><span><span class="chapter-num">Cap. 4</span> Pill Transmitter & Pill Receiver (Transmissão de Canais)</span> <span>09</span></li>
+    <li><span><span class="chapter-num">Cap. 5</span> Pill Bundle Pack & Unpack (Pacotes de Dados Estruturados)</span> <span>11</span></li>
+    <li><span><span class="chapter-num">Cap. 6</span> Pill Compute Cache (Cache Inteligente de Simulação)</span> <span>12</span></li>
+    <li><span><span class="chapter-num">Cap. 7</span> Pill Disabler (Desabilitador Condicional de Pilhas)</span> <span>13</span></li>
+    <li><span><span class="chapter-num">Cap. 8</span> Pilhas Utilitárias (Detector de Mudança, Restrições & Catálogo)</span> <span>14</span></li>
+    <li><span><span class="chapter-num">Cap. 9</span> Guia de Manutenção e Atualização Deste Manual</span> <span>15</span></li>
+  </ul>
+</div>
+
+<!-- CAPÍTULO 1 -->
+<div class="page-break"></div>
+<h1>1. Arquitetura do Barramento Sem Fios (PillHub)</h1>
+
+<p>O ecossistema <strong>Pills</strong> foi desenvolvido para solucionar um dos maiores gargalos de legibilidade no Grasshopper: o <em>"espaguete de fios"</em> que surge quando dezenas de componentes precisam compartilhar parâmetros geométricos, coeficientes de materiais, seleções e gatilhos de simulação.</p>
+
+<p>No coração da arquitetura está o <strong>PillHub</strong>, um barramento de memória global e reativo por documento que permite aos componentes transmitirem e escutarem dados sem necessidade de fios físicos no Canvas.</p>
+
+<h2>1.1 Categorias e Código Cromático Padronizado</h2>
+<p>Cada canal publicado no barramento possui uma categoria padronizada de 3 letras que define a sua cor visual e facilita a organização no Canvas:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th style="width: 15%;">Badge</th>
+      <th style="width: 18%;">Código</th>
+      <th style="width: 25%;">Significado / Domínio</th>
+      <th>Exemplos de Parâmetros</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><span class="badge badge-geo">GEO</span></td>
+      <td><code>GEO</code></td>
+      <td>Geometria & Espaço</td>
+      <td>Raio, Largura, Comprimento, Número de Assentos, Malhas</td>
+    </tr>
+    <tr>
+      <td><span class="badge badge-acu">ACU</span></td>
+      <td><code>ACU</code></td>
+      <td>Acústica & Áudio</td>
+      <td>RT60, EDT, C80, Faixa de Frequência, Sinal de Áudio</td>
+    </tr>
+    <tr>
+      <td><span class="badge badge-mat">MAT</span></td>
+      <td><code>MAT</code></td>
+      <td>Materiais & Camadas</td>
+      <td>Coeficientes de Absorção, Espalhamento, Densidade, Espessura</td>
+    </tr>
+    <tr>
+      <td><span class="badge badge-sim">SIM</span></td>
+      <td><code>SIM</code></td>
+      <td>Simulação & Cálculo</td>
+      <td>Disparo de Raios, Número de Partículas, Tolerância, Solver</td>
+    </tr>
+    <tr>
+      <td><span class="badge badge-cfg">CFG</span></td>
+      <td><code>CFG</code></td>
+      <td>Configurações Globais</td>
+      <td>Modo de Exibição, Diretório de Saída, Unidades, Idioma</td>
+    </tr>
+    <tr>
+      <td><span class="badge badge-out">OUT</span></td>
+      <td><code>OUT</code></td>
+      <td>Saídas & Resultados</td>
+      <td>Métricas Finais, Relatórios de Conformidade, Listas de Peças</td>
+    </tr>
+    <tr>
+      <td><span class="badge badge-in">IN</span></td>
+      <td><code>IN</code></td>
+      <td>Entradas Externas</td>
+      <td>Arquivos CSV, Dados Climáticos, Sensores em Tempo Real</td>
+    </tr>
+    <tr>
+      <td><span class="badge badge-vault">VAULT</span></td>
+      <td><code>VAULT</code></td>
+      <td>Cofre de Variantes</td>
+      <td>Snapshots, Presets de Estudo, Alternância de Cenários</td>
+    </tr>
+    <tr>
+      <td><span class="badge badge-cache">CACHE</span></td>
+      <td><code>CACHE</code></td>
+      <td>Cache de Memória</td>
+      <td>Resultados pesados retidos para economia de recálculo</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>1.2 Convenção de Nomenclatura das Chaves</h2>
+<p>O PillHub aceita dois formatos universais para chaves de dados:</p>
+<ul>
+  <li><strong>Formato Canônico:</strong> <code>[CATEGORIA] NomeDoParametro</code> (ex: <code>[GEO] Raio_Curvatura</code>).</li>
+  <li><strong>Formato Simplificado:</strong> <code>CATEGORIA_NomeDoParametro</code> (ex: <code>GEO_Raio_Curvatura</code>).</li>
+</ul>
+<p>O sistema é tolerante a variações e automaticamente publica os dois aliases, permitindo pesquisas rápidas por grupo ou por chave individual.</p>
+
+<!-- CAPÍTULO 2 -->
+<div class="page-break"></div>
+<h1>2. Pill Slider Pool (Banco Concentrador de Parâmetros)</h1>
+
+<p>O <strong>Pill Slider Pool</strong> é um painel vertical enriquecido que agrupa sliders, botões, toggles e menus em um único cartão, publicando tudo no PillHub e fornecendo saídas compatíveis com o <em>Gene Pool</em> nativo e o otimizador <em>Galapagos</em>.</p>
+
+<h2>2.1 Tipos de Dados Suportados</h2>
+<table>
+  <thead>
+    <tr>
+      <th style="width: 12%;">Badge</th>
+      <th style="width: 15%;">Tipo</th>
+      <th style="width: 33%;">Descrição</th>
+      <th>Interação no Canvas</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><span class="type-badge type-flt">flt</span></td>
+      <td><strong>Float</strong></td>
+      <td>Número real com casas decimais configuráveis e unidade opcional (ex: <code>12.5m</code>).</td>
+      <td>Arrastar o manípulo deslizante no trilho.</td>
+    </tr>
+    <tr>
+      <td><span class="type-badge type-int">int</span></td>
+      <td><strong>Integer</strong></td>
+      <td>Número inteiro discreto (arredondamento passo a passo).</td>
+      <td>Arrasto discreto com passos unitários (<code>1, 2, 3...</code>).</td>
+    </tr>
+    <tr>
+      <td><span class="type-badge type-bool">bool</span></td>
+      <td><strong>Boolean</strong></td>
+      <td>Chave binária True/False para ligar/desligar processos.</td>
+      <td>Clique no <em>Toggle Switch</em> (possui debounce anti-repique de 350ms).</td>
+    </tr>
+    <tr>
+      <td><span class="type-badge type-btn">btn</span></td>
+      <td><strong>Button (Pulse)</strong></td>
+      <td>Botão de pulso momentâneo (Trigger).</td>
+      <td>Clique no botão: emite <code>True</code> no ciclo atual e retorna a <code>False</code> após 80ms.</td>
+    </tr>
+    <tr>
+      <td><span class="type-badge type-dom">dom</span></td>
+      <td><strong>Domain</strong></td>
+      <td>Intervalo numérico (<code>Rhino.Geometry.Interval</code>) com início e fim.</td>
+      <td><em>Range Slider Duplo</em>: arraste individual do ponto inicial e do final.</td>
+    </tr>
+    <tr>
+      <td><span class="type-badge type-list">list</span></td>
+      <td><strong>Value List</strong></td>
+      <td>Menu suspenso com opções textuais cadastradas.</td>
+      <td>Clique para abrir o menu flutuante e selecionar a opção desejada.</td>
+    </tr>
+    <tr>
+      <td><span class="type-badge type-str">str</span></td>
+      <td><strong>String</strong></td>
+      <td>Texto puro editável ou lista de termos.</td>
+      <td>Clique para digitar ou arraste se houver opções.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>2.2 Entradas e Saídas (I/O)</h2>
+<table>
+  <thead>
+    <tr>
+      <th style="width: 10%;">Direção</th>
+      <th style="width: 15%;">Nome (Sigla)</th>
+      <th style="width: 18%;">Tipo</th>
+      <th>Descrição Detalhada</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Input</strong></td>
+      <td><code>Def</code> (<code>C</code>)</td>
+      <td><code>List&lt;String&gt;</code> (Opcional)</td>
+      <td>Linhas de configuração textual via <strong>Panel</strong>. Permite parametrizar e criar toda a pilha dinamicamente via código.</td>
+    </tr>
+    <tr>
+      <td><strong>Output</strong></td>
+      <td><code>Values</code> (<code>V</code>)</td>
+      <td><code>List&lt;Double&gt;</code></td>
+      <td>Lista ordenada dos valores numéricos. <strong>100% compatível com Gene Pool e otimização por Galapagos</strong>.</td>
+    </tr>
+    <tr>
+      <td><strong>Output</strong></td>
+      <td><code>Keys</code> (<code>K</code>)</td>
+      <td><code>List&lt;String&gt;</code></td>
+      <td>Lista com as chaves completas de publicação no PillHub (ex: <code>[GEO] Raio</code>).</td>
+    </tr>
+    <tr>
+      <td><strong>Output</strong></td>
+      <td><code>Tree</code> (<code>T</code>)</td>
+      <td><code>DataTree&lt;Generic&gt;</code></td>
+      <td>Árvore de dados estruturada onde cada parâmetro ocupa seu próprio ramo <code>{0}</code>, <code>{1}</code>, preservando seu tipo de dado nativo.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>2.3 Sintaxe do Panel / Editor de Texto</h2>
+<p>Para configurar a pilha, basta conectar um <em>Panel</em> na entrada <code>Def</code> ou dar um <strong>duplo-clique no cabeçalho</strong>:</p>
+
+<pre><code># 1. Título do Concentrador
+Title = Sala Acústica - Parâmetros
+
+# 2. Slider numérico com limites, unidade e casas decimais
+[GEO] Raio = 12.5 (1.0 .. 50.0) [m] [float]
+
+# 3. Inteiro discreto
+[GEO] Assentos = 120 (10 .. 500) [int]
+
+# 4. Toggle booleano com proteção de Auto-Reset [r]
+[SIM] Ativar_Calculo = False [bool] [r]
+
+# 5. Botão de Disparo / Pulso Momentâneo (Trigger)
+[SIM] Disparar_Raios [btn]
+
+# 6. Domínio / Faixa com dois limites
+[ACU] Banda_Oitava = 250 .. 4000 (100 .. 8000) [Hz] [dom]
+
+# 7. Menu suspenso (Value List / Dropdown)
+[MAT] Tipo_Painel = Madeira ("Madeira", "Vidro", "Gesso", "Cortiça") [list]</code></pre>
+
+<div class="callout warning">
+  <strong>O Modificador de Segurança [r] (Auto-Reset ao Abrir):</strong><br>
+  Similar ao <em>FalseStartToggle</em> do Ladybug Tools, colocar a tag <code>[r]</code> faz com que o parâmetro <strong>retorne automaticamente ao seu valor padrão seguro toda vez que o arquivo .gh for aberto</strong>. Isso impede que arquivos com cálculos pesados travem o computador imediatamente na abertura.
+</div>
+
+<!-- CAPÍTULO 3 -->
+<div class="page-break"></div>
+<h1>3. Pill Preset Vault (Cofre de Variantes & Estudos)</h1>
+
+<p>O <strong>Pill Preset Vault</strong> é o componente definitivo para comparar opções de projeto. Ele captura e restaura com um único clique o estado de múltiplos parâmetros, componentes ou até mesmo de pilhas inteiras (como coeficientes de absorção de materiais).</p>
+
+<h2>3.1 Identidade Visual Estilo "Pill"</h2>
+<p>O componente foi projetado na linguagem estética da família Pill:</p>
+<ul>
+  <li><strong>Cápsula Escura Arredondada:</strong> Fundo gradiente profissional (<code>#1c2026</code> a <code>#14181c</code>) com borda curva violeta (<code>#9333ea</code>).</li>
+  <li><strong>Badge Interno <code>[VAULT]</code>:</strong> Retângulo com cantos arredondados na cor do tema.</li>
+  <li><strong>LED Luminoso de Status:</strong> 🟢 <em>Verde Esmeralda</em> (quando há variantes salvas e ativas) ou 🟡 <em>Âmbar</em> (quando vazio).</li>
+  <li><strong>Navegação Vetorial:</strong> Setas <code>◀</code> e <code>▶</code> desenhadas em vetor geométrico anti-aliased (livre de glitches de fonte) para alternar opções.</li>
+  <li><strong>Barra Superior:</strong> Botões modernos <code>[+ NOVA]</code> (azul) e <code>[SALVAR]</code> (âmbar) para operação instantânea.</li>
+</ul>
+
+<h2>3.2 Conexão Estilo Galapagos (Wire Linker)</h2>
+<div class="callout purple">
+  <strong>Como Conectar Pilhas Inteiras ou Sliders ao Cofre:</strong><br>
+  Você <strong>não precisa</strong> puxar fios comuns na saída de dados! Basta clicar no <em>Grip</em> (conector redondo) de entrada <code>Hub / Parameters</code> e <strong>arrastar o mouse até o componente desejado</strong> (ex: Pill Slider Pool, Material Stack, Sliders avulsos). Uma linha estilizada com moldura <code>[VAULT]</code> conectará os componentes. Para desconectar, segure <code>Ctrl</code> e arraste novamente sobre o componente.
+</div>
+
+<h2>3.3 Funcionalidade de Gravação e Sobrescrita</h2>
+<table>
+  <thead>
+    <tr>
+      <th style="width: 25%;">Ação</th>
+      <th style="width: 25%;">Como Acionar</th>
+      <th>Comportamento Realizado</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Gravar Nova Variante</strong></td>
+      <td>Botão <code>[+ NOVA]</code></td>
+      <td>Abre diálogo para digitar o nome da nova variante e grava o estado de todos os controles monitorados.</td>
+    </tr>
+    <tr>
+      <td><strong>Sobrescrever Atual</strong></td>
+      <td>Botão <code>[SALVAR]</code></td>
+      <td><strong>Com apenas 1 clique</strong>, atualiza os valores da variante selecionada no momento com as posições atuais do Canvas.</td>
+    </tr>
+    <tr>
+      <td><strong>Navegar entre Estudos</strong></td>
+      <td>Setas <code>◀</code> e <code>▶</code></td>
+      <td>Aplica os valores da variante anterior/próxima diretamente nos sliders e componentes do Grasshopper.</td>
+    </tr>
+    <tr>
+      <td><strong>Gerenciador de Log</strong></td>
+      <td><strong>Duplo-clique</strong> no componente</td>
+      <td>Abre tabela completa de auditoria com data/hora, resumo dos valores, botão de excluir e botão <code>[Sobrescrever Selecionada]</code>.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>3.4 Persistência Confiável no Arquivo <code>.gh</code></h2>
+<p>O componente implementa <strong>persistência dupla</strong>:</p>
+<ol>
+  <li><strong>Notificação ao Grasshopper:</strong> Ao gravar, sobrescrever ou excluir uma variante, o componente aciona <code>RecordUndoEvent()</code> e <code>doc.Modified()</code>, garantindo que o Grasshopper marque o arquivo como modificado e salve as alterações ao pressionar <code>Ctrl+S</code> ou fechar o Rhino.</li>
+  <li><strong>Payload Seguro Duplo:</strong> Os dados são gravados tanto na árvore de nós nativa do Grasshopper (<em>Chunks</em>) quanto em uma estrutura JSON completa (<code>VaultJson</code>). Caso algum nó sofra corrupção, o payload JSON restaura 100% dos dados.</li>
+</ol>
+
+<!-- CAPÍTULO 4 -->
+<div class="page-break"></div>
+<h1>4. Pill Transmitter & Pill Receiver (Transmissão Sem Fios)</h1>
+
+<p>O par <strong>Transmitter / Receiver</strong> é a base do tráfego de dados ponto-a-ponto e ponto-multiponto no barramento PillHub.</p>
+
+<h2>4.1 Pill Transmitter (Publicador)</h2>
+<ul>
+  <li><strong>Função:</strong> Publica qualquer dado (números, geometrias, materiais, sinais de áudio, árvores completas) em um canal nomeado.</li>
+  <li><strong>Entradas:</strong>
+    <ul>
+      <li><code>Data</code> (<code>D</code>): Dado a ser transmitido (item ou árvore).</li>
+      <li><code>Key</code> (<code>K</code>): Chave de publicação (ex: <code>[GEO] Raio</code> ou <code>GEO_Raio</code>).</li>
+      <li><code>Unit</code> (<code>U</code>): Unidade opcional (ex: <code>m</code>, <code>s</code>, <code>dB</code>).</li>
+    </ul>
+  </li>
+  <li><strong>Visual:</strong> Cápsula ultra compacta com badge na cor da categoria e indicador LED ativo.</li>
+</ul>
+
+<h2>4.2 Pill Receiver (Receptor)</h2>
+<ul>
+  <li><strong>Função:</strong> Escuta o barramento PillHub e fornece os dados imediatamente na sua saída, sem fios.</li>
+  <li><strong>Modos de Escuta:</strong>
+    <ul>
+      <li><strong>Chave Exata:</strong> Escuta apenas aquele canal específico (ex: <code>[GEO] Raio</code>).</li>
+      <li><strong>Grupo Inteiro:</strong> Se configurado para uma categoria (ex: <code>ACU</code> ou <code>[ACU]</code>), ele extrai e combina todos os dados dessa categoria.</li>
+      <li><strong>Wildcard Global (<code>*</code> ou <code>ALL</code>):</strong> Recebe todos os canais cadastrados no arquivo.</li>
+    </ul>
+  </li>
+  <li><strong>Saídas:</strong>
+    <ul>
+      <li><code>Data</code> (<code>D</code>): Os dados restaurados mantendo a árvore original.</li>
+      <li><code>Info</code> (<code>I</code>): Metadados do canal (unidade, última atualização, transmissor).</li>
+    </ul>
+  </li>
+</ul>
+
+<!-- CAPÍTULO 5 & 6 -->
+<div class="page-break"></div>
+<h1>5. Pill Bundle Pack & Unpack (Pacotes Estruturados)</h1>
+
+<p>Quando múltiplos dados precisam viajar juntos como uma única unidade conceitual (por exemplo: um <em>Material Acústico</em> composto por Nome, Curva de Absorção de 6 bandas, Espalhamento e Cor), utiliza-se o <strong>Pill Bundle</strong>.</p>
+
+<h2>5.1 Funcionamento</h2>
+<ul>
+  <li><strong>Pill Bundle Pack:</strong> Recebe múltiplos nomes e valores e cria um pacote único imutável tipado.</li>
+  <li><strong>Pill Bundle Unpack:</strong> Recebe o pacote e extrai cada campo diretamente por chave ou índice.</li>
+  <li><strong>Compatibilidade:</strong> O <code>Pill Preset Vault</code> é capaz de identificar <code>PillBundles</code> automaticamente e salvá-los integralmente no cofre de variantes.</li>
+</ul>
+
+<hr style="margin: 30px 0; border: none; border-top: 1px solid #e2e8f0;">
+
+<h1>6. Pill Compute Cache (Cache Inteligente de Simulação)</h1>
+
+<p>Simulações acústicas (como traçado de raios no Pachyderm, simulação de Schroeder ou solvers estruturais) exigem alto consumo de CPU. O <strong>Pill Compute Cache</strong> atua como um escudo protetor para evitar recálculos desnecessários.</p>
+
+<h2>6.1 Sistema de Fingerprint Profundo (Deep Fingerprint)</h2>
+<p>Diferente de caches comuns que apenas comparam referências em memória, o Pill Cache calcula um hash criptográfico profundo (SHA256) dos dados de entrada:</p>
+<ul>
+  <li>Se você alterar um slider que <em>não</em> está conectado na simulação, o cache <strong>não recalcula</strong> e entrega o resultado anterior instantaneamente.</li>
+  <li>Ele analisa profundamente coeficientes de absorção de materiais, listas de sinais de áudio e geometrias. Se nada mudou, economiza preciosos minutos de processamento.</li>
+  <li>Possui botão manual <code>[LIMPAR CACHE]</code> e entrada booleana <code>Force</code> para recalcular sob demanda.</li>
+</ul>
+
+<!-- CAPÍTULO 7 & 8 -->
+<div class="page-break"></div>
+<h1>7. Pill Disabler (Desabilitador Condicional de Pilhas)</h1>
+
+<p>Permite ligar e desligar componentes e grupos inteiros do Canvas com base em uma condição booleana, utilizando o mesmo cabo inteligente estilo Galapagos.</p>
+<ul>
+  <li>Conecte o <strong>Pill Disabler</strong> a qualquer conjunto de componentes pesados.</li>
+  <li>Quando a entrada booleana for <code>False</code>, os componentes são colocados no estado <em>Disabled</em> (cinza), liberando 100% da memória e CPU do Grasshopper.</li>
+</ul>
+
+<hr style="margin: 30px 0; border: none; border-top: 1px solid #e2e8f0;">
+
+<h1>8. Pilhas Utilitárias</h1>
+
+<h2>8.1 Pill Change Detector</h2>
+<p>Monitora um fluxo de dados e emite um pulso de <code>True</code> apenas quando os dados mudarem de fato. Ideal para disparar salvamentos automáticos ou notificações sonoras.</p>
+
+<h2>8.2 Pill Constraint Checker</h2>
+<p>Verifica se um valor acústico ou geométrico está dentro dos limites da norma (ex: $RT_{60} \le 1.2\text{ s}$). Exibe bordas coloridas no componente (Verde para Aprovado, Vermelho para Reprovado) e emite relatórios automáticos de conformidade.</p>
+
+<h2>8.3 Pill Catalog</h2>
+<p>Painel de controle geral. Coloque no Canvas para ver em tempo real uma tabela com todos os transmissores, canais, valores e receptores conectados em todo o documento.</p>
+
+<!-- CAPÍTULO 9 -->
+<div class="page-break"></div>
+<h1>9. Guia de Manutenção e Atualização Deste Manual</h1>
+
+<p>Este manual foi projetado com uma arquitetura de documentação viva (<em>Living Documentation</em>). Sempre que novas funcionalidades, novos parâmetros ou novas pilhas forem adicionados ao <strong>Buraqueira Tools</strong>, o PDF pode ser atualizado de forma 100% automatizada.</p>
+
+<h2>9.1 Como Regenerar o PDF Atualizado</h2>
+<p>Existe um script de automação pronto em PowerShell que lê o código-fonte deste documento e utiliza o motor do Microsoft Edge / Google Chrome em modo headless para compilar o PDF com renderização tipográfica perfeita:</p>
+
+<pre><code># Executar no PowerShell para atualizar o manual em PDF:
+powershell -ExecutionPolicy Bypass -File "g:\Meu Drive\PROJETOS\Teatro escola\pachyderm\Buraqueira_Tools\generate_manual_pdf.ps1"</code></pre>
+
+<h2>9.2 Estrutura de Arquivos da Documentação</h2>
+<ul>
+  <li><code>Buraqueira_Tools_Manual_Pills.html</code>: Arquivo fonte mestre em HTML5 com estilização para impressão A4.</li>
+  <li><code>generate_manual_pdf.ps1</code>: Script gerador que produz o arquivo <code>Buraqueira_Tools_Manual_Pills.pdf</code>.</li>
+  <li><code>Buraqueira_Tools_Manual_Pills.pdf</code>: Documento final pronto para leitura, impressão e compartilhamento.</li>
+</ul>
+
+<div class="footer-note">
+  Buraqueira Tools • Desenvolvido para Acústica Arquitetônica & Modelagem Paramétrica no Grasshopper
+</div>
+
+</body>
+</html>

@@ -1,0 +1,6 @@
+<Project>
+  <PropertyGroup>
+    <GlauxToolsRoot>$(MSBuildThisFileDirectory)</GlauxToolsRoot>
+    <RhinoInstallDir Condition="'$(RhinoInstallDir)' == ''">$(ProgramW6432)\Rhino 8</RhinoInstallDir>
+  </PropertyGroup>
+</Project>
