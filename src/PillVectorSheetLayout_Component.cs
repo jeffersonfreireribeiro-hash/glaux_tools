@@ -23,10 +23,10 @@ namespace Buraqueira_Tools
 {
     /// <summary>
     /// Componente no estilo "Pill" que diagrama e exporta pranchas técnicas vetoriais (SVG e PDF)
-    /// a partir de curvas e geometrias do Grasshopper.
+    /// a partir de curvas e geometrias universais do Grasshopper (Curvas, Breps, Meshes, Superfícies, Pontos e Hachuras).
     /// Suporta templates SVG com carimbo customizado, detecção de área de desenho (drawing_area),
     /// presets de auto-distribuição (Hero, Split, Quad, Grid 3x2), escalas gráficas paramétricas,
-    /// norte dinâmico e botão interativo para pré-visualização instantânea no navegador.
+    /// norte dinâmico, estilos de pena inspirados no QGIS/ABNT e botão interativo para pré-visualização instantânea no navegador.
     /// </summary>
     public class PillVectorSheetLayout_Component : GH_Component
     {
@@ -57,7 +57,7 @@ namespace Buraqueira_Tools
             : base(
                 "Pill Vector Sheet Layout",
                 "PillSheet",
-                "Diagrama e exporta pranchas técnicas vetoriais (SVG e PDF) a partir de curvas e geometrias do Grasshopper. Suporta templates SVG com carimbo customizado, detecção de área de desenho (drawing_area), presets de auto-distribuição (Hero, Split, Quad, Grid 3x2), escalas gráficas paramétricas, norte e botão interativo para pré-visualização instantânea no navegador.",
+                "Diagrama e exporta pranchas técnicas vetoriais (SVG e PDF) a partir de curvas e geometrias universais do Grasshopper (Curvas, Breps, Meshes, Superfícies, Pontos e Hachuras). Suporta templates SVG com carimbo customizado, detecção de área de desenho (drawing_area), presets de auto-distribuição (Hero, Split, Quad, Grid 3x2), escalas gráficas paramétricas, norte dinâmico, estilos de pena inspirados no QGIS/ABNT e botão interativo para pré-visualização instantânea no navegador.",
                 "Glaux Tools",
                 "Visual")
         {
@@ -77,8 +77,8 @@ namespace Buraqueira_Tools
         protected override void RegisterInputParams(GH_InputParamManager pManager)
         {
             pManager.AddGeometryParameter(
-                "Curves / Geometry", "C",
-                "Curvas ou geometrias 2D/3D a diagramar na prancha (Curve, Line, Polyline, etc.). Use uma DataTree onde cada ramo {0}, {1}, etc., corresponde a uma vista diferente. Se uma lista simples for fornecida, distribui conforme o layout.",
+                "Geometry", "G",
+                "Geometrias 2D/3D a diagramar na prancha (Curvas, Breps, Meshes, Superfícies, Pontos, Hachuras). Use uma DataTree onde cada ramo {0}, {1}, etc., corresponde a uma vista ou camada diferente.",
                 GH_ParamAccess.tree);
 
             pManager.AddTextParameter(
@@ -111,11 +111,17 @@ namespace Buraqueira_Tools
                 GH_ParamAccess.item);
             pManager[5].Optional = true;
 
+            pManager.AddGenericParameter(
+                "Styles / Pens", "Sty",
+                "Estilos de linha/pena para os conjuntos/ramos de objetos. Aceita a saída do Pill Pen Style, strings shorthand por ramo ('0.50, solid, #000' ou '0: 0.5, dashed, #0284c7'), regras de camada ('Corte: 0.6mm') ou strings CSS/SVG. Se omitido, adota a hierarquia canônica ABNT.",
+                GH_ParamAccess.tree);
+            pManager[6].Optional = true;
+
             pManager.AddTextParameter(
                 "Data / Tags", "D",
                 "Metadados do carimbo no formato chave-valor (ex.: 'PROJETO: Teatro Escola', 'AUTOR: Jefferson', 'DATA: 26/09/2026', 'FOLHA: 01/01', 'CLIENTE: PMB'). Substitui automaticamente as tags {{CHAVE}} no SVG.",
                 GH_ParamAccess.list);
-            pManager[6].Optional = true;
+            pManager[7].Optional = true;
 
             pManager.AddBooleanParameter(
                 "Export", "On",
@@ -128,7 +134,7 @@ namespace Buraqueira_Tools
                 "Caminho do arquivo ou diretório de destino para gravação do SVG e PDF. Se omitido, salva na pasta temporária ou ao lado do arquivo do Rhino.",
                 GH_ParamAccess.item,
                 "");
-            pManager[8].Optional = true;
+            pManager[9].Optional = true;
         }
 
         protected override void RegisterOutputParams(GH_OutputParamManager pManager)
@@ -142,7 +148,7 @@ namespace Buraqueira_Tools
 
         protected override void SolveInstance(IGH_DataAccess DA)
         {
-            // 1. Obter Geometrias de Entrada (Tree ou List)
+            // 1. Obter Geometrias de Entrada
             if (!DA.GetDataTree(0, out GH_Structure<IGH_GeometricGoo> geomTree)) return;
 
             string templateInput = "A3_Quad";
@@ -163,37 +169,42 @@ namespace Buraqueira_Tools
             DA.GetData(5, ref northObj);
             double northAngleDeg = ParseNorthAngle(northObj);
 
+            GH_Structure<IGH_Goo> stylesTree = null;
+            DA.GetDataTree(6, out stylesTree);
+
             List<string> tagList = new List<string>();
-            DA.GetDataList(6, tagList);
+            DA.GetDataList(7, tagList);
 
             bool exportActive = false;
-            DA.GetData(7, ref exportActive);
+            DA.GetData(8, ref exportActive);
 
             string customPath = "";
-            DA.GetData(8, ref customPath);
+            DA.GetData(9, ref customPath);
 
-            // Ação disparada por botão
             if (_forceExport)
             {
                 exportActive = true;
                 _forceExport = false;
             }
 
-            // 2. Organizar Geometrias por Vista (Ramos da Árvore)
-            List<List<Curve>> viewCurves = ExtractCurvesByView(geomTree);
-            int numViews = Math.Max(1, viewCurves.Count);
+            // 2. Mapear Estilos por Ramo e Dicionário
+            var styleMap = ParseStyles(stylesTree);
 
-            // 3. Carregar Template SVG Base (Nativo ou Customizado)
+            // 3. Extrair e Processar Geometrias Universais (Curvas, Breps, Meshes, Pontos)
+            List<List<StyledGeometryItem>> viewElements = ExtractUniversalGeometries(geomTree, styleMap);
+            int numViews = Math.Max(1, viewElements.Count);
+
+            // 4. Carregar Template SVG Base (Nativo ou Customizado)
             SheetTemplateDef sheetDef = LoadSheetTemplate(ActiveTemplate);
 
-            // 4. Mapear Substituições do Carimbo (Tags)
+            // 5. Mapear Substituições do Carimbo (Tags)
             var tagDict = ParseTags(tagList);
             ApplyDefaultTags(tagDict, numViews);
 
-            // 5. Determinar Modo de Distribuição
+            // 6. Determinar Modo de Distribuição
             string effectiveDist = ResolveDistributionMode(DistributionMode, numViews);
 
-            // 6. Subdividir Área de Desenho em Viewports
+            // 7. Subdividir Área de Desenho em Viewports
             List<ViewportLayout> viewports = SubdivideDrawingArea(sheetDef, effectiveDist, numViews);
             ComputedViewports.Clear();
             foreach (var vp in viewports)
@@ -201,16 +212,14 @@ namespace Buraqueira_Tools
                 ComputedViewports.Add(new RectangleF(vp.Box.X, vp.Box.Y, vp.Box.Width, vp.Box.Height));
             }
 
-            // 7. Renderizar Geometria e Rodapé de Cada Viewport no SVG
+            // 8. Renderizar Geometria e Rodapé de Cada Viewport no SVG
             StringBuilder svgContent = new StringBuilder(sheetDef.SvgXml);
 
-            // Substituir Tags do Carimbo no Texto
             foreach (var kvp in tagDict)
             {
                 svgContent.Replace("{{" + kvp.Key + "}}", kvp.Value);
             }
 
-            // Injetar Elementos de Cada Vista no SVG
             StringBuilder viewportsGroup = new StringBuilder();
             viewportsGroup.AppendLine("<g id=\"glaux_viewports_layer\">");
 
@@ -221,21 +230,19 @@ namespace Buraqueira_Tools
             for (int i = 0; i < viewports.Count; i++)
             {
                 var vp = viewports[i];
-                List<Curve> curves = (i < viewCurves.Count) ? viewCurves[i] : new List<Curve>();
+                List<StyledGeometryItem> elements = (i < viewElements.Count) ? viewElements[i] : new List<StyledGeometryItem>();
 
                 string viewTitle = (i < names.Count && !string.IsNullOrWhiteSpace(names[i])) ? names[i] : $"0{i + 1} | VISTA {i + 1}";
                 string scaleSpec = (i < scales.Count && !string.IsNullOrWhiteSpace(scales[i])) ? scales[i] : "Fit";
 
-                // Gerar SVG do Viewport (Curvas, ClipPath, Escala Gráfica, Seta Norte)
-                string vpSvg = RenderViewportSvg(vp, curves, viewTitle, scaleSpec, northAngleDeg, i, out string resolvedScaleText);
+                string vpSvg = RenderViewportSvg(vp, elements, viewTitle, scaleSpec, northAngleDeg, i, out string resolvedScaleText);
                 viewportsGroup.AppendLine(vpSvg);
 
-                statusLog.Add($"  [Vista {i + 1}] {viewTitle} -> Escala: {resolvedScaleText} ({curves.Count} curvas)");
+                statusLog.Add($"  [Vista {i + 1}] {viewTitle} -> Escala: {resolvedScaleText} ({elements.Count} elementos)");
             }
 
             viewportsGroup.AppendLine("</g>");
 
-            // Inserir antes da tag de fechamento </svg>
             int closeIndex = svgContent.ToString().LastIndexOf("</svg>", StringComparison.OrdinalIgnoreCase);
             if (closeIndex >= 0)
             {
@@ -248,7 +255,7 @@ namespace Buraqueira_Tools
 
             LastGeneratedSvg = svgContent.ToString();
 
-            // 8. Gravação em Disco e Compilação de PDF Vetorial
+            // 9. Gravação em Disco e Compilação de PDF Vetorial
             string outSvgPath = "";
             string outPdfPath = "";
 
@@ -261,7 +268,6 @@ namespace Buraqueira_Tools
                 File.WriteAllText(outSvgPath, LastGeneratedSvg, Encoding.UTF8);
                 LastSvgPath = outSvgPath;
 
-                // Compilar PDF Vetorial via Chromium/Edge Headless
                 outPdfPath = Path.Combine(targetDir, baseName + ".pdf");
                 bool pdfSuccess = CompileVectorPdf(outSvgPath, outPdfPath, sheetDef.WidthMm, sheetDef.HeightMm);
                 if (pdfSuccess) LastPdfPath = outPdfPath;
@@ -271,14 +277,13 @@ namespace Buraqueira_Tools
                 if (pdfSuccess) statusLog.Add($"  PDF: {outPdfPath}");
             }
 
-            // Ação de Preview no Navegador
             if (_forcePreview)
             {
                 _forcePreview = false;
                 OpenBrowserPreview(LastGeneratedSvg, sheetDef.WidthMm, sheetDef.HeightMm);
             }
 
-            // 9. Emitir Saídas do Grasshopper
+            // 10. Emitir Saídas do Grasshopper
             DA.SetData(0, LastPdfPath);
             DA.SetData(1, LastSvgPath);
             DA.SetData(2, LastGeneratedSvg);
@@ -319,30 +324,33 @@ namespace Buraqueira_Tools
         }
 
         // ==========================================
-        // MOTOR DE RENDERIZAÇÃO VETORIAL SVG
+        // MOTOR DE RENDERIZAÇÃO VETORIAL SVG UNIVERSAL
         // ==========================================
-        private string RenderViewportSvg(ViewportLayout vp, List<Curve> curves, string title, string scaleSpec, double northAngleDeg, int viewIdx, out string resolvedScaleText)
+        private string RenderViewportSvg(ViewportLayout vp, List<StyledGeometryItem> elements, string title, string scaleSpec, double northAngleDeg, int viewIdx, out string resolvedScaleText)
         {
             StringBuilder sb = new StringBuilder();
             string clipId = $"clip_view_{viewIdx}_{vp.Box.X:0}_{vp.Box.Y:0}";
 
-            // Área Útil de Geometria (reserva espaço inferior para o rodapé)
             float footerHeight = Math.Min(18f, vp.Box.Height * 0.22f);
             float geomWidth = vp.Box.Width;
             float geomHeight = vp.Box.Height - footerHeight;
             float geomX = vp.Box.X;
             float geomY = vp.Box.Y;
 
-            // 1. ClipPath para impedir que qualquer linha vaze para fora do quadro
             sb.AppendLine($"<clipPath id=\"{clipId}\">");
             sb.AppendLine($"  <rect x=\"{geomX.ToString("F2", CultureInfo.InvariantCulture)}\" y=\"{geomY.ToString("F2", CultureInfo.InvariantCulture)}\" width=\"{geomWidth.ToString("F2", CultureInfo.InvariantCulture)}\" height=\"{geomHeight.ToString("F2", CultureInfo.InvariantCulture)}\" />");
             sb.AppendLine("</clipPath>");
 
-            // 2. Moldura Sutil do Viewport
             sb.AppendLine($"<rect x=\"{vp.Box.X.ToString("F2", CultureInfo.InvariantCulture)}\" y=\"{vp.Box.Y.ToString("F2", CultureInfo.InvariantCulture)}\" width=\"{vp.Box.Width.ToString("F2", CultureInfo.InvariantCulture)}\" height=\"{vp.Box.Height.ToString("F2", CultureInfo.InvariantCulture)}\" fill=\"none\" stroke=\"#e2e8f0\" stroke-width=\"0.35\" stroke-dasharray=\"2,2\" />");
 
-            // 3. Calcular Enquadramento e Escala da Geometria
-            BoundingBox bbox2D = ComputeCurves2DBBox(curves);
+            // Calcular BoundingBox conjunto
+            BoundingBox bbox2D = BoundingBox.Unset;
+            foreach (var el in elements)
+            {
+                if (el.Geometry != null) bbox2D.Union(el.Geometry.GetBoundingBox(true));
+                else if (el.Point.HasValue) bbox2D.Union(el.Point.Value);
+            }
+
             double scaleFactor = 1.0;
             double geomCenterX = 0;
             double geomCenterY = 0;
@@ -358,18 +366,15 @@ namespace Buraqueira_Tools
 
                 if (scaleSpec.Equals("Fit", StringComparison.OrdinalIgnoreCase) || !scaleSpec.Contains(":"))
                 {
-                    double marginScale = 0.88; // 12% de margem de respiro
+                    double marginScale = 0.88;
                     scaleFactor = Math.Min((geomWidth * marginScale) / rawW, (geomHeight * marginScale) / rawH);
                     resolvedScaleText = "Ajustada (Fit)";
                 }
                 else
                 {
-                    // Escala Técnica Arquitetônica Exata (ex.: 1:50, 1:100)
                     string[] parts = scaleSpec.Split(':');
                     if (parts.Length == 2 && double.TryParse(parts[1], out double denom) && denom > 0)
                     {
-                        // Assume modelo em metros -> papel em milímetros: 1m = (1000 / denom) mm
-                        // Se o modelo estiver em milímetros no Rhino, converte proporcionalmente
                         var unit = RhinoDoc.ActiveDoc?.ModelUnitSystem ?? UnitSystem.Meters;
                         double unitToMm = (unit == UnitSystem.Millimeters) ? 1.0 : (unit == UnitSystem.Centimeters ? 10.0 : 1000.0);
                         scaleFactor = unitToMm / denom;
@@ -383,47 +388,35 @@ namespace Buraqueira_Tools
                 }
             }
 
-            // 4. Desenhar Curvas do Modelo Projetadas em 2D
             float boxCenterX = geomX + geomWidth * 0.5f;
             float boxCenterY = geomY + geomHeight * 0.5f;
 
             sb.AppendLine($"<g id=\"view_{viewIdx}_geometry\" clip-path=\"url(#{clipId})\">");
 
-            foreach (var crv in curves)
+            foreach (var el in elements)
             {
-                if (crv == null || !crv.IsValid) continue;
-                string pathD = ConvertCurveToSvgPath(crv, geomCenterX, geomCenterY, boxCenterX, boxCenterY, scaleFactor);
-                if (!string.IsNullOrEmpty(pathD))
-                {
-                    sb.AppendLine($"  <path d=\"{pathD}\" fill=\"none\" stroke=\"#0f172a\" stroke-width=\"0.35\" stroke-linecap=\"round\" stroke-linejoin=\"round\" vector-effect=\"non-scaling-stroke\" />");
-                }
+                RenderSingleElementSvg(sb, el, geomCenterX, geomCenterY, boxCenterX, boxCenterY, scaleFactor);
             }
+
             sb.AppendLine("</g>");
 
-            // 5. Rodapé Técnico do Viewport (Título, Escala Numérica, Escala Gráfica, Seta de Norte)
+            // Rodapé Técnico do Viewport
             float footerY = vp.Box.Bottom - footerHeight;
             float titleX = vp.Box.X + 4f;
             float titleY = footerY + 5.5f;
 
             sb.AppendLine($"<g id=\"view_{viewIdx}_footer\">");
-
-            // Linha Divisória Superior do Rodapé
             sb.AppendLine($"  <line x1=\"{vp.Box.X.ToString("F2", CultureInfo.InvariantCulture)}\" y1=\"{footerY.ToString("F2", CultureInfo.InvariantCulture)}\" x2=\"{vp.Box.Right.ToString("F2", CultureInfo.InvariantCulture)}\" y2=\"{footerY.ToString("F2", CultureInfo.InvariantCulture)}\" stroke=\"#cbd5e0\" stroke-width=\"0.3\" />");
-
-            // Título Editorial da Vista
             sb.AppendLine($"  <text x=\"{titleX.ToString("F2", CultureInfo.InvariantCulture)}\" y=\"{titleY.ToString("F2", CultureInfo.InvariantCulture)}\" font-family=\"'Segoe UI', Helvetica, Arial, sans-serif\" font-size=\"3.2\" font-weight=\"bold\" fill=\"#0f172a\">{EscapeXml(title)}</text>");
 
-            // Escala Numérica
             float scaleY = titleY + 4f;
             sb.AppendLine($"  <text x=\"{titleX.ToString("F2", CultureInfo.InvariantCulture)}\" y=\"{scaleY.ToString("F2", CultureInfo.InvariantCulture)}\" font-family=\"'Segoe UI', Helvetica, Arial, sans-serif\" font-size=\"2.3\" fill=\"#475569\">Escala: {EscapeXml(resolvedScaleText)}</text>");
 
-            // Escala Gráfica Alternada (Branco e Preto)
             float scaleBarX = titleX + 32f;
             float scaleBarY = footerY + 4f;
             string scaleBarSvg = GenerateGraphicScaleBarSvg(scaleBarX, scaleBarY, scaleFactor, resolvedScaleText);
             sb.AppendLine(scaleBarSvg);
 
-            // Seta do Norte / Rosa dos Ventos
             float northX = vp.Box.Right - 8f;
             float northY = footerY + (footerHeight * 0.5f);
             string northSvg = GenerateNorthArrowSvg(northX, northY, northAngleDeg, 5.5f);
@@ -434,9 +427,282 @@ namespace Buraqueira_Tools
             return sb.ToString();
         }
 
+        private void RenderSingleElementSvg(StringBuilder sb, StyledGeometryItem el, double geomCenterX, double geomCenterY, float boxCenterX, float boxCenterY, double scale)
+        {
+            var sty = el.Style;
+
+            // 1. Ponto / Marcador Vetorial
+            if (el.Point.HasValue)
+            {
+                Point3d pt = el.Point.Value;
+                double sx = boxCenterX + (pt.X - geomCenterX) * scale;
+                double sy = boxCenterY - (pt.Y - geomCenterY) * scale;
+                RenderMarkerSvg(sb, sx, sy, sty);
+                return;
+            }
+
+            // 2. Malha (Mesh)
+            if (el.Geometry is Mesh mesh)
+            {
+                // REGRA CRÍTICA: Malhas de gráficos / Heatmaps com cores nos vértices devem preservar suas cores!
+                if (mesh.VertexColors != null && mesh.VertexColors.Count > 0)
+                {
+                    RenderColoredMeshSvg(sb, mesh, geomCenterX, geomCenterY, boxCenterX, boxCenterY, scale);
+                }
+                else
+                {
+                    // Malha arquitetônica comum: desenha wireframe com o estilo de linha configurado
+                    if (mesh.TopologyEdges != null && mesh.TopologyEdges.Count > 0)
+                    {
+                        for (int e = 0; e < mesh.TopologyEdges.Count; e++)
+                        {
+                            var pair = mesh.TopologyEdges.GetTopologyVertices(e);
+                            Point3d ptA = mesh.TopologyVertices[pair.I];
+                            Point3d ptB = mesh.TopologyVertices[pair.J];
+                            Line line = new Line(ptA, ptB);
+                            string d = LineToSvgPath(line, geomCenterX, geomCenterY, boxCenterX, boxCenterY, scale);
+                            sb.AppendLine($"  <path d=\"{d}\" fill=\"none\" stroke=\"{sty.StrokeColorHex}\" stroke-width=\"{sty.WeightMm.ToString("F2", CultureInfo.InvariantCulture)}\" stroke-dasharray=\"{sty.DashArray}\" opacity=\"{sty.Opacity.ToString("F2", CultureInfo.InvariantCulture)}\" vector-effect=\"non-scaling-stroke\" />");
+                        }
+                    }
+                }
+                return;
+            }
+
+            // 3. Curvas (Curves, Lines, Arcs, Polylines)
+            if (el.Geometry is Curve crv)
+            {
+                string pathD = ConvertCurveToSvgPath(crv, geomCenterX, geomCenterY, boxCenterX, boxCenterY, scale);
+                if (!string.IsNullOrEmpty(pathD))
+                {
+                    string fillAttr = crv.IsClosed ? sty.Fill : "none";
+                    sb.AppendLine($"  <path d=\"{pathD}\" fill=\"{fillAttr}\" stroke=\"{sty.StrokeColorHex}\" stroke-width=\"{sty.WeightMm.ToString("F2", CultureInfo.InvariantCulture)}\" stroke-dasharray=\"{sty.DashArray}\" opacity=\"{sty.Opacity.ToString("F2", CultureInfo.InvariantCulture)}\" stroke-linecap=\"round\" stroke-linejoin=\"round\" vector-effect=\"non-scaling-stroke\" />");
+                }
+            }
+        }
+
         // ==========================================
-        // CONVERSÃO DE CURVAS RHINO PARA PATH SVG
+        // RENDERIZAÇÃO DE MALHAS COLORIDAS (HEATMAPS)
         // ==========================================
+        private void RenderColoredMeshSvg(StringBuilder sb, Mesh mesh, double geomCenterX, double geomCenterY, float boxCenterX, float boxCenterY, double scale)
+        {
+            sb.AppendLine("  <g id=\"colored_mesh_graphic\">");
+            for (int i = 0; i < mesh.Faces.Count; i++)
+            {
+                var f = mesh.Faces[i];
+                Point3d pA = mesh.Vertices[f.A];
+                Point3d pB = mesh.Vertices[f.B];
+                Point3d pC = mesh.Vertices[f.C];
+
+                double sAx = boxCenterX + (pA.X - geomCenterX) * scale;
+                double sAy = boxCenterY - (pA.Y - geomCenterY) * scale;
+                double sBx = boxCenterX + (pB.X - geomCenterX) * scale;
+                double sBy = boxCenterY - (pB.Y - geomCenterY) * scale;
+                double sCx = boxCenterX + (pC.X - geomCenterX) * scale;
+                double sCy = boxCenterY - (pC.Y - geomCenterY) * scale;
+
+                Color cA = mesh.VertexColors[f.A];
+                Color cB = mesh.VertexColors[f.B];
+                Color cC = mesh.VertexColors[f.C];
+
+                int avgR = (cA.R + cB.R + cC.R) / 3;
+                int avgG = (cA.G + cB.G + cC.G) / 3;
+                int avgB = (cA.B + cB.B + cC.B) / 3;
+                string faceColor = $"#{avgR:X2}{avgG:X2}{avgB:X2}";
+
+                if (f.IsQuad)
+                {
+                    Point3d pD = mesh.Vertices[f.D];
+                    double sDx = boxCenterX + (pD.X - geomCenterX) * scale;
+                    double sDy = boxCenterY - (pD.Y - geomCenterY) * scale;
+
+                    sb.AppendLine($"    <polygon points=\"{sAx:F2},{sAy:F2} {sBx:F2},{sBy:F2} {sCx:F2},{sCy:F2} {sDx:F2},{sDy:F2}\" fill=\"{faceColor}\" stroke=\"{faceColor}\" stroke-width=\"0.05\" />");
+                }
+                else
+                {
+                    sb.AppendLine($"    <polygon points=\"{sAx:F2},{sAy:F2} {sBx:F2},{sBy:F2} {sCx:F2},{sCy:F2}\" fill=\"{faceColor}\" stroke=\"{faceColor}\" stroke-width=\"0.05\" />");
+                }
+            }
+            sb.AppendLine("  </g>");
+        }
+
+        // ==========================================
+        // RENDERIZAÇÃO DE MARCADORES DE PONTO (QGIS)
+        // ==========================================
+        private void RenderMarkerSvg(StringBuilder sb, double sx, double sy, PenStyleDef sty)
+        {
+            float r = (float)(sty.MarkerSizeMm * 0.5);
+            string col = sty.StrokeColorHex;
+            string fill = sty.Fill == "none" ? col : sty.Fill;
+            string op = sty.Opacity.ToString("F2", CultureInfo.InvariantCulture);
+
+            switch (sty.Marker.ToLowerInvariant())
+            {
+                case "square":
+                    sb.AppendLine($"  <rect x=\"{(sx - r):F2}\" y=\"{(sy - r):F2}\" width=\"{(r * 2):F2}\" height=\"{(r * 2):F2}\" fill=\"{fill}\" stroke=\"{col}\" stroke-width=\"0.3\" opacity=\"{op}\" />");
+                    break;
+                case "cross":
+                    sb.AppendLine($"  <line x1=\"{(sx - r):F2}\" y1=\"{sy:F2}\" x2=\"{(sx + r):F2}\" y2=\"{sy:F2}\" stroke=\"{col}\" stroke-width=\"0.4\" opacity=\"{op}\" />");
+                    sb.AppendLine($"  <line x1=\"{sx:F2}\" y1=\"{(sy - r):F2}\" x2=\"{sx:F2}\" y2=\"{(sy + r):F2}\" stroke=\"{col}\" stroke-width=\"0.4\" opacity=\"{op}\" />");
+                    break;
+                case "x":
+                    sb.AppendLine($"  <line x1=\"{(sx - r):F2}\" y1=\"{(sy - r):F2}\" x2=\"{(sx + r):F2}\" y2=\"{(sy + r):F2}\" stroke=\"{col}\" stroke-width=\"0.4\" opacity=\"{op}\" />");
+                    sb.AppendLine($"  <line x1=\"{(sx - r):F2}\" y1=\"{(sy + r):F2}\" x2=\"{(sx + r):F2}\" y2=\"{(sy - r):F2}\" stroke=\"{col}\" stroke-width=\"0.4\" opacity=\"{op}\" />");
+                    break;
+                case "target":
+                    sb.AppendLine($"  <circle cx=\"{sx:F2}\" cy=\"{sy:F2}\" r=\"{r:F2}\" fill=\"none\" stroke=\"{col}\" stroke-width=\"0.3\" opacity=\"{op}\" />");
+                    sb.AppendLine($"  <line x1=\"{(sx - r * 1.3):F2}\" y1=\"{sy:F2}\" x2=\"{(sx + r * 1.3):F2}\" y2=\"{sy:F2}\" stroke=\"{col}\" stroke-width=\"0.3\" opacity=\"{op}\" />");
+                    sb.AppendLine($"  <line x1=\"{sx:F2}\" y1=\"{(sy - r * 1.3):F2}\" x2=\"{sx:F2}\" y2=\"{(sy + r * 1.3):F2}\" stroke=\"{col}\" stroke-width=\"0.3\" opacity=\"{op}\" />");
+                    break;
+                case "triangle":
+                    sb.AppendLine($"  <polygon points=\"{sx:F2},{(sy - r):F2} {(sx + r):F2},{(sy + r):F2} {(sx - r):F2},{(sy + r):F2}\" fill=\"{fill}\" stroke=\"{col}\" stroke-width=\"0.3\" opacity=\"{op}\" />");
+                    break;
+                case "circle":
+                default:
+                    sb.AppendLine($"  <circle cx=\"{sx:F2}\" cy=\"{sy:F2}\" r=\"{r:F2}\" fill=\"{fill}\" stroke=\"{col}\" stroke-width=\"0.3\" opacity=\"{op}\" />");
+                    break;
+            }
+        }
+
+        // ==========================================
+        // EXTRAÇÃO UNIVERSAL DE GEOMETRIAS (BREPS, MESHES, PONTOS)
+        // ==========================================
+        private List<List<StyledGeometryItem>> ExtractUniversalGeometries(GH_Structure<IGH_GeometricGoo> geomTree, Dictionary<int, PenStyleDef> styleMap)
+        {
+            List<List<StyledGeometryItem>> result = new List<List<StyledGeometryItem>>();
+            if (geomTree.PathCount == 0) return result;
+
+            int branchIdx = 0;
+            foreach (var path in geomTree.Paths)
+            {
+                var branch = geomTree.get_Branch(path);
+                List<StyledGeometryItem> viewItems = new List<StyledGeometryItem>();
+
+                // Estilo padrão do ramo (resolvido por Sty ou ABNT fallback)
+                PenStyleDef branchStyle = styleMap.ContainsKey(branchIdx) ? styleMap[branchIdx] : GetAbntDefaultStyle(branchIdx);
+
+                foreach (var item in branch)
+                {
+                    if (item == null) continue;
+                    var scriptObj = (item as IGH_Goo)?.ScriptVariable();
+
+                    // 1. Checar se tem estilo individual anexado via Pill Pen Style
+                    PenStyleDef itemStyle = branchStyle;
+                    if (scriptObj is GeometryBase gb && gb.UserDictionary != null && gb.UserDictionary.ContainsKey("glaux_pen_style"))
+                    {
+                        string embeddedStyle = gb.UserDictionary.GetString("glaux_pen_style");
+                        if (!string.IsNullOrWhiteSpace(embeddedStyle))
+                        {
+                            itemStyle = PenStyleDef.Parse(embeddedStyle);
+                        }
+                    }
+
+                    // 2. Extrair conforme o tipo geométrico
+                    if (scriptObj is Point3d pt3d)
+                    {
+                        viewItems.Add(new StyledGeometryItem { Point = pt3d, Style = itemStyle });
+                    }
+                    else if (scriptObj is GH_Point ghPt)
+                    {
+                        viewItems.Add(new StyledGeometryItem { Point = ghPt.Value, Style = itemStyle });
+                    }
+                    else if (scriptObj is Mesh mesh)
+                    {
+                        viewItems.Add(new StyledGeometryItem { Geometry = mesh, Style = itemStyle });
+                    }
+                    else if (scriptObj is Brep brep)
+                    {
+                        var edgeCurves = brep.DuplicateEdgeCurves();
+                        if (edgeCurves != null)
+                        {
+                            foreach (var ec in edgeCurves) viewItems.Add(new StyledGeometryItem { Geometry = ec, Style = itemStyle });
+                        }
+                    }
+                    else if (scriptObj is Surface srf)
+                    {
+                        var edgeCurves = srf.ToBrep()?.DuplicateEdgeCurves();
+                        if (edgeCurves != null)
+                        {
+                            foreach (var ec in edgeCurves) viewItems.Add(new StyledGeometryItem { Geometry = ec, Style = itemStyle });
+                        }
+                    }
+                    else if (scriptObj is Hatch hatch)
+                    {
+                        var hCurves = hatch.Get3dCurves(true);
+                        if (hCurves != null)
+                        {
+                            foreach (var hc in hCurves) viewItems.Add(new StyledGeometryItem { Geometry = hc, Style = itemStyle });
+                        }
+                    }
+                    else
+                    {
+                        Curve crv = null;
+                        if (GH_Convert.ToCurve(item, ref crv, GH_Conversion.Both) && crv != null && crv.IsValid)
+                        {
+                            viewItems.Add(new StyledGeometryItem { Geometry = crv, Style = itemStyle });
+                        }
+                    }
+                }
+
+                if (viewItems.Count > 0) result.Add(viewItems);
+                branchIdx++;
+            }
+
+            return result;
+        }
+
+        // ==========================================
+        // PARSER DE ESTILOS DE PENA
+        // ==========================================
+        private Dictionary<int, PenStyleDef> ParseStyles(GH_Structure<IGH_Goo> stylesTree)
+        {
+            var dict = new Dictionary<int, PenStyleDef>();
+            if (stylesTree == null || stylesTree.IsEmpty) return dict;
+
+            int branchIdx = 0;
+            foreach (var path in stylesTree.Paths)
+            {
+                var branch = stylesTree.get_Branch(path);
+                if (branch != null && branch.Count > 0)
+                {
+                    string str = branch[0]?.ToString();
+                    if (!string.IsNullOrWhiteSpace(str))
+                    {
+                        dict[branchIdx] = PenStyleDef.Parse(str);
+                    }
+                }
+                branchIdx++;
+            }
+
+            return dict;
+        }
+
+        private static PenStyleDef GetAbntDefaultStyle(int branchIdx)
+        {
+            switch (branchIdx)
+            {
+                case 0: // Corte ABNT: Linha Grossa Contínua Preta
+                    return new PenStyleDef { WeightMm = 0.50, StrokeColorHex = "#0f172a", DashArray = "none", Opacity = 1.0 };
+                case 1: // Vista ABNT: Linha Média Contínua Grafite
+                    return new PenStyleDef { WeightMm = 0.25, StrokeColorHex = "#334155", DashArray = "none", Opacity = 1.0 };
+                case 2: // Projeção ABNT: Linha Fina Tracejada
+                    return new PenStyleDef { WeightMm = 0.18, StrokeColorHex = "#64748b", DashArray = "4,2", Opacity = 0.85 };
+                case 3: // Eixo ABNT: Linha Fina Traço-Ponto
+                    return new PenStyleDef { WeightMm = 0.13, StrokeColorHex = "#94a3b8", DashArray = "5,2,1,2", Opacity = 0.75, Marker = "cross" };
+                default:
+                    return new PenStyleDef { WeightMm = 0.20, StrokeColorHex = "#0f172a", DashArray = "none", Opacity = 1.0 };
+            }
+        }
+
+        private string LineToSvgPath(Line line, double geomCenterX, double geomCenterY, float boxCenterX, float boxCenterY, double scale)
+        {
+            double x1 = boxCenterX + (line.FromX - geomCenterX) * scale;
+            double y1 = boxCenterY - (line.FromY - geomCenterY) * scale;
+            double x2 = boxCenterX + (line.ToX - geomCenterX) * scale;
+            double y2 = boxCenterY - (line.ToY - geomCenterY) * scale;
+
+            return $"M {x1.ToString("F2", CultureInfo.InvariantCulture)} {y1.ToString("F2", CultureInfo.InvariantCulture)} L {x2.ToString("F2", CultureInfo.InvariantCulture)} {y2.ToString("F2", CultureInfo.InvariantCulture)}";
+        }
+
         private string ConvertCurveToSvgPath(Curve crv, double geomCenterX, double geomCenterY, float boxCenterX, float boxCenterY, double scale)
         {
             Polyline poly;
@@ -452,7 +718,6 @@ namespace Buraqueira_Tools
             for (int i = 0; i < poly.Count; i++)
             {
                 Point3d pt = poly[i];
-                // Projeção 2D com inversão do eixo Y (SVG cresce para baixo, Rhino cresce para cima)
                 double svgX = boxCenterX + (pt.X - geomCenterX) * scale;
                 double svgY = boxCenterY - (pt.Y - geomCenterY) * scale;
 
@@ -468,27 +733,14 @@ namespace Buraqueira_Tools
             return path.ToString().TrimEnd();
         }
 
-        private BoundingBox ComputeCurves2DBBox(List<Curve> curves)
-        {
-            BoundingBox bbox = BoundingBox.Unset;
-            foreach (var crv in curves)
-            {
-                if (crv == null || !crv.IsValid) continue;
-                bbox.Union(crv.GetBoundingBox(true));
-            }
-            return bbox;
-        }
-
         // ==========================================
-        // GERADOR DE ESCALA GRÁFICA PARAMÉTRICA
+        // GERADOR DE ESCALA GRÁFICA & NORTE
         // ==========================================
         private string GenerateGraphicScaleBarSvg(float startX, float startY, double scaleFactor, string scaleText)
         {
-            // Determina passo da escala (ex.: 1m, 2m, 5m em papel mm)
-            double stepReal = 1.0; // 1 metro
+            double stepReal = 1.0;
             double segWidthMm = stepReal * scaleFactor;
 
-            // Se o segmento ficar muito pequeno (< 5mm) ou muito grande (> 25mm), ajusta a métrica
             if (segWidthMm < 5.0) { stepReal = 5.0; segWidthMm = stepReal * scaleFactor; }
             if (segWidthMm < 5.0) { stepReal = 10.0; segWidthMm = stepReal * scaleFactor; }
             if (segWidthMm > 30.0) { stepReal = 0.5; segWidthMm = stepReal * scaleFactor; }
@@ -499,18 +751,14 @@ namespace Buraqueira_Tools
             StringBuilder sb = new StringBuilder();
             sb.AppendLine($"  <g id=\"graphic_scale_bar\">");
 
-            // Segmento 1: Branco com borda preta
             sb.AppendLine($"    <rect x=\"{startX.ToString("F2", CultureInfo.InvariantCulture)}\" y=\"{startY.ToString("F2", CultureInfo.InvariantCulture)}\" width=\"{segWidthMm.ToString("F2", CultureInfo.InvariantCulture)}\" height=\"{barH.ToString("F2", CultureInfo.InvariantCulture)}\" fill=\"#ffffff\" stroke=\"#0f172a\" stroke-width=\"0.2\" />");
 
-            // Segmento 2: Preto preenchido
             float seg2X = (float)(startX + segWidthMm);
             sb.AppendLine($"    <rect x=\"{seg2X.ToString("F2", CultureInfo.InvariantCulture)}\" y=\"{startY.ToString("F2", CultureInfo.InvariantCulture)}\" width=\"{segWidthMm.ToString("F2", CultureInfo.InvariantCulture)}\" height=\"{barH.ToString("F2", CultureInfo.InvariantCulture)}\" fill=\"#0f172a\" stroke=\"#0f172a\" stroke-width=\"0.2\" />");
 
-            // Segmento 3: Branco com borda preta
             float seg3X = (float)(seg2X + segWidthMm);
             sb.AppendLine($"    <rect x=\"{seg3X.ToString("F2", CultureInfo.InvariantCulture)}\" y=\"{startY.ToString("F2", CultureInfo.InvariantCulture)}\" width=\"{segWidthMm.ToString("F2", CultureInfo.InvariantCulture)}\" height=\"{barH.ToString("F2", CultureInfo.InvariantCulture)}\" fill=\"#ffffff\" stroke=\"#0f172a\" stroke-width=\"0.2\" />");
 
-            // Números da Escala (0, 1m, 2m, 3m)
             float textY = startY + barH + 2.5f;
             sb.AppendLine($"    <text x=\"{startX.ToString("F2", CultureInfo.InvariantCulture)}\" y=\"{textY.ToString("F2", CultureInfo.InvariantCulture)}\" font-family=\"'Segoe UI', sans-serif\" font-size=\"1.8\" fill=\"#64748b\" text-anchor=\"middle\">0</text>");
             sb.AppendLine($"    <text x=\"{seg2X.ToString("F2", CultureInfo.InvariantCulture)}\" y=\"{textY.ToString("F2", CultureInfo.InvariantCulture)}\" font-family=\"'Segoe UI', sans-serif\" font-size=\"1.8\" fill=\"#64748b\" text-anchor=\"middle\">{stepReal:0}m</text>");
@@ -520,40 +768,29 @@ namespace Buraqueira_Tools
             return sb.ToString();
         }
 
-        // ==========================================
-        // GERADOR DE SETA DE NORTE / ROSA DOS VENTOS
-        // ==========================================
         private string GenerateNorthArrowSvg(float cx, float cy, double angleDeg, float radius)
         {
             StringBuilder sb = new StringBuilder();
-            // Inversão angular para o sistema de coordenadas do SVG
             double rotSvg = -angleDeg + 90.0;
 
             sb.AppendLine($"  <g id=\"north_arrow\" transform=\"translate({cx.ToString("F2", CultureInfo.InvariantCulture)}, {cy.ToString("F2", CultureInfo.InvariantCulture)}) rotate({rotSvg.ToString("F1", CultureInfo.InvariantCulture)})\">");
-
-            // Círculo Guia Fino
             sb.AppendLine($"    <circle cx=\"0\" cy=\"0\" r=\"{radius.ToString("F2", CultureInfo.InvariantCulture)}\" fill=\"none\" stroke=\"#cbd5e0\" stroke-width=\"0.25\" />");
 
-            // Metade Esquerda da Seta (Preta)
             float tipY = -radius * 1.05f;
             float baseY = radius * 0.85f;
             float wingX = radius * 0.45f;
 
             sb.AppendLine($"    <polygon points=\"0,{tipY.ToString("F2", CultureInfo.InvariantCulture)} -{wingX.ToString("F2", CultureInfo.InvariantCulture)},{baseY.ToString("F2", CultureInfo.InvariantCulture)} 0,0\" fill=\"#0f172a\" />");
-
-            // Metade Direita da Seta (Branca com Contorno)
             sb.AppendLine($"    <polygon points=\"0,{tipY.ToString("F2", CultureInfo.InvariantCulture)} {wingX.ToString("F2", CultureInfo.InvariantCulture)},{baseY.ToString("F2", CultureInfo.InvariantCulture)} 0,0\" fill=\"#ffffff\" stroke=\"#0f172a\" stroke-width=\"0.2\" />");
 
-            // Letra "N"
             float letterY = tipY - 1.2f;
             sb.AppendLine($"    <text x=\"0\" y=\"{letterY.ToString("F2", CultureInfo.InvariantCulture)}\" font-family=\"'Segoe UI', sans-serif\" font-size=\"2.6\" font-weight=\"bold\" fill=\"#0f172a\" text-anchor=\"middle\">N</text>");
-
             sb.AppendLine("  </g>");
             return sb.ToString();
         }
 
         // ==========================================
-        // MOTOR DE SUBDIVISÃO DE ÁREA DE DESENHO
+        // SUBDIVISÃO DE ÁREA DE DESENHO
         // ==========================================
         private List<ViewportLayout> SubdivideDrawingArea(SheetTemplateDef sheet, string distMode, int numViews)
         {
@@ -567,7 +804,6 @@ namespace Buraqueira_Tools
                 case "1":
                     vps.Add(new ViewportLayout(area, 0));
                     break;
-
                 case "SPLIT_H":
                 case "2_H":
                     {
@@ -576,7 +812,6 @@ namespace Buraqueira_Tools
                         vps.Add(new ViewportLayout(new RectangleF(area.X + w + gutter, area.Y, w, area.Height), 1));
                     }
                     break;
-
                 case "SPLIT_V":
                 case "2_V":
                     {
@@ -585,21 +820,17 @@ namespace Buraqueira_Tools
                         vps.Add(new ViewportLayout(new RectangleF(area.X, area.Y + h + gutter, area.Width, h), 1));
                     }
                     break;
-
                 case "MASTER_2":
                 case "3":
                     {
-                        // 1 Vista Master à esquerda (63%) e 2 Secundárias à direita (37%)
                         float wLeft = (area.Width - gutter) * 0.63f;
                         float wRight = area.Width - gutter - wLeft;
                         float hRight = (area.Height - gutter) * 0.5f;
-
                         vps.Add(new ViewportLayout(new RectangleF(area.X, area.Y, wLeft, area.Height), 0));
                         vps.Add(new ViewportLayout(new RectangleF(area.X + wLeft + gutter, area.Y, wRight, hRight), 1));
                         vps.Add(new ViewportLayout(new RectangleF(area.X + wLeft + gutter, area.Y + hRight + gutter, wRight, hRight), 2));
                     }
                     break;
-
                 case "GRID_3X2":
                 case "6":
                     {
@@ -616,18 +847,13 @@ namespace Buraqueira_Tools
                         }
                     }
                     break;
-
                 case "EXPLICIT":
                     if (sheet.ExplicitViewports != null && sheet.ExplicitViewports.Count > 0)
                     {
-                        for (int i = 0; i < sheet.ExplicitViewports.Count; i++)
-                        {
-                            vps.Add(new ViewportLayout(sheet.ExplicitViewports[i], i));
-                        }
+                        for (int i = 0; i < sheet.ExplicitViewports.Count; i++) vps.Add(new ViewportLayout(sheet.ExplicitViewports[i], i));
                         break;
                     }
                     goto case "QUAD";
-
                 case "QUAD":
                 case "4":
                 default:
@@ -658,12 +884,8 @@ namespace Buraqueira_Tools
             return mode;
         }
 
-        // ==========================================
-        // CARREGAMENTO DE TEMPLATES SVG
-        // ==========================================
         private SheetTemplateDef LoadSheetTemplate(string templateInput)
         {
-            // 1. Verificar se é arquivo SVG em disco
             if (!string.IsNullOrWhiteSpace(templateInput) && File.Exists(templateInput))
             {
                 try
@@ -677,12 +899,8 @@ namespace Buraqueira_Tools
                 }
             }
 
-            // 2. Templates Embutidos
             string tName = templateInput?.ToUpperInvariant() ?? "A3_QUAD";
-            if (tName.Contains("A4"))
-            {
-                return GenerateBuiltInA4Template();
-            }
+            if (tName.Contains("A4")) return GenerateBuiltInA4Template();
             return GenerateBuiltInA3Template();
         }
 
@@ -698,7 +916,6 @@ namespace Buraqueira_Tools
                 var doc = XDocument.Parse(svgXml);
                 var svgRoot = doc.Root;
 
-                // Lê viewBox ou width/height
                 var viewBoxAttr = svgRoot.Attribute("viewBox");
                 if (viewBoxAttr != null)
                 {
@@ -710,7 +927,6 @@ namespace Buraqueira_Tools
                     }
                 }
 
-                // Procura elemento com ID drawing_area ou area_desenho ou work_area
                 var areaElem = svgRoot.Descendants().FirstOrDefault(e =>
                 {
                     var id = e.Attribute("id")?.Value?.ToLowerInvariant();
@@ -727,11 +943,9 @@ namespace Buraqueira_Tools
                 }
                 else
                 {
-                    // Fallback para margens padrão: 25mm esquerda, 10mm outros, 70mm carimbo à direita
                     drawingArea = new RectangleF(25f, 10f, width - 25f - 85f, height - 20f);
                 }
 
-                // Procura viewports explícitos (view_0, view_1...)
                 for (int i = 0; i < 16; i++)
                 {
                     string targetId = $"view_{i}";
@@ -753,42 +967,25 @@ namespace Buraqueira_Tools
 
         private SheetTemplateDef GenerateBuiltInA3Template()
         {
-            float w = 420f;
-            float h = 297f;
+            float w = 420f; float h = 297f;
             RectangleF drawingArea = new RectangleF(25f, 10f, 315f, 277f);
 
             StringBuilder sb = new StringBuilder();
             sb.AppendLine("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
             sb.AppendLine($"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{w}mm\" height=\"{h}mm\" viewBox=\"0 0 {w} {h}\">");
-            sb.AppendLine("  <defs>");
-            sb.AppendLine("    <style>");
-            sb.AppendLine("      @page { size: 420mm 297mm; margin: 0; }");
-            sb.AppendLine("      text { font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Arial, sans-serif; }");
-            sb.AppendLine("    </style>");
-            sb.AppendLine("  </defs>");
-
-            // Fundo Branco da Folha
+            sb.AppendLine("  <defs><style>@page { size: 420mm 297mm; margin: 0; } text { font-family: 'Segoe UI', -apple-system, Arial, sans-serif; }</style></defs>");
             sb.AppendLine($"  <rect width=\"{w}\" height=\"{h}\" fill=\"#ffffff\" />");
 
-            // Margem ABNT Oficial: 25mm Esquerda, 10mm Superior, Inferior e Direita
             float mx = 25f; float my = 10f; float mw = w - 35f; float mh = h - 20f;
             sb.AppendLine($"  <rect x=\"{mx}\" y=\"{my}\" width=\"{mw}\" height=\"{mh}\" fill=\"none\" stroke=\"#0f172a\" stroke-width=\"0.5\" />");
 
-            // Carimbo / Selo Técnico Vertical no Canto Direito (Largura 65mm)
-            float carimboW = 65f;
-            float carimboX = w - 10f - carimboW;
-            float carimboY = my;
-            float carimboH = mh;
-
+            float carimboW = 65f; float carimboX = w - 10f - carimboW; float carimboY = my; float carimboH = mh;
             sb.AppendLine($"  <g id=\"glaux_carimbo\">");
             sb.AppendLine($"    <rect x=\"{carimboX}\" y=\"{carimboY}\" width=\"{carimboW}\" height=\"{carimboH}\" fill=\"#f8fafc\" stroke=\"#0f172a\" stroke-width=\"0.4\" />");
-
-            // Cabeçalho da Empresa / Plugin
             sb.AppendLine($"    <rect x=\"{carimboX}\" y=\"{carimboY}\" width=\"{carimboW}\" height=\"22\" fill=\"#0284c7\" />");
             sb.AppendLine($"    <text x=\"{carimboX + carimboW * 0.5f}\" y=\"{carimboY + 11}\" font-size=\"4.2\" font-weight=\"bold\" fill=\"#ffffff\" text-anchor=\"middle\">GLAUX TOOLS</text>");
             sb.AppendLine($"    <text x=\"{carimboX + carimboW * 0.5f}\" y=\"{carimboY + 17}\" font-size=\"2.3\" fill=\"#e0f2fe\" text-anchor=\"middle\">ARQUITETURA &amp; ACÚSTICA</text>");
 
-            // Linhas de Campos
             float fieldY = carimboY + 22f;
             void DrawField(string label, string tagValue, float fieldHeight)
             {
@@ -806,42 +1003,29 @@ namespace Buraqueira_Tools
             DrawField("ESCALA GERAL", "{{ESCALA}}", 12f);
             DrawField("Nº DA FOLHA", "{{FOLHA}}", 14f);
 
-            // Rodapé do Selo com Software
             sb.AppendLine($"    <line x1=\"{carimboX}\" y1=\"{carimboY + carimboH - 10}\" x2=\"{carimboX + carimboW}\" y2=\"{carimboY + carimboH - 10}\" stroke=\"#cbd5e0\" stroke-width=\"0.25\" />");
             sb.AppendLine($"    <text x=\"{carimboX + carimboW * 0.5f}\" y=\"{carimboY + carimboH - 4}\" font-size=\"2.0\" fill=\"#94a3b8\" text-anchor=\"middle\">Desenvolvido via Glaux Engine</text>");
             sb.AppendLine("  </g>");
-
-            // Marcação da Área Livre de Desenho
             sb.AppendLine($"  <rect id=\"drawing_area\" x=\"{drawingArea.X}\" y=\"{drawingArea.Y}\" width=\"{drawingArea.Width}\" height=\"{drawingArea.Height}\" fill=\"none\" stroke=\"none\" />");
-
             sb.AppendLine("</svg>");
             return new SheetTemplateDef("A3 Horizontal Padrão", w, h, drawingArea, sb.ToString());
         }
 
         private SheetTemplateDef GenerateBuiltInA4Template()
         {
-            float w = 210f;
-            float h = 297f;
+            float w = 210f; float h = 297f;
             RectangleF drawingArea = new RectangleF(25f, 10f, 175f, 230f);
 
             StringBuilder sb = new StringBuilder();
             sb.AppendLine("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
             sb.AppendLine($"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{w}mm\" height=\"{h}mm\" viewBox=\"0 0 {w} {h}\">");
-            sb.AppendLine("  <defs>");
-            sb.AppendLine("    <style>");
-            sb.AppendLine("      @page { size: 210mm 297mm; margin: 0; }");
-            sb.AppendLine("      text { font-family: 'Segoe UI', -apple-system, Arial, sans-serif; }");
-            sb.AppendLine("    </style>");
-            sb.AppendLine("  </defs>");
+            sb.AppendLine("  <defs><style>@page { size: 210mm 297mm; margin: 0; } text { font-family: 'Segoe UI', Arial, sans-serif; }</style></defs>");
             sb.AppendLine($"  <rect width=\"{w}\" height=\"{h}\" fill=\"#ffffff\" />");
 
-            // Margem A4: 25mm Esquerda, 10mm Outras
             float mx = 25f; float my = 10f; float mw = w - 35f; float mh = h - 20f;
             sb.AppendLine($"  <rect x=\"{mx}\" y=\"{my}\" width=\"{mw}\" height=\"{mh}\" fill=\"none\" stroke=\"#0f172a\" stroke-width=\"0.45\" />");
 
-            // Carimbo Inferior Horizontal (Altura 42mm)
-            float carimboH = 42f;
-            float carimboY = my + mh - carimboH;
+            float carimboH = 42f; float carimboY = my + mh - carimboH;
             sb.AppendLine($"  <g id=\"glaux_carimbo\">");
             sb.AppendLine($"    <rect x=\"{mx}\" y=\"{carimboY}\" width=\"{mw}\" height=\"{carimboH}\" fill=\"#f8fafc\" stroke=\"#0f172a\" stroke-width=\"0.35\" />");
             sb.AppendLine($"    <text x=\"{mx + 4}\" y=\"{carimboY + 8}\" font-size=\"3.8\" font-weight=\"bold\" fill=\"#0284c7\">GLAUX TOOLS</text>");
@@ -849,71 +1033,25 @@ namespace Buraqueira_Tools
             sb.AppendLine($"    <text x=\"{mx + 4}\" y=\"{carimboY + 23}\" font-size=\"2.3\" fill=\"#475569\">Autor: {{AUTOR}} | Data: {{DATA}}</text>");
             sb.AppendLine($"    <text x=\"{mx + mw - 4}\" y=\"{carimboY + 23}\" font-size=\"2.5\" font-weight=\"bold\" fill=\"#0f172a\" text-anchor=\"end\">Folha: {{FOLHA}}</text>");
             sb.AppendLine("  </g>");
-
             sb.AppendLine($"  <rect id=\"drawing_area\" x=\"{drawingArea.X}\" y=\"{drawingArea.Y}\" width=\"{drawingArea.Width}\" height=\"{drawingArea.Height}\" fill=\"none\" stroke=\"none\" />");
             sb.AppendLine("</svg>");
-
             return new SheetTemplateDef("A4 Vertical Relatório", w, h, drawingArea, sb.ToString());
         }
 
         // ==========================================
-        // UTILITÁRIOS DE DADOS, TAGS E GEOMETRIA
+        // UTILITÁRIOS DE DADOS, TAGS E EXPORT
         // ==========================================
-        private List<List<Curve>> ExtractCurvesByView(GH_Structure<IGH_GeometricGoo> geomTree)
-        {
-            List<List<Curve>> result = new List<List<Curve>>();
-
-            if (geomTree.PathCount == 0) return result;
-
-            foreach (var path in geomTree.Paths)
-            {
-                var branch = geomTree.get_Branch(path);
-                List<Curve> branchCurves = new List<Curve>();
-                foreach (var item in branch)
-                {
-                    if (item == null) continue;
-                    Curve crv = null;
-                    if (GH_Convert.ToCurve(item, ref crv, GH_Conversion.Both) && crv != null && crv.IsValid)
-                    {
-                        branchCurves.Add(crv);
-                    }
-                }
-                if (branchCurves.Count > 0) result.Add(branchCurves);
-            }
-
-            // Fallback se a árvore não tinha curvas em ramos separados mas tinha uma lista plana
-            if (result.Count == 0 && geomTree.AllData(true).Any())
-            {
-                List<Curve> allCrvs = new List<Curve>();
-                foreach (var item in geomTree.AllData(true))
-                {
-                    if (item == null) continue;
-                    Curve crv = null;
-                    if (GH_Convert.ToCurve(item, ref crv, GH_Conversion.Both) && crv != null && crv.IsValid)
-                    {
-                        allCrvs.Add(crv);
-                    }
-                }
-                if (allCrvs.Count > 0) result.Add(allCrvs);
-            }
-
-            return result;
-        }
-
         private Dictionary<string, string> ParseTags(List<string> tagList)
         {
             var dict = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             if (tagList == null) return dict;
-
             foreach (var item in tagList)
             {
                 if (string.IsNullOrWhiteSpace(item)) continue;
                 int colonIdx = item.IndexOf(':');
                 if (colonIdx > 0)
                 {
-                    string key = item.Substring(0, colonIdx).Trim();
-                    string val = item.Substring(colonIdx + 1).Trim();
-                    dict[key] = val;
+                    dict[item.Substring(0, colonIdx).Trim()] = item.Substring(colonIdx + 1).Trim();
                 }
             }
             return dict;
@@ -932,28 +1070,19 @@ namespace Buraqueira_Tools
 
         private double ParseNorthAngle(object northObj)
         {
-            if (northObj == null) return 90.0; // Padrão: YAxis / Norte para cima
-
+            if (northObj == null) return 90.0;
             if (northObj is GH_Vector ghVec) northObj = ghVec.Value;
             if (northObj is Vector3d vec)
             {
                 if (vec.Length < 1e-6) return 90.0;
                 double rad = Math.Atan2(vec.Y, vec.X);
-                double deg = rad * (180.0 / Math.PI);
-                return (deg + 360.0) % 360.0;
+                return ((rad * (180.0 / Math.PI)) + 360.0) % 360.0;
             }
-
             if (northObj is GH_Number ghNum) return ghNum.Value;
-            if (double.TryParse(northObj.ToString(), NumberStyles.Any, CultureInfo.InvariantCulture, out double val))
-            {
-                return val;
-            }
+            if (double.TryParse(northObj.ToString(), NumberStyles.Any, CultureInfo.InvariantCulture, out double val)) return val;
             return 90.0;
         }
 
-        // ==========================================
-        // EXPORTAÇÃO VETORIAL E PREVIEW NO NAVEGADOR
-        // ==========================================
         public void OpenBrowserPreview(string svgContent, float widthMm, float heightMm)
         {
             try
@@ -964,7 +1093,6 @@ namespace Buraqueira_Tools
                 string svgFile = Path.Combine(tempDir, "preview_sheet.svg");
                 File.WriteAllText(svgFile, svgContent, Encoding.UTF8);
 
-                // Criar wrapper HTML elegante com controles de zoom e fundo escuro profissional
                 string htmlFile = Path.Combine(tempDir, "preview_sheet.html");
                 string htmlContent = $@"<!DOCTYPE html>
 <html lang=""pt-BR"">
@@ -1011,7 +1139,6 @@ namespace Buraqueira_Tools
 </body>
 </html>";
                 File.WriteAllText(htmlFile, htmlContent, Encoding.UTF8);
-
                 Process.Start(new ProcessStartInfo { FileName = htmlFile, UseShellExecute = true });
             }
             catch (Exception ex)
@@ -1049,10 +1176,7 @@ namespace Buraqueira_Tools
                 }
                 return File.Exists(pdfPath) && new FileInfo(pdfPath).Length > 0;
             }
-            catch
-            {
-                return false;
-            }
+            catch { return false; }
         }
 
         private string ResolveTargetDirectory(string customPath)
@@ -1063,14 +1187,12 @@ namespace Buraqueira_Tools
                 string dir = Path.GetDirectoryName(customPath);
                 if (!string.IsNullOrWhiteSpace(dir) && Directory.Exists(dir)) return dir;
             }
-
             var doc = RhinoDoc.ActiveDoc;
             if (doc != null && !string.IsNullOrWhiteSpace(doc.Path))
             {
                 string pDir = Path.GetDirectoryName(doc.Path);
                 if (Directory.Exists(pDir)) return pDir;
             }
-
             string temp = Path.Combine(Path.GetTempPath(), "Glaux_Sheets");
             if (!Directory.Exists(temp)) Directory.CreateDirectory(temp);
             return temp;
@@ -1094,8 +1216,90 @@ namespace Buraqueira_Tools
     }
 
     // ==========================================
-    // ESTRUTURAS AUXILIARES
+    // ESTRUTURAS AUXILIARES & DEFINIÇÃO DE PENAS
     // ==========================================
+    public class StyledGeometryItem
+    {
+        public GeometryBase Geometry { get; set; }
+        public Point3d? Point { get; set; }
+        public PenStyleDef Style { get; set; }
+    }
+
+    public class PenStyleDef
+    {
+        public double WeightMm { get; set; } = 0.25;
+        public string StrokeColorHex { get; set; } = "#0f172a";
+        public string DashArray { get; set; } = "none";
+        public string Fill { get; set; } = "none";
+        public double Opacity { get; set; } = 1.0;
+        public string Marker { get; set; } = "circle";
+        public double MarkerSizeMm { get; set; } = 2.5;
+
+        public static PenStyleDef Parse(string raw)
+        {
+            var def = new PenStyleDef();
+            if (string.IsNullOrWhiteSpace(raw)) return def;
+
+            string s = raw.Trim();
+
+            // Formato CSS Key-Value (ex.: stroke:#0f172a; stroke-width:0.5mm; fill:none;)
+            if (s.Contains(":") && (s.Contains("stroke") || s.Contains("width") || s.Contains(";")))
+            {
+                var pairs = s.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
+                foreach (var pair in pairs)
+                {
+                    int colon = pair.IndexOf(':');
+                    if (colon > 0)
+                    {
+                        string k = pair.Substring(0, colon).Trim().ToLowerInvariant();
+                        string v = pair.Substring(colon + 1).Trim();
+
+                        if (k == "stroke" || k == "color") def.StrokeColorHex = v;
+                        else if (k == "stroke-width" || k == "width" || k == "weight")
+                        {
+                            string numOnly = v.Replace("mm", "").Replace("px", "").Trim();
+                            if (double.TryParse(numOnly, NumberStyles.Any, CultureInfo.InvariantCulture, out double w)) def.WeightMm = w;
+                        }
+                        else if (k == "stroke-dasharray" || k == "pattern" || k == "dash") def.DashArray = PillPenStyle_Component.ResolveDashPattern(v);
+                        else if (k == "fill") def.Fill = v;
+                        else if (k == "opacity")
+                        {
+                            if (double.TryParse(v, NumberStyles.Any, CultureInfo.InvariantCulture, out double op)) def.Opacity = op;
+                        }
+                        else if (k == "marker") def.Marker = v;
+                        else if (k == "marker-size")
+                        {
+                            string numOnly = v.Replace("mm", "").Trim();
+                            if (double.TryParse(numOnly, NumberStyles.Any, CultureInfo.InvariantCulture, out double ms)) def.MarkerSizeMm = ms;
+                        }
+                    }
+                }
+                return def;
+            }
+
+            // Formato Shorthand separado por vírgula (ex.: "0.50, dashed, #0284c7")
+            var tokens = s.Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries);
+            for (int i = 0; i < tokens.Length; i++)
+            {
+                string tok = tokens[i].Trim();
+                if (double.TryParse(tok.Replace("mm", ""), NumberStyles.Any, CultureInfo.InvariantCulture, out double wVal))
+                {
+                    def.WeightMm = wVal;
+                }
+                else if (tok.StartsWith("#") || tok.StartsWith("rgb", StringComparison.OrdinalIgnoreCase))
+                {
+                    def.StrokeColorHex = tok;
+                }
+                else
+                {
+                    def.DashArray = PillPenStyle_Component.ResolveDashPattern(tok);
+                }
+            }
+
+            return def;
+        }
+    }
+
     public class SheetTemplateDef
     {
         public string Name { get; set; }
@@ -1128,9 +1332,6 @@ namespace Buraqueira_Tools
         }
     }
 
-    // ==========================================
-    // ATRIBUTOS E BOTÃO INTERATIVO NA TELA
-    // ==========================================
     public class PillVectorSheetLayout_Attributes : GH_ComponentAttributes
     {
         private const float CONTROL_BAR_HEIGHT = 42f;
@@ -1175,13 +1376,11 @@ namespace Buraqueira_Tools
             float barW = Bounds.Width - 10f;
             float barX = Bounds.X + 5f;
 
-            // Linha 1: [ 👁️ Visualizar no Navegador ] e [ 📑 Exportar ]
             float row1Y = barY + 2f;
             float halfBtnW = (barW - 4f) * 0.5f;
             m_btnPreviewRect = new RectangleF(barX + 1f, row1Y, halfBtnW, 17f);
             m_btnExportRect = new RectangleF(barX + 3f + halfBtnW, row1Y, halfBtnW, 17f);
 
-            // Linha 2: Badge de Preset / Modo de Distribuição
             float row2Y = barY + 21f;
             m_badgePresetRect = new RectangleF(barX + 1f, row2Y, barW - 2f, 16f);
         }
@@ -1201,7 +1400,6 @@ namespace Buraqueira_Tools
                 RectangleF b = Bounds;
                 RectangleF barRect = new RectangleF(b.X + 4f, b.Bottom - CONTROL_BAR_HEIGHT + 2f, b.Width - 8f, CONTROL_BAR_HEIGHT - 4f);
 
-                // 1. Fundo da Cápsula Inferior (Dark Slate com Borda Técnica)
                 using (var path = CreateRoundedRectangle(barRect, 5f))
                 using (var bgBrush = new LinearGradientBrush(barRect, Color.FromArgb(30, 41, 59), Color.FromArgb(15, 23, 42), LinearGradientMode.Vertical))
                 using (var borderPen = new Pen(Color.FromArgb(51, 65, 85), 1.0f))
@@ -1210,11 +1408,9 @@ namespace Buraqueira_Tools
                     graphics.DrawPath(borderPen, path);
                 }
 
-                // 2. Botão [ 👁️ Preview ] e Botão [ 📑 Export ]
                 DrawActionPill(graphics, m_btnPreviewRect, "👁️ Preview Web", Color.FromArgb(14, 165, 233));
                 DrawActionPill(graphics, m_btnExportRect, "📑 Exportar PDF", Color.FromArgb(16, 185, 129));
 
-                // 3. Badge Inferior com Preset e Modo de Distribuição
                 string badgeText = $"Prancha: {comp.ActiveTemplate} | Modo: {comp.DistributionMode}";
                 DrawBadgePill(graphics, m_badgePresetRect, badgeText);
             }

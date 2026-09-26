@@ -124,6 +124,7 @@ Transforme dados numéricos em diagnósticos visuais imediatos dentro do ambient
 | **Hierarchical Cluster Graph**| `Dendro` | Agrupamento hierárquico aglomerativo com exibição gráfica de dendrogramas. |
 | **Pill View Generator** | `PillViewGen` | Orientador e gerador de câmeras/vistas 3D (Isométricas, Ortogonais) com Named Views automáticas. |
 | **Pill Vector Sheet Layout** | `PillSheet` | Diagramação paramétrica de pranchas técnicas vetoriais (SVG e PDF), carimbos customizados, escalas gráficas e pré-visualização instantânea no navegador. |
+| **Pill Pen Style** | `PillPen` | Estilização de linhas e simbologia vetorial inspirada no QGIS e ABNT (espessura mm, traçados, cores, preenchimento, marcadores). |
 
 ---
 

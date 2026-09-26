@@ -6028,7 +6028,74 @@ namespace Buraqueira_Tools
             }
             return bmp;
         }
+
+        // ==========================================
+        // ÍCONE: PILL PEN STYLE (Estilo de Linhas e Simbologia QGIS / ABNT)
+        // ==========================================
+        private static Bitmap _pillPenStyle;
+        public static Bitmap PillPenStyle => _pillPenStyle ?? (_pillPenStyle = DrawPillPenStyle());
+
+        private static Bitmap DrawPillPenStyle()
+        {
+            var bmp = new Bitmap(24, 24, PixelFormat.Format32bppArgb);
+            using (var g = Graphics.FromImage(bmp))
+            {
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                g.PixelOffsetMode = PixelOffsetMode.HighQuality;
+
+                // 1. Fundo Circular / Cápsula em Slate Escuro
+                using (var bgBrush = new SolidBrush(Color.FromArgb(241, 245, 249)))
+                using (var borderPen = new Pen(Color.FromArgb(148, 163, 184), 0.8f))
+                {
+                    g.FillEllipse(bgBrush, 1.5f, 1.5f, 21f, 21f);
+                    g.DrawEllipse(borderPen, 1.5f, 1.5f, 21f, 21f);
+                }
+
+                // 2. Três Traços de Estilos Diferentes (Hierarquia Visual QGIS / CAD)
+                // Traço 1: Linha Grossa Sólida (Corte 0.50mm / Preta)
+                using (var solidPen = new Pen(Color.FromArgb(15, 23, 42), 2.2f))
+                {
+                    g.DrawLine(solidPen, 4.5f, 6f, 19.5f, 6f);
+                }
+
+                // Traço 2: Linha Média Tracejada (Projeção 0.25mm / Ciano Glaux)
+                using (var dashedPen = new Pen(Color.FromArgb(14, 165, 233), 1.5f) { DashPattern = new float[] { 3f, 2f } })
+                {
+                    g.DrawLine(dashedPen, 4.5f, 11f, 19.5f, 11f);
+                }
+
+                // Traço 3: Linha Fina Traço-Ponto (Eixo 0.13mm / Âmbar-Laranja)
+                using (var dashDotPen = new Pen(Color.FromArgb(245, 158, 11), 1.2f) { DashPattern = new float[] { 4f, 1.5f, 1f, 1.5f } })
+                {
+                    g.DrawLine(dashDotPen, 4.5f, 16f, 19.5f, 16f);
+                }
+
+                // 3. Caneta Técnica / Nanquim no Canto Inferior Direito
+                using (var penBrush = new SolidBrush(Color.FromArgb(30, 41, 59)))
+                using (var tipBrush = new SolidBrush(Color.FromArgb(239, 68, 68)))
+                using (var penBorder = new Pen(Color.White, 0.7f))
+                {
+                    PointF[] nib = new PointF[] {
+                        new PointF(18f, 14f),
+                        new PointF(22f, 18f),
+                        new PointF(20f, 20f),
+                        new PointF(16f, 16f)
+                    };
+                    g.FillPolygon(penBrush, nib);
+                    g.DrawPolygon(penBorder, nib);
+
+                    PointF[] point = new PointF[] {
+                        new PointF(16f, 16f),
+                        new PointF(13f, 19f),
+                        new PointF(17f, 17f)
+                    };
+                    g.FillPolygon(tipBrush, point);
+                }
+            }
+            return bmp;
+        }
     }
 }
+
 
 
