@@ -12,7 +12,7 @@
   <a href="https://www.rhino3d.com/"><img src="https://img.shields.io/badge/Rhino-8%20(SR4%2B)-000000.svg?logo=rhinoceros&logoColor=white" alt="Rhino 8" /></a>
   <a href="https://www.rhino3d.com/6/features/grasshopper/"><img src="https://img.shields.io/badge/Grasshopper-1.0-4E8752.svg" alt="Grasshopper" /></a>
   <a href="https://dotnet.microsoft.com/"><img src="https://img.shields.io/badge/.NET%20Framework-4.8-512BD4.svg?logo=dotnet&logoColor=white" alt=".NET 4.8" /></a>
-  <a href="https://github.com/jeffersonfreireribeiro-hash/glaux_tools/releases"><img src="https://img.shields.io/badge/Release-v1.0.2-blue.svg" alt="Release v1.0.2" /></a>
+  <a href="https://github.com/jeffersonfreireribeiro-hash/glaux_tools/releases"><img src="https://img.shields.io/badge/Release-v1.0.5-blue.svg" alt="Release v1.0.5" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT" /></a>
 </p>
 
@@ -22,12 +22,12 @@
 
 **Glaux Tools** é uma suíte de alta performance desenvolvida em C# nativo para o **Grasshopper / Rhino 8**, projetada para superar as limitações computacionais de fluxos paramétricos complexos. 
 
-O plugin reúne mais de **69 componentes especializados** em cinco áreas fundamentais:
-1. **💊 Arquitetura Pill**: Comunicação sem fios (*Wireless*), barramento de dados centralizado (`PillHub`), caching com hashing criptográfico (SHA-256), gerenciamento de presets e automação de layers.
+O plugin reúne mais de **95 componentes especializados** em cinco áreas fundamentais:
+1. **💊 Arquitetura Pill**: Comunicação sem fios (*Wireless*), barramento de dados centralizado (`PillHub`), caching com hashing criptográfico (SHA-256), gerenciamento de presets, diagramação de pranchas e automação de layers.
 2. **🌳 Engenharia de Árvores de Dados (`DataTree`)**: Diferenciação topológica estrutural (`Diff`), alinhamento de ramos, agrupamentos dinâmicos, buscas vetoriais e aritmética de caminhos.
 3. **📐 Álgebra Linear & Matrizes**: Autovalores/autovetores (`Eigen`), inversão, determinantes, multiplicação matricial e resolução de sistemas lineares $A \cdot x = b$.
-4. **📊 Estatística Descritiva & Aprendizado de Dados**: Matrizes de correlação/covariância, detecção de outliers (IQR e Z-Score), entropia de Shannon, divergência KL, distribuições estatísticas e funções de perda (Huber, Quantile, MAE, MSE, BCE).
-5. **🗺️ Visualização de Dados & Gráficos**: Mapas de calor espaciais no viewport do Rhino (`Spatial Heatmap`), superfícies de resposta isométrica 3D, tabelas dinâmicas interativas e box plots analíticos.
+4. **📊 Estatística, Inferência & Machine Learning**: 50 fórmulas canônicas cobrindo distribuições (Normal, Poisson, Beta, Binomial, Chi-Square), inferência (Intervalos de Confiança, t-score, ANOVA, teste F), regressão linear OLS, árvores (Gini, Information Gain, Logit) e validação de clusters (Silhueta e Mahalanobis).
+5. **🗺️ Visualização de Dados, Desenho Técnico & Gráficos**: Diagramação de pranchas vetoriais (SVG/PDF com visualizador web instantâneo), simbologia técnica estilo QGIS/ABNT (`PillPen`), mapas de calor espaciais no viewport (`Spatial Heatmap`), superfícies 3D e box plots.
 
 <p align="center">
   <img src="assets/Glaux_Tools_Components_Map.png" alt="Mapa de Componentes do Glaux Tools" width="95%" />
@@ -95,36 +95,57 @@ Operações matriciais de alto desempenho compiladas em código nativo seguro, e
 
 ---
 
-### 4. 📊 Estatística Descritiva, Probabilidade & Funções de Perda
-Conjunto completo de ferramentas estatísticas e funções matemáticas de apoio à tomada de decisão projetual.
+### 4. 📊 Estatística, Inferência, Regressão & Aprendizado de Máquina
+Conjunto completo cobrindo 50 formulações matemáticas canônicas de apoio à ciência de dados paramétrica e calibração de modelos:
 
 | Componente | Nickname | Descrição |
 | :--- | :---: | :--- |
+| **Normal Distribution** | `NormDist` | Densidade (PDF), acumulada (CDF), quantil inverso (NORM.INV / Probit de alta precisão) e Z-Score. |
+| **Poisson Distribution** | `PoissonDist` | Probabilidade pontual (PMF), cumulativa (CDF), inverso e momentos para eventos de Poisson. |
+| **Probability & Bayes** | `Bayes` | Teorema de Bayes, Regras do Complementar, Adição, Multiplicação, Odds e Valor Esperado E[X]. |
+| **Confidence Interval** | `ConfInterval` | Intervalo de confiança para a média (Normal Z ou t de Student), Margem de Erro E, SE e teste t/Z. |
+| **ANOVA & F-Test** | `ANOVA` | ANOVA One-Way ($F = MS_{between} / MS_{within}$), razão F de variâncias e teste Qui-Quadrado ($\chi^2$). |
+| **Linear Regression (OLS)** | `LinReg` | Regressão linear simples: Slope $\beta_1$, Intercept $\beta_0$, $R^2$, predições $\hat{y}$, resíduos e teste t. |
+| **Classification Metrics** | `ClassMetrics` | Impureza de Gini ($1 - \sum p_i^2$), Ganho de Informação ($IG$), Odds, Logit e Sigmóide Inversa. |
+| **Cluster Validation** | `ClusterEval` | Distância de Mahalanobis $D^2 = (x - \mu)^T \Sigma^{-1} (x - \mu)$ e Coeficiente de Silhueta individual/global. |
 | **Covariance & Correlation**| `CovCorr` | Matrizes de covariância e correlação linear de Pearson e Spearman prontas para visualização. |
 | **Outlier Detection** | `Outliers` | Identificação de anomalias por Z-Score e Intervalo Interquartil (IQR) com divisão limpa (In/Out). |
 | **Shannon Entropy** | `Entropy` | Medição de dispersão e diversidade informacional de conjuntos de dados. |
 | **KL Divergence** | `KLD` | Divergência de Kullback-Leibler para comparação de distribuições de probabilidade. |
 | **Fast Pareto** | `Pareto` | Ordenação não dominada e cálculo da fronteira de Pareto para otimização multiobjetivo. |
 | **Trimmed & Winsorized Mean**| `RobustMean`| Médias robustas imunes à influência de extremos e caudas pesadas. |
-| **Statistical Distributions**| `Dist` | Avaliação de PDF, CDF e quantis inversos para Beta, Binomial, Chi-Square e Normal. |
+| **Statistical Distributions**| `Dist` | Avaliação de PDF, CDF e quantis inversos para Beta, Binomial e Chi-Square. |
 | **Loss Functions** | `Losses` | Avaliação analítica de perdas: Huber, Quantile, MAE, MSE, Hinge e Binary Cross-Entropy. |
 | **Model Metrics** | `Metrics` | Avaliação quantitativa de modelos: $R^2$, RMSE, MAE, MAPE e resíduos. |
 
 ---
 
-### 5. 🗺️ Visualização de Dados & Gráficos Interativos
-Transforme dados numéricos em diagnósticos visuais imediatos dentro do ambiente de modelagem.
+### 5. 🗺️ Visualização de Dados, Desenho Técnico & Gráficos
+Transforme dados numéricos em diagnósticos visuais e pranchas técnicas publicáveis dentro do ambiente de modelagem:
 
 | Componente | Nickname | Descrição |
 | :--- | :---: | :--- |
+| **Pill Vector Sheet Layout** | `PillSheet` | Diagramação paramétrica de pranchas técnicas vetoriais (SVG e PDF), carimbos customizados, escalas gráficas e pré-visualização instantânea no navegador. |
+| **Pill Pen Style** | `PillPen` | Estilização de linhas e simbologia vetorial inspirada no QGIS e ABNT (espessura mm, traçados, cores, preenchimento, marcadores). |
+| **Pill View Generator** | `PillViewGen` | Orientador e gerador de câmeras/vistas 3D (Isométricas, Ortogonais) com Named Views automáticas. |
 | **Spatial Heatmap** | `Heatmap` | Renderização contínua de mapas de calor vetoriais sobre malhas e nuvens de pontos no viewport do Rhino. |
 | **Isometric Surface Graph** | `IsoGraph` | Plotagem de superfícies de resposta 3D interativas para exploração paramétrica. |
 | **Data Table Visualizer** | `TableVis` | Tabela interativa com rolagem e busca inserida diretamente no canvas do Grasshopper. |
 | **Chart Box Plot** | `BoxPlot` | Diagramas analíticos de caixa e bigodes para análise de quartis e variabilidade. |
 | **Hierarchical Cluster Graph**| `Dendro` | Agrupamento hierárquico aglomerativo com exibição gráfica de dendrogramas. |
-| **Pill View Generator** | `PillViewGen` | Orientador e gerador de câmeras/vistas 3D (Isométricas, Ortogonais) com Named Views automáticas. |
-| **Pill Vector Sheet Layout** | `PillSheet` | Diagramação paramétrica de pranchas técnicas vetoriais (SVG e PDF), carimbos customizados, escalas gráficas e pré-visualização instantânea no navegador. |
-| **Pill Pen Style** | `PillPen` | Estilização de linhas e simbologia vetorial inspirada no QGIS e ABNT (espessura mm, traçados, cores, preenchimento, marcadores). |
+
+---
+
+## 🏷️ Histórico de Versões & Releases
+
+| Versão | Data | Principais Novidades & Melhorias |
+| :---: | :---: | :--- |
+| **v1.0.5** | 26/09/2026 | **Cobertura Integral de 50 Fórmulas Estatísticas & ML**: 8 novos componentes (`Normal Distribution`, `Poisson Distribution`, `Probability & Bayes`, `Confidence Interval & t-Score`, `ANOVA & F-Test`, `Linear Regression OLS`, `Classification & Tree Metrics` e `Cluster Validation`). Solvers analíticos de alta precisão (Acklam, Incomplete Beta/Gamma, Halley). |
+| **v1.0.4** | 26/09/2026 | **Simbologia Técnica QGIS & ABNT**: Componente `Pill Pen Style` (`PillPen`) para estilização vetorial universal de curvas, pontos e polígonos com espessuras em mm, traçados técnicos e preenchimentos compatíveis com `PillSheet`. |
+| **v1.0.3** | 26/09/2026 | **Diagramação de Pranchas Vetoriais**: Componente `Pill Vector Sheet Layout` (`PillSheet`) para composição paramétrica de pranchas técnicas (SVG/PDF), carimbos customizáveis, escalas gráficas e pré-visualização instantânea no navegador via HTML5. |
+| **v1.0.2** | 25/09/2026 | **Automação de Câmeras & Vistas 3D**: Componente `Pill View Generator` (`ViewGen`), suporte a Named Views, capturas programáticas de alta resolução e arquivamento versionado de binários `.gha`. |
+| **v1.0.1** | 24/09/2026 | **Lançamento Inicial Oficial**: 69 componentes base, arquitetura Pill Wireless desacoplada, instaladores em 1 clique (`INSTALAR.bat` / `install.ps1`) e documentação completa. |
+
 
 ---
 
