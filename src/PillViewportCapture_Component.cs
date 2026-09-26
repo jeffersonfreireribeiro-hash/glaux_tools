@@ -268,6 +268,21 @@ namespace Buraqueira_Tools
                 if (!string.IsNullOrWhiteSpace(viewName))
                 {
                     view = doc.Views.Find(viewName, false);
+                    if (view == null && doc.NamedViews != null)
+                    {
+                        int namedIdx = doc.NamedViews.FindByName(viewName);
+                        if (namedIdx >= 0)
+                            view = doc.Views.ActiveView;
+                            if (view == null)
+                            {
+                                foreach (var v in doc.Views) { if (v != null) { view = v; break; } }
+                            }
+                            if (view != null && view.ActiveViewport != null)
+                            {
+                                doc.NamedViews.Restore(namedIdx, view.ActiveViewport);
+                                view.Redraw();
+                            }
+                    }
                 }
                 if (view == null)
                 {

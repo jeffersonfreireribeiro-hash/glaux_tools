@@ -12,7 +12,7 @@
   <a href="https://www.rhino3d.com/"><img src="https://img.shields.io/badge/Rhino-8%20(SR4%2B)-000000.svg?logo=rhinoceros&logoColor=white" alt="Rhino 8" /></a>
   <a href="https://www.rhino3d.com/6/features/grasshopper/"><img src="https://img.shields.io/badge/Grasshopper-1.0-4E8752.svg" alt="Grasshopper" /></a>
   <a href="https://dotnet.microsoft.com/"><img src="https://img.shields.io/badge/.NET%20Framework-4.8-512BD4.svg?logo=dotnet&logoColor=white" alt=".NET 4.8" /></a>
-  <a href="https://github.com/jeffersonfreireribeiro-hash/glaux_tools/releases"><img src="https://img.shields.io/badge/Release-v1.0.1-blue.svg" alt="Release v1.0.1" /></a>
+  <a href="https://github.com/jeffersonfreireribeiro-hash/glaux_tools/releases"><img src="https://img.shields.io/badge/Release-v1.0.2-blue.svg" alt="Release v1.0.2" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT" /></a>
 </p>
 
@@ -22,7 +22,7 @@
 
 **Glaux Tools** é uma suíte de alta performance desenvolvida em C# nativo para o **Grasshopper / Rhino 8**, projetada para superar as limitações computacionais de fluxos paramétricos complexos. 
 
-O plugin reúne mais de **68 componentes especializados** em cinco áreas fundamentais:
+O plugin reúne mais de **69 componentes especializados** em cinco áreas fundamentais:
 1. **💊 Arquitetura Pill**: Comunicação sem fios (*Wireless*), barramento de dados centralizado (`PillHub`), caching com hashing criptográfico (SHA-256), gerenciamento de presets e automação de layers.
 2. **🌳 Engenharia de Árvores de Dados (`DataTree`)**: Diferenciação topológica estrutural (`Diff`), alinhamento de ramos, agrupamentos dinâmicos, buscas vetoriais e aritmética de caminhos.
 3. **📐 Álgebra Linear & Matrizes**: Autovalores/autovetores (`Eigen`), inversão, determinantes, multiplicação matricial e resolução de sistemas lineares $A \cdot x = b$.
@@ -56,6 +56,7 @@ Elimine o emaranhado de fios (*spaghetti code*) no canvas e implemente arquitetu
 | **Pill Layer Pipeline** | `LayerPipe` | Criação dinâmica de camadas no Rhino, controle de visibilidade, bloqueio e bake paramétrico automatizado. |
 | **Pill Pulse Timer** | `Clock` | Gerador não bloqueante de pulsos temporais periódicos para rotinas iterativas e animações. |
 | **Pill Viewport Capture** | `Capture` | Captura automatizada de alta resolução do viewport com anotações e exportação programática. |
+| **Pill View Generator** | `ViewGen` | Orientação paramétrica de câmeras, geração de vistas isométricas/ortogonais e exportação de metadados para captura 3D. |
 | **Pill Domain Filter** | `DomainFilt` | Filtragem de intervalos numéricos e espaciais com máscaras booleanas para `Cull Pattern`. |
 | **Pill Number Rounder** | `Rounder` | Arredondamento inteligente com suporte a casas decimais, múltiplos e tolerâncias de fabricação. |
 

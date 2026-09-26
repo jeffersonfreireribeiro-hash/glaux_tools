@@ -412,6 +412,9 @@ namespace Buraqueira_Tools
         private static Bitmap _pillViewportCapture;
         public static Bitmap PillViewportCapture => _pillViewportCapture ?? (_pillViewportCapture = DrawPillViewportCapture());
 
+        private static Bitmap _pillViewGenerator;
+        public static Bitmap PillViewGenerator => _pillViewGenerator ?? (_pillViewGenerator = DrawPillViewGenerator());
+
         private static Bitmap _duplicateInspector;
         public static Bitmap DuplicateInspector => _duplicateInspector ?? (_duplicateInspector = DrawDuplicateInspector());
 
@@ -5862,6 +5865,81 @@ namespace Buraqueira_Tools
                     g.FillRectangle(new SolidBrush(Color.FromArgb(46, 204, 113)), 21.5f, 13f, 2f, 3.5f);
                     g.FillRectangle(new SolidBrush(Color.FromArgb(52, 152, 219)), 21.5f, 16.5f, 2f, 3.5f);
                     g.DrawRectangle(cbBorder, 21.5f, 6f, 2f, 14f);
+                }
+            }
+            return bmp;
+        }
+
+        private static Bitmap DrawPillViewGenerator()
+        {
+            var bmp = new Bitmap(24, 24, PixelFormat.Format32bppArgb);
+            using (var g = InitGfx(bmp))
+            {
+                g.Clear(Color.Transparent);
+
+                // 1. Cubo Isométrico / Bounding Box (Aramado em Cyan e Slate)
+                PointF cBot = new PointF(12f, 19f);
+                PointF cLeft = new PointF(3.5f, 14.5f);
+                PointF cRight = new PointF(20.5f, 14.5f);
+                PointF cCenter = new PointF(12f, 10f);
+                PointF cTop = new PointF(12f, 2.5f);
+                PointF cTopLeft = new PointF(3.5f, 7f);
+                PointF cTopRight = new PointF(20.5f, 7f);
+
+                // Faceta Superior do Cubo (Semitransparente Cyan Claro)
+                PointF[] topFace = new PointF[] { cCenter, cTopRight, cTop, cTopLeft };
+                using (var brushTop = new SolidBrush(Color.FromArgb(45, 14, 165, 233)))
+                {
+                    g.FillPolygon(brushTop, topFace);
+                }
+
+                // Faceta Esquerda do Cubo (Frente)
+                PointF[] leftFace = new PointF[] { cBot, cLeft, cTopLeft, cCenter };
+                using (var brushLeft = new SolidBrush(Color.FromArgb(30, 14, 165, 233)))
+                {
+                    g.FillPolygon(brushLeft, leftFace);
+                }
+
+                // Arestas da Bounding Box
+                using (var boxPen = new Pen(Color.FromArgb(148, 163, 184), 1.1f))
+                {
+                    g.DrawPolygon(boxPen, new PointF[] { cTop, cTopRight, cRight, cBot, cLeft, cTopLeft });
+                    g.DrawLine(boxPen, cCenter, cTop);
+                    g.DrawLine(boxPen, cCenter, cLeft);
+                    g.DrawLine(boxPen, cCenter, cBot);
+                }
+
+                // 2. Câmera / Visor em perspectiva (Posicionada no canto superior direito mirando no centro)
+                using (var camBrush = new SolidBrush(Color.FromArgb(245, 158, 11)))
+                using (var camPen = new Pen(Color.FromArgb(15, 23, 42), 1.0f))
+                {
+                    g.FillRectangle(camBrush, 17f, 3.5f, 5.5f, 4f);
+                    g.DrawRectangle(camPen, 17f, 3.5f, 5.5f, 4f);
+
+                    PointF[] lens = new PointF[] {
+                        new PointF(17f, 4.5f),
+                        new PointF(14.5f, 6f),
+                        new PointF(17f, 6.5f)
+                    };
+                    using (var lensBrush = new SolidBrush(Color.FromArgb(234, 88, 12)))
+                    {
+                        g.FillPolygon(lensBrush, lens);
+                        g.DrawPolygon(camPen, lens);
+                    }
+                }
+
+                // 3. Vetor de Visão / Linha de Mira Ciano Pontilhada
+                using (var sightPen = new Pen(Color.FromArgb(14, 165, 233), 1.2f) { DashStyle = DashStyle.Dot })
+                {
+                    g.DrawLine(sightPen, 14.5f, 6f, 12f, 10f);
+                }
+
+                // Ponto Focal / Alvo no Centro (Ponto Cyan com borda branca)
+                using (var tgtBrush = new SolidBrush(Color.FromArgb(14, 165, 233)))
+                using (var tgtBorder = new Pen(Color.White, 0.8f))
+                {
+                    g.FillEllipse(tgtBrush, 10.5f, 8.5f, 3f, 3f);
+                    g.DrawEllipse(tgtBorder, 10.5f, 8.5f, 3f, 3f);
                 }
             }
             return bmp;
