@@ -122,6 +122,8 @@ Transforme dados numéricos em diagnósticos visuais imediatos dentro do ambient
 | **Data Table Visualizer** | `TableVis` | Tabela interativa com rolagem e busca inserida diretamente no canvas do Grasshopper. |
 | **Chart Box Plot** | `BoxPlot` | Diagramas analíticos de caixa e bigodes para análise de quartis e variabilidade. |
 | **Hierarchical Cluster Graph**| `Dendro` | Agrupamento hierárquico aglomerativo com exibição gráfica de dendrogramas. |
+| **Pill View Generator** | `PillViewGen` | Orientador e gerador de câmeras/vistas 3D (Isométricas, Ortogonais) com Named Views automáticas. |
+| **Pill Vector Sheet Layout** | `PillSheet` | Diagramação paramétrica de pranchas técnicas vetoriais (SVG e PDF), carimbos customizados, escalas gráficas e pré-visualização instantânea no navegador. |
 
 ---
 

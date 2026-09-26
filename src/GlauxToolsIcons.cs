@@ -5944,6 +5944,90 @@ namespace Buraqueira_Tools
             }
             return bmp;
         }
+
+        // ==========================================
+        // ÍCONE: PILL VECTOR SHEET LAYOUT (Prancha Vetorial SVG / PDF)
+        // ==========================================
+        private static Bitmap _pillVectorSheetLayout;
+        public static Bitmap PillVectorSheetLayout => _pillVectorSheetLayout ?? (_pillVectorSheetLayout = DrawPillVectorSheetLayout());
+
+        private static Bitmap DrawPillVectorSheetLayout()
+        {
+            var bmp = new Bitmap(24, 24, PixelFormat.Format32bppArgb);
+            using (var g = Graphics.FromImage(bmp))
+            {
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                g.PixelOffsetMode = PixelOffsetMode.HighQuality;
+
+                // 1. Folha de Papel / Prancha Base (Branco/Cinza Técnico com Sombra Leve)
+                using (var shadowBrush = new SolidBrush(Color.FromArgb(40, 15, 23, 42)))
+                {
+                    g.FillRectangle(shadowBrush, 2.5f, 2.5f, 19.5f, 19.5f);
+                }
+
+                using (var paperBrush = new SolidBrush(Color.FromArgb(248, 250, 252)))
+                using (var borderPen = new Pen(Color.FromArgb(51, 65, 85), 1.0f))
+                {
+                    g.FillRectangle(paperBrush, 1.5f, 1.5f, 19.5f, 19.5f);
+                    g.DrawRectangle(borderPen, 1.5f, 1.5f, 19.5f, 19.5f);
+                }
+
+                // 2. Margem Interna da Prancha (Linha Fina de Borda Técnica)
+                using (var marginPen = new Pen(Color.FromArgb(148, 163, 184), 0.7f))
+                {
+                    g.DrawRectangle(marginPen, 3f, 3f, 16.5f, 16.5f);
+                }
+
+                // 3. Carimbo / Selo Técnico (Canto Inferior Direito)
+                using (var titleBrush = new SolidBrush(Color.FromArgb(226, 232, 240)))
+                using (var titlePen = new Pen(Color.FromArgb(71, 85, 105), 0.8f))
+                {
+                    g.FillRectangle(titleBrush, 12f, 14.5f, 7.5f, 5f);
+                    g.DrawRectangle(titlePen, 12f, 14.5f, 7.5f, 5f);
+                }
+                using (var linePen = new Pen(Color.FromArgb(100, 116, 139), 0.6f))
+                {
+                    g.DrawLine(linePen, 13f, 16.5f, 18.5f, 16.5f);
+                    g.DrawLine(linePen, 13f, 18f, 17f, 18f);
+                }
+
+                // 4. Quadrantes de Vistas (Auto-Layout 2x2 com Cor Ciano Glaux)
+                using (var quadPen = new Pen(Color.FromArgb(14, 165, 233), 0.8f))
+                using (var geomPen = new Pen(Color.FromArgb(30, 41, 59), 0.8f))
+                {
+                    // Vista 1 (Superior Esquerda: Isométrica / Cubo)
+                    g.DrawRectangle(quadPen, 4f, 4f, 6.5f, 4.5f);
+                    g.DrawLine(geomPen, 5.5f, 7f, 7.2f, 5f);
+                    g.DrawLine(geomPen, 7.2f, 5f, 9f, 6f);
+                    g.DrawLine(geomPen, 5.5f, 7f, 7.2f, 8f);
+
+                    // Vista 2 (Superior Direita: Seta do Norte e Rosa dos Ventos)
+                    g.DrawRectangle(quadPen, 12f, 4f, 6.5f, 4.5f);
+                    using (var northBrush = new SolidBrush(Color.FromArgb(239, 68, 68)))
+                    {
+                        PointF[] northArrow = new PointF[] {
+                            new PointF(15.2f, 4.8f),
+                            new PointF(13.8f, 7.5f),
+                            new PointF(15.2f, 6.8f),
+                            new PointF(16.6f, 7.5f)
+                        };
+                        g.FillPolygon(northBrush, northArrow);
+                    }
+
+                    // Vista 3 (Inferior Esquerda: Planta / Curvas)
+                    g.DrawRectangle(quadPen, 4f, 10f, 6.5f, 4.5f);
+                    using (var wavePen = new Pen(Color.FromArgb(16, 185, 129), 0.8f))
+                    {
+                        g.DrawArc(wavePen, 4.8f, 10.8f, 5f, 3f, 0, 180);
+                    }
+
+                    // Vista 4 (Central Direita: Corte)
+                    g.DrawRectangle(quadPen, 12f, 10f, 6.5f, 3.5f);
+                    g.DrawLine(geomPen, 13f, 12.5f, 17.5f, 12.5f);
+                }
+            }
+            return bmp;
+        }
     }
 }
 
