@@ -306,6 +306,30 @@ namespace Buraqueira_Tools
         private static Bitmap _chiSquareDistribution;
         public static Bitmap ChiSquareDistribution => _chiSquareDistribution ?? (_chiSquareDistribution = DrawChiSquareDistribution());
 
+        private static Bitmap _normalDistribution;
+        public static Bitmap NormalDistribution => _normalDistribution ?? (_normalDistribution = DrawNormalDistribution());
+
+        private static Bitmap _poissonDistribution;
+        public static Bitmap PoissonDistribution => _poissonDistribution ?? (_poissonDistribution = DrawPoissonDistribution());
+
+        private static Bitmap _probabilityBayes;
+        public static Bitmap ProbabilityBayes => _probabilityBayes ?? (_probabilityBayes = DrawProbabilityBayes());
+
+        private static Bitmap _confidenceInterval;
+        public static Bitmap ConfidenceInterval => _confidenceInterval ?? (_confidenceInterval = DrawConfidenceInterval());
+
+        private static Bitmap _anovaFTest;
+        public static Bitmap AnovaFTest => _anovaFTest ?? (_anovaFTest = DrawAnovaFTest());
+
+        private static Bitmap _linearRegression;
+        public static Bitmap LinearRegression => _linearRegression ?? (_linearRegression = DrawLinearRegression());
+
+        private static Bitmap _classificationMetrics;
+        public static Bitmap ClassificationMetrics => _classificationMetrics ?? (_classificationMetrics = DrawClassificationMetrics());
+
+        private static Bitmap _clusterValidation;
+        public static Bitmap ClusterValidation => _clusterValidation ?? (_clusterValidation = DrawClusterValidation());
+
         private static Bitmap _massMath;
         public static Bitmap MassMath => _massMath ?? (_massMath = DrawMassMath());
 
@@ -6094,8 +6118,352 @@ namespace Buraqueira_Tools
             }
             return bmp;
         }
+
+        private static Bitmap DrawNormalDistribution()
+        {
+            var bmp = new Bitmap(24, 24, PixelFormat.Format32bppArgb);
+            using (var g = InitGfx(bmp))
+            {
+                // Eixos cartesianos sutis
+                using (var axisPen = new Pen(Color.FromArgb(120, 140, 160), 1.2f))
+                {
+                    g.DrawLine(axisPen, 2, 21, 22, 21);
+                }
+
+                // Curva Normal (Gaussiana suave)
+                PointF[] curve = new PointF[]
+                {
+                    new PointF(2, 21),
+                    new PointF(5, 20.5f),
+                    new PointF(8, 17f),
+                    new PointF(10, 11f),
+                    new PointF(12, 5f),
+                    new PointF(14, 11f),
+                    new PointF(16, 17f),
+                    new PointF(19, 20.5f),
+                    new PointF(22, 21)
+                };
+
+                using (var fillBrush = new SolidBrush(Color.FromArgb(50, 0, 190, 255)))
+                using (var path = new GraphicsPath())
+                {
+                    path.AddCurve(curve);
+                    path.AddLine(22, 21, 2, 21);
+                    g.FillPath(fillBrush, path);
+                }
+
+                using (var curvePen = new Pen(Color.FromArgb(0, 160, 235), 1.6f))
+                {
+                    g.DrawCurve(curvePen, curve);
+                }
+
+                // Linha de centro média (μ)
+                using (var centerPen = new Pen(Color.FromArgb(231, 76, 60), 1f) { DashPattern = new float[] { 2f, 2f } })
+                {
+                    g.DrawLine(centerPen, 12, 5, 12, 21);
+                }
+
+                // Badge N
+                using (var font = new Font("Arial", 6.5f, FontStyle.Bold))
+                using (var brush = new SolidBrush(Color.FromArgb(0, 120, 200)))
+                {
+                    g.DrawString("N", font, brush, 2, 2);
+                }
+            }
+            return bmp;
+        }
+
+        private static Bitmap DrawPoissonDistribution()
+        {
+            var bmp = new Bitmap(24, 24, PixelFormat.Format32bppArgb);
+            using (var g = InitGfx(bmp))
+            {
+                using (var axisPen = new Pen(Color.FromArgb(100, 130, 100), 1.2f))
+                {
+                    g.DrawLine(axisPen, 2, 21, 22, 21);
+                }
+
+                // Barras assimétricas da distribuição de Poisson
+                int[] heights = new int[] { 4, 12, 16, 14, 9, 5, 2 };
+                int[] xs = new int[] { 3, 6, 9, 12, 15, 18, 20 };
+
+                using (var barBrush = new SolidBrush(Color.FromArgb(155, 89, 182)))
+                using (var borderPen = new Pen(Color.FromArgb(142, 68, 173), 0.8f))
+                {
+                    for (int i = 0; i < heights.Length; i++)
+                    {
+                        int h = heights[i];
+                        int x = xs[i];
+                        int y = 21 - h;
+                        g.FillRectangle(barBrush, x, y, 2, h);
+                        g.DrawRectangle(borderPen, x, y, 2, h);
+                    }
+                }
+
+                // Badge λ estilizado
+                using (var font = new Font("Arial", 7f, FontStyle.Bold))
+                using (var brush = new SolidBrush(Color.FromArgb(142, 68, 173)))
+                {
+                    g.DrawString("λ", font, brush, 13, 2);
+                }
+            }
+            return bmp;
+        }
+
+        private static Bitmap DrawProbabilityBayes()
+        {
+            var bmp = new Bitmap(24, 24, PixelFormat.Format32bppArgb);
+            using (var g = InitGfx(bmp))
+            {
+                // Círculo A (Azul)
+                using (var brushA = new SolidBrush(Color.FromArgb(80, 52, 152, 219)))
+                using (var penA = new Pen(Color.FromArgb(41, 128, 185), 1.3f))
+                {
+                    g.FillEllipse(brushA, 2, 5, 13, 13);
+                    g.DrawEllipse(penA, 2, 5, 13, 13);
+                }
+
+                // Círculo B (Laranja)
+                using (var brushB = new SolidBrush(Color.FromArgb(80, 230, 126, 34)))
+                using (var penB = new Pen(Color.FromArgb(211, 84, 0), 1.3f))
+                {
+                    g.FillEllipse(brushB, 9, 5, 13, 13);
+                    g.DrawEllipse(penB, 9, 5, 13, 13);
+                }
+
+                // Interseção A ∩ B em destaque (Verde esmeralda)
+                using (var interBrush = new SolidBrush(Color.FromArgb(180, 46, 204, 113)))
+                {
+                    g.FillEllipse(interBrush, 9, 8, 4, 7);
+                }
+
+                // Rótulo P(A|B)
+                using (var font = new Font("Arial", 5.5f, FontStyle.Bold))
+                using (var brush = new SolidBrush(Color.FromArgb(44, 62, 80)))
+                {
+                    g.DrawString("P(A|B)", font, brush, 2, 17);
+                }
+            }
+            return bmp;
+        }
+
+        private static Bitmap DrawConfidenceInterval()
+        {
+            var bmp = new Bitmap(24, 24, PixelFormat.Format32bppArgb);
+            using (var g = InitGfx(bmp))
+            {
+                // Linha de centro de referência
+                using (var refPen = new Pen(Color.FromArgb(180, 190, 200), 1f) { DashPattern = new float[] { 2f, 2f } })
+                {
+                    g.DrawLine(refPen, 12, 2, 12, 22);
+                }
+
+                // Barra horizontal do IC [--- • ---]
+                using (var barPen = new Pen(Color.FromArgb(41, 128, 185), 2f))
+                {
+                    g.DrawLine(barPen, 4, 12, 20, 12);
+                    // Cap inferior
+                    g.DrawLine(barPen, 4, 8, 4, 16);
+                    // Cap superior
+                    g.DrawLine(barPen, 20, 8, 20, 16);
+                }
+
+                // Ponto médio amostral (x̄)
+                using (var ptBrush = new SolidBrush(Color.FromArgb(231, 76, 60)))
+                using (var ptBorder = new Pen(Color.White, 0.8f))
+                {
+                    g.FillEllipse(ptBrush, 10, 10, 4, 4);
+                    g.DrawEllipse(ptBorder, 10, 10, 4, 4);
+                }
+
+                // Badge CI 95%
+                using (var font = new Font("Arial", 5.5f, FontStyle.Bold))
+                using (var brush = new SolidBrush(Color.FromArgb(41, 128, 185)))
+                {
+                    g.DrawString("CI", font, brush, 1, 2);
+                }
+            }
+            return bmp;
+        }
+
+        private static Bitmap DrawAnovaFTest()
+        {
+            var bmp = new Bitmap(24, 24, PixelFormat.Format32bppArgb);
+            using (var g = InitGfx(bmp))
+            {
+                using (var axisPen = new Pen(Color.FromArgb(120, 140, 160), 1.2f))
+                {
+                    g.DrawLine(axisPen, 2, 21, 22, 21);
+                    g.DrawLine(axisPen, 2, 3, 2, 21);
+                }
+
+                // Curva assimétrica F de Fisher
+                PointF[] curve = new PointF[]
+                {
+                    new PointF(2, 20),
+                    new PointF(4, 7),
+                    new PointF(7, 10),
+                    new PointF(11, 15),
+                    new PointF(16, 18),
+                    new PointF(22, 20.5f)
+                };
+
+                // Região crítica de rejeição (Cauda direita em vermelho)
+                using (var critBrush = new SolidBrush(Color.FromArgb(140, 231, 76, 60)))
+                {
+                    PointF[] tail = new PointF[]
+                    {
+                        new PointF(15, 17.5f),
+                        new PointF(18, 19f),
+                        new PointF(22, 20.5f),
+                        new PointF(22, 21),
+                        new PointF(15, 21)
+                    };
+                    g.FillPolygon(critBrush, tail);
+                }
+
+                using (var curvePen = new Pen(Color.FromArgb(46, 117, 182), 1.6f))
+                {
+                    g.DrawCurve(curvePen, curve);
+                }
+
+                // Badge F
+                using (var font = new Font("Arial", 7f, FontStyle.Bold))
+                using (var brush = new SolidBrush(Color.FromArgb(192, 57, 43)))
+                {
+                    g.DrawString("F", font, brush, 14, 2);
+                }
+            }
+            return bmp;
+        }
+
+        private static Bitmap DrawLinearRegression()
+        {
+            var bmp = new Bitmap(24, 24, PixelFormat.Format32bppArgb);
+            using (var g = InitGfx(bmp))
+            {
+                using (var axisPen = new Pen(Color.FromArgb(120, 140, 160), 1.2f))
+                {
+                    g.DrawLine(axisPen, 2, 21, 22, 21);
+                    g.DrawLine(axisPen, 2, 3, 2, 21);
+                }
+
+                // Pontos de dispersão (Scatter)
+                PointF[] pts = new PointF[]
+                {
+                    new PointF(5, 18),
+                    new PointF(8, 14),
+                    new PointF(10, 16),
+                    new PointF(13, 11),
+                    new PointF(16, 9),
+                    new PointF(19, 6)
+                };
+
+                using (var ptBrush = new SolidBrush(Color.FromArgb(52, 152, 219)))
+                {
+                    foreach (var pt in pts)
+                    {
+                        g.FillEllipse(ptBrush, pt.X - 1.5f, pt.Y - 1.5f, 3f, 3f);
+                    }
+                }
+
+                // Reta de regressão (y = ax + b) em vermelho
+                using (var linePen = new Pen(Color.FromArgb(231, 76, 60), 1.6f))
+                {
+                    g.DrawLine(linePen, 3, 20, 21, 4);
+                }
+
+                // Badge R²
+                using (var font = new Font("Arial", 6f, FontStyle.Bold))
+                using (var brush = new SolidBrush(Color.FromArgb(44, 62, 80)))
+                {
+                    g.DrawString("R²", font, brush, 14, 16);
+                }
+            }
+            return bmp;
+        }
+
+        private static Bitmap DrawClassificationMetrics()
+        {
+            var bmp = new Bitmap(24, 24, PixelFormat.Format32bppArgb);
+            using (var g = InitGfx(bmp))
+            {
+                // Árvore de Decisão / Split
+                using (var branchPen = new Pen(Color.FromArgb(100, 120, 140), 1.4f))
+                {
+                    g.DrawLine(branchPen, 12, 5, 6, 17);
+                    g.DrawLine(branchPen, 12, 5, 18, 17);
+                }
+
+                // Nó raiz (Pai)
+                using (var nodeBrush = new SolidBrush(Color.FromArgb(243, 156, 18)))
+                using (var nodeBorder = new Pen(Color.White, 0.8f))
+                {
+                    g.FillEllipse(nodeBrush, 10, 3, 4, 4);
+                    g.DrawEllipse(nodeBorder, 10, 3, 4, 4);
+                }
+
+                // Folhas filhas (Puras/Divisão)
+                using (var leafBrush1 = new SolidBrush(Color.FromArgb(46, 204, 113)))
+                using (var leafBrush2 = new SolidBrush(Color.FromArgb(231, 76, 60)))
+                using (var nodeBorder = new Pen(Color.White, 0.8f))
+                {
+                    g.FillEllipse(leafBrush1, 4, 15, 4, 4);
+                    g.DrawEllipse(nodeBorder, 4, 15, 4, 4);
+
+                    g.FillEllipse(leafBrush2, 16, 15, 4, 4);
+                    g.DrawEllipse(nodeBorder, 16, 15, 4, 4);
+                }
+
+                // Badge Gini / Logit
+                using (var font = new Font("Arial", 5.5f, FontStyle.Bold))
+                using (var brush = new SolidBrush(Color.FromArgb(41, 128, 185)))
+                {
+                    g.DrawString("IG", font, brush, 1, 1);
+                }
+            }
+            return bmp;
+        }
+
+        private static Bitmap DrawClusterValidation()
+        {
+            var bmp = new Bitmap(24, 24, PixelFormat.Format32bppArgb);
+            using (var g = InitGfx(bmp))
+            {
+                // Cluster 1 (Ciano)
+                using (var brush1 = new SolidBrush(Color.FromArgb(0, 180, 220)))
+                {
+                    g.FillEllipse(brush1, 4, 6, 3, 3);
+                    g.FillEllipse(brush1, 7, 4, 3, 3);
+                    g.FillEllipse(brush1, 5, 9, 3, 3);
+                }
+
+                // Cluster 2 (Laranja)
+                using (var brush2 = new SolidBrush(Color.FromArgb(230, 126, 34)))
+                {
+                    g.FillEllipse(brush2, 16, 14, 3, 3);
+                    g.FillEllipse(brush2, 19, 16, 3, 3);
+                    g.FillEllipse(brush2, 15, 18, 3, 3);
+                }
+
+                // Vetor de distância entre clusters (Mahalanobis / Silhouette)
+                using (var distPen = new Pen(Color.FromArgb(142, 68, 173), 1.4f) { DashPattern = new float[] { 2f, 2f } })
+                {
+                    g.DrawLine(distPen, 7, 7, 16, 16);
+                }
+
+                // Badge S (Silhouette / Mahalanobis)
+                using (var font = new Font("Arial", 6.5f, FontStyle.Bold))
+                using (var brush = new SolidBrush(Color.FromArgb(142, 68, 173)))
+                {
+                    g.DrawString("S", font, brush, 1, 15);
+                }
+            }
+            return bmp;
+        }
     }
 }
+
 
 
 

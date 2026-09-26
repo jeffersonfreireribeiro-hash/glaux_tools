@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace Buraqueira_Tools
 {
@@ -372,5 +372,252 @@ namespace Buraqueira_Tools
         }
 
         #endregion
+
+        #region Normal (Gaussian) Distribution & Error Function
+
+        /// <summary>
+        /// Função de Erro de Gauss: erf(x) = (2/√π) ∫_0^x e^(-t²) dt.
+        /// </summary>
+        public static double Erf(double x)
+        {
+            if (double.IsNaN(x)) return double.NaN;
+            if (x == 0.0) return 0.0;
+            double sign = x < 0.0 ? -1.0 : 1.0;
+            double ax = Math.Abs(x);
+            if (ax >= 8.0) return sign;
+
+            return sign * IncompleteGamma(0.5, ax * ax);
+        }
+
+        /// <summary>
+        /// Função de Erro Complementar: erfc(x) = 1 - erf(x).
+        /// </summary>
+        public static double Erfc(double x)
+        {
+            return 1.0 - Erf(x);
+        }
+
+        /// <summary>
+        /// Densidade de probabilidade Normal (PDF): f(x; μ, σ) = (1 / (σ √(2π))) exp(-(x - μ)² / (2σ²)).
+        /// </summary>
+        public static double NormPdf(double x, double mu = 0.0, double sigma = 1.0)
+        {
+            if (sigma <= 0.0 || double.IsNaN(x) || double.IsNaN(mu) || double.IsNaN(sigma)) return double.NaN;
+            double z = (x - mu) / sigma;
+            return (1.0 / (sigma * Math.Sqrt(2.0 * Math.PI))) * Math.Exp(-0.5 * z * z);
+        }
+
+        /// <summary>
+        /// Distribuição cumulativa Normal (CDF): P(X &lt;= x; μ, σ) correspondente a NORM.DIST(x, μ, σ, True).
+        /// </summary>
+        public static double NormCdf(double x, double mu = 0.0, double sigma = 1.0)
+        {
+            if (sigma <= 0.0 || double.IsNaN(x) || double.IsNaN(mu) || double.IsNaN(sigma)) return double.NaN;
+            double z = (x - mu) / (sigma * Math.Sqrt(2.0));
+            return 0.5 * (1.0 + Erf(z));
+        }
+
+        /// <summary>
+        /// Inverso da CDF Normal (Função Probit / Quantil) correspondente a NORM.INV(p, μ, σ).
+        /// Utiliza o algoritmo racional de alta precisão de Peter J. Acklam com refinamento de Halley.
+        /// </summary>
+        public static double NormInv(double p, double mu = 0.0, double sigma = 1.0)
+        {
+            if (sigma <= 0.0 || p < 0.0 || p > 1.0 || double.IsNaN(p)) return double.NaN;
+            if (p == 0.0) return double.NegativeInfinity;
+            if (p == 1.0) return double.PositiveInfinity;
+
+            // Coeficientes do algoritmo de Acklam
+            double[] a = { -3.969683028665376e+01,  2.209460984245205e+02, -2.759285104469687e+02,
+                            1.383577518672690e+02, -3.066479806614716e+01,  2.506628277459239e+00 };
+            double[] b = { -5.447609879822406e+01,  1.615858368580409e+02, -1.556989798598866e+02,
+                            6.680131188771972e+01, -1.328068155288572e+01 };
+            double[] c = { -7.784894002430293e-03, -3.223964580411365e-01, -2.400758277161838e+00,
+                           -2.549732539343734e+00,  4.374664141464968e+00,  2.938163982698783e+00 };
+            double[] d = {  7.784695709041462e-03,  3.224671290700398e-01,  2.445134137142996e+00,
+                            3.754408661907416e+00 };
+
+            double p_low = 0.02425;
+            double p_high = 1.0 - p_low;
+            double z;
+
+            if (p < p_low)
+            {
+                double q = Math.Sqrt(-2.0 * Math.Log(p));
+                z = (((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) /
+                    ((((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1.0);
+            }
+            else if (p <= p_high)
+            {
+                double q = p - 0.5;
+                double r = q * q;
+                z = (((((a[0] * r + a[1]) * r + a[2]) * r + a[3]) * r + a[4]) * r + a[5]) * q /
+                    (((((b[0] * r + b[1]) * r + b[2]) * r + b[3]) * r + b[4]) * r + 1.0);
+            }
+            else
+            {
+                double q = Math.Sqrt(-2.0 * Math.Log(1.0 - p));
+                z = -(((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) /
+                     ((((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1.0);
+            }
+
+            // Passo de refinamento de Halley
+            double e = NormCdf(z, 0.0, 1.0) - p;
+            double u = NormPdf(z, 0.0, 1.0);
+            if (Math.Abs(u) > 1e-15)
+            {
+                z = z - e / (u + 0.5 * z * e);
+            }
+
+            return mu + z * sigma;
+        }
+
+        #endregion
+
+        #region Student's t-Distribution
+
+        /// <summary>
+        /// Densidade de probabilidade t de Student (PDF).
+        /// </summary>
+        public static double StudentTPdf(double t, double df)
+        {
+            if (df <= 0.0 || double.IsNaN(t)) return double.NaN;
+            double logNum = LogGamma((df + 1.0) / 2.0);
+            double logDen = LogGamma(df / 2.0) + 0.5 * Math.Log(df * Math.PI) + ((df + 1.0) / 2.0) * Math.Log(1.0 + (t * t) / df);
+            return Math.Exp(logNum - logDen);
+        }
+
+        /// <summary>
+        /// Distribuição cumulativa t de Student (CDF) correspondente a T.DIST(t, df, True).
+        /// </summary>
+        public static double StudentTCdf(double t, double df)
+        {
+            if (df <= 0.0 || double.IsNaN(t)) return double.NaN;
+            if (double.IsPositiveInfinity(t)) return 1.0;
+            if (double.IsNegativeInfinity(t)) return 0.0;
+            if (t == 0.0) return 0.5;
+
+            double x = df / (df + t * t);
+            double ibeta = IncompleteBeta(x, df / 2.0, 0.5);
+
+            if (t > 0.0)
+                return 1.0 - 0.5 * ibeta;
+            else
+                return 0.5 * ibeta;
+        }
+
+        /// <summary>
+        /// Inverso da CDF t de Student correspondente a T.INV(p, df).
+        /// </summary>
+        public static double StudentTInv(double p, double df)
+        {
+            if (df <= 0.0 || p <= 0.0 || p >= 1.0 || double.IsNaN(p)) return double.NaN;
+            if (p == 0.5) return 0.0;
+
+            if (p < 0.5)
+            {
+                return -StudentTInv(1.0 - p, df);
+            }
+
+            // Para p > 0.5:
+            double alpha = 2.0 * (1.0 - p);
+            double x = BetaInv(alpha, df / 2.0, 0.5);
+            if (x <= 0.0) return double.PositiveInfinity;
+            return Math.Sqrt(df * (1.0 - x) / x);
+        }
+
+        #endregion
+
+        #region F-Distribution (Fisher-Snedecor)
+
+        /// <summary>
+        /// Densidade de probabilidade da distribuição F (PDF).
+        /// </summary>
+        public static double FDistPdf(double f, double df1, double df2)
+        {
+            if (f <= 0.0 || df1 <= 0.0 || df2 <= 0.0 || double.IsNaN(f)) return 0.0;
+            double half1 = df1 / 2.0;
+            double half2 = df2 / 2.0;
+            double logVal = half1 * Math.Log(df1) + half2 * Math.Log(df2)
+                          - (LogGamma(half1) + LogGamma(half2) - LogGamma(half1 + half2))
+                          + (half1 - 1.0) * Math.Log(f)
+                          - (half1 + half2) * Math.Log(df1 * f + df2);
+            return Math.Exp(logVal);
+        }
+
+        /// <summary>
+        /// Distribuição cumulativa F (CDF) correspondente a F.DIST(f, df1, df2, True).
+        /// </summary>
+        public static double FDistCdf(double f, double df1, double df2)
+        {
+            if (df1 <= 0.0 || df2 <= 0.0 || double.IsNaN(f)) return double.NaN;
+            if (f <= 0.0) return 0.0;
+            if (double.IsPositiveInfinity(f)) return 1.0;
+
+            double x = (df1 * f) / (df1 * f + df2);
+            return IncompleteBeta(x, df1 / 2.0, df2 / 2.0);
+        }
+
+        /// <summary>
+        /// Inverso da CDF F correspondente a F.INV(p, df1, df2).
+        /// </summary>
+        public static double FDistInv(double p, double df1, double df2)
+        {
+            if (df1 <= 0.0 || df2 <= 0.0 || p < 0.0 || p > 1.0 || double.IsNaN(p)) return double.NaN;
+            if (p == 0.0) return 0.0;
+            if (p == 1.0) return double.PositiveInfinity;
+
+            double x = BetaInv(p, df1 / 2.0, df2 / 2.0);
+            if (x >= 1.0) return double.PositiveInfinity;
+            return (df2 * x) / (df1 * (1.0 - x));
+        }
+
+        #endregion
+
+        #region Poisson Distribution
+
+        /// <summary>
+        /// Probabilidade de massa pontual de Poisson (PMF): P(X = k) = (λ^k * e^-λ) / k! correspondente a POISSON.DIST(k, λ, False).
+        /// </summary>
+        public static double PoissonPmf(int k, double lambda)
+        {
+            if (k < 0 || lambda <= 0.0 || double.IsNaN(lambda)) return 0.0;
+            double logProb = k * Math.Log(lambda) - lambda - LogGamma(k + 1.0);
+            return Math.Exp(logProb);
+        }
+
+        /// <summary>
+        /// Probabilidade cumulativa de Poisson: P(X &lt;= k) correspondente a POISSON.DIST(k, λ, True).
+        /// </summary>
+        public static double PoissonCdf(int k, double lambda)
+        {
+            if (k < 0) return 0.0;
+            if (lambda <= 0.0 || double.IsNaN(lambda)) return double.NaN;
+
+            // Relação exata com Incomplete Gamma: P(X <= k) = 1 - P(k + 1, λ)
+            return 1.0 - IncompleteGamma(k + 1.0, lambda);
+        }
+
+        /// <summary>
+        /// Inverso da distribuição de Poisson: menor k inteiro para o qual P(X &lt;= k) &gt;= criterion.
+        /// </summary>
+        public static int PoissonInv(double criterion, double lambda)
+        {
+            if (criterion <= 0.0) return 0;
+            if (criterion >= 1.0) return (int)Math.Ceiling(lambda + 10.0 * Math.Sqrt(lambda));
+            if (lambda <= 0.0) return 0;
+
+            int k = 0;
+            double sum = PoissonPmf(0, lambda);
+            while (sum < criterion - 1e-12 && k < 100000)
+            {
+                k++;
+                sum += PoissonPmf(k, lambda);
+            }
+            return k;
+        }
+
+        #endregion
     }
 }
+
