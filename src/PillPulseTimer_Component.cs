@@ -249,10 +249,31 @@ namespace Buraqueira_Tools
 
                 RhinoApp.InvokeOnUiThread(new Action(() =>
                 {
-                    _isImpulseActive = true;
-                    _pulseCount++;
-                    _cycleWatch.Restart();
-                    ExpireSolution(true);
+                    try
+                    {
+                        var doc = OnPingDocument();
+                        if (doc == null) return;
+                        if (doc.SolutionState == GH_ProcessStep.Process)
+                        {
+                            doc.ScheduleSolution(50, d =>
+                            {
+                                _isImpulseActive = true;
+                                _pulseCount++;
+                                _cycleWatch.Restart();
+                                ExpireSolution(false);
+                            });
+                            return;
+                        }
+
+                        _isImpulseActive = true;
+                        _pulseCount++;
+                        _cycleWatch.Restart();
+                        ExpireSolution(true);
+                    }
+                    catch (Exception ex)
+                    {
+                        RhinoApp.WriteLine($"[PillPulseTimer Warning] {ex.Message}");
+                    }
                 }));
             };
             _timer.Start();
