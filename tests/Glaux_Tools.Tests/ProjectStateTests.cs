@@ -232,7 +232,9 @@ namespace Glaux_Tools.Tests
                 Assert.True(env.ContainsKey(k), k);
                 Assert.False(string.IsNullOrEmpty(env[k]), k);
             }
-            Assert.StartsWith("1.0", env[EnvironmentInfo.GlauxVersion]);
+            // Versão do próprio .gha (não fixa: muda a cada release)
+            var asmVersion = typeof(EnvironmentInfo).Assembly.GetName().Version;
+            Assert.StartsWith($"{asmVersion.Major}.{asmVersion.Minor}.{asmVersion.Build}", env[EnvironmentInfo.GlauxVersion]);
             _output.WriteLine(string.Join("\n", env.Select(kv => $"{kv.Key} = {kv.Value}")));
         }
 
