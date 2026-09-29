@@ -43,5 +43,9 @@
     <Reference Include="System.Numerics" />
     <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
+  <ItemGroup>
+    <!-- Testes acessam os adaptadores internos (Dashboard, Hub, cofres) -->
+    <InternalsVisibleTo Include="Glaux_Tools.Tests" />
+  </ItemGroup>
   <!-- PostBuild: Copia o .gha para Libraries do Grasshopper, Buraqueira_Tools_Dist e PLUGINS -->
 </Project>

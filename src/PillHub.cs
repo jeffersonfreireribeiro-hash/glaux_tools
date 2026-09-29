@@ -909,6 +909,11 @@ namespace Buraqueira_Tools
                         activeTxKeys.Add(PillHub.CleanUpKey($"{s.Category}_{s.Name}"));
                     }
                 }
+                else if (obj is IPillHubPublisher publisher)
+                {
+                    // Publicadores novos (ex: Pill Dashboard) declaram as próprias chaves em vez de ganhar um caso aqui
+                    foreach (var key in publisher.PublishedCleanKeys) activeTxKeys.Add(key);
+                }
             }
 
             // Só considera canais deste documento: canais de outros documentos abertos não são órfãos

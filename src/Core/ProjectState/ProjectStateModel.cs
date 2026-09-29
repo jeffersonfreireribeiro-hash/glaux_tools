@@ -98,6 +98,9 @@ namespace Buraqueira_Tools.ProjectState
         public const string ValueList = "ValueList";
         public const string Panel = "Panel";
         public const string PoolSlider = "PoolSlider";
+
+        /// <summary>Controle de um Pill Dashboard (Id = "guidDoPainel|idDoWidget").</summary>
+        public const string Dashboard = "Dashboard";
     }
 
     /// <summary>
@@ -247,6 +250,17 @@ namespace Buraqueira_Tools.ProjectState
                           (s.Extra.HasValue && (s.Extra.Value < m.Current.Min.Value || s.Extra.Value > m.Current.Max.Value))))
                 {
                     m.Reason = $"valor {s.DisplayValue} fora da faixa atual [{m.Current.Min.Value.ToString(CultureInfo.InvariantCulture)}, {m.Current.Max.Value.ToString(CultureInfo.InvariantCulture)}].";
+                }
+                else if (s.Kind == ControlKinds.Dashboard && s.Text != null && optionsOf?.Invoke(m.Current) is ICollection<string> dashboardOptions)
+                {
+                    // Dropdown do Pill Dashboard: a opção salva precisa existir na lista atual
+                    bool found = false;
+                    foreach (var o in dashboardOptions)
+                    {
+                        if (string.Equals(o, s.Text, StringComparison.OrdinalIgnoreCase)) found = true;
+                    }
+                    if (!found) m.Reason = $"opção '{s.Text}' não existe mais na lista.";
+                    else m.Compatible = true;
                 }
                 else if (s.Kind == ControlKinds.ValueList && optionsOf != null)
                 {

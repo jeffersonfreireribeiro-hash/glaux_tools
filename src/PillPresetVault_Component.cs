@@ -46,6 +46,7 @@ namespace Buraqueira_Tools
             {
                 if (!string.IsNullOrEmpty(v.BundleJson)) parts.Add($"{v.ObjectName} [Bundle]");
                 else if (v.ObjectType == "Component") parts.Add($"{v.ObjectName} [Pilha]");
+                else if (v.ObjectType == "ControlState") parts.Add($"{v.ObjectName} [Painel]");
                 else if (v.NumberValue.HasValue) parts.Add($"{v.ObjectName}={v.NumberValue.Value:F2}");
                 else if (v.BoolValue.HasValue) parts.Add($"{v.ObjectName}={v.BoolValue.Value}");
                 else if (!string.IsNullOrEmpty(v.TextValue)) parts.Add($"{v.ObjectName}={v.TextValue}");
@@ -414,6 +415,12 @@ namespace Buraqueira_Tools
                         if (double.TryParse(vlist.SelectedItems[0].Expression, out double val)) pv.NumberValue = val;
                     }
                 }
+                else if (obj is IPillControlStateProvider provider)
+                {
+                    // Pill Dashboard: só o estado dos controles (a configuração e a posição do painel não mudam ao aplicar)
+                    pv.ObjectType = "ControlState";
+                    pv.TextValue = string.Join("\n", provider.ExportStateLines());
+                }
                 else if (obj is IGH_Component comp)
                 {
                     pv.ObjectType = "Component";
@@ -504,6 +511,10 @@ namespace Buraqueira_Tools
                                 break;
                             }
                         }
+                    }
+                    else if (obj is IPillControlStateProvider provider && v.ObjectType == "ControlState" && v.TextValue != null)
+                    {
+                        provider.ImportStateLines(v.TextValue.Split('\n'));
                     }
                     else if (obj is IGH_Component comp && !string.IsNullOrEmpty(v.SerializedXml))
                     {

@@ -8,8 +8,9 @@ using Grasshopper.Kernel.Special;
 namespace Buraqueira_Tools
 {
     /// <summary>
-    /// Captura e restaura o estado dos controles do canvas (sliders, toggles, value lists, panels de entrada e
-    /// sliders do Pill Slider Pool). A decisão de compatibilidade fica em <see cref="ControlCompatibility"/> (testável);
+    /// Captura e restaura o estado dos controles do canvas (sliders, toggles, value lists, panels de entrada,
+    /// sliders do Pill Slider Pool e controles de componentes <see cref="IPillControlStateProvider"/>, como o
+    /// Pill Dashboard). A decisão de compatibilidade fica em <see cref="ControlCompatibility"/> (testável);
     /// aqui só há a leitura e a escrita nos objetos do Grasshopper.
     /// </summary>
     internal static class ControlStateService
@@ -73,6 +74,9 @@ namespace Buraqueira_Tools
                             list.Add(state);
                         }
                         break;
+                    case IPillControlStateProvider provider:
+                        list.AddRange(provider.CaptureControlStates());
+                        break;
                 }
             }
             return list;
@@ -90,6 +94,10 @@ namespace Buraqueira_Tools
                     var names = new List<string>();
                     foreach (var item in v.ListItems) names.Add(item.Name);
                     options[v.InstanceGuid.ToString("D")] = names;
+                }
+                else if (obj is IPillControlStateProvider provider)
+                {
+                    foreach (var kv in provider.ControlOptions()) options[kv.Key] = kv.Value;
                 }
             }
             return ControlCompatibility.Match(saved, current, c => options.TryGetValue(c.Id ?? "", out var n) ? n : null);
@@ -111,11 +119,12 @@ namespace Buraqueira_Tools
             Action apply = () =>
             {
                 var touchedPools = new HashSet<PillSliderPool_Component>();
+                var touchedProviders = new HashSet<IGH_ActiveObject>();
                 foreach (var m in compatible)
                 {
                     try
                     {
-                        ApplyOne(doc, m, touchedPools);
+                        ApplyOne(doc, m, touchedPools, touchedProviders);
                     }
                     catch
                     {
@@ -123,6 +132,7 @@ namespace Buraqueira_Tools
                     }
                 }
                 foreach (var pool in touchedPools) pool.ExpireSolution(false);
+                foreach (var provider in touchedProviders) provider.ExpireSolution(false);
                 Grasshopper.Instances.RedrawCanvas();
                 doc.NewSolution(false);
             };
@@ -143,10 +153,21 @@ namespace Buraqueira_Tools
             }
         }
 
-        private static void ApplyOne(GH_Document doc, ControlMatch m, HashSet<PillSliderPool_Component> touchedPools)
+        private static void ApplyOne(GH_Document doc, ControlMatch m, HashSet<PillSliderPool_Component> touchedPools, HashSet<IGH_ActiveObject> touchedProviders)
         {
             var saved = m.Saved;
             var current = m.Current;
+            if (current.Kind == ControlKinds.Dashboard)
+            {
+                int sep = current.Id.IndexOf('|');
+                if (sep < 0 || !Guid.TryParse(current.Id.Substring(0, sep), out Guid ownerId)) return;
+                // Aplica só o valor: configuração e posição do painel não mudam
+                if (doc.FindObject(ownerId, true) is IPillControlStateProvider provider && provider.ApplyControlState(current.Id.Substring(sep + 1), saved) && provider is IGH_ActiveObject active)
+                {
+                    touchedProviders.Add(active);
+                }
+                return;
+            }
             if (current.Kind == ControlKinds.PoolSlider)
             {
                 int bar = current.Id.IndexOf('|');

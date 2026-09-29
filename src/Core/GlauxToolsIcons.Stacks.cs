@@ -274,6 +274,95 @@ namespace Buraqueira_Tools
         }));
 
         // ==========================================
+        // PILHA 6 — DASHBOARD
+        // ==========================================
+
+        private static readonly Color IconDash = Color.FromArgb(139, 92, 246);
+        private static Bitmap _pillDashboard, _pillDashboardBuilder;
+
+        public static Bitmap PillDashboard => _pillDashboard ?? (_pillDashboard = DrawStackIcon(g =>
+        {
+            DrawPanelGlyph(g, new RectangleF(1.5f, 2.5f, 21, 19));
+        }));
+
+        public static Bitmap PillDashboardBuilder => _pillDashboardBuilder ?? (_pillDashboardBuilder = DrawStackIcon(g =>
+        {
+            // Linhas de definição ao lado do painel que elas geram
+            using (var pen = new Pen(IconInk, 1.6f))
+            {
+                g.DrawLine(pen, 1.5f, 7, 8f, 7);
+                g.DrawLine(pen, 1.5f, 11.5f, 6.5f, 11.5f);
+                g.DrawLine(pen, 1.5f, 16, 7.5f, 16);
+            }
+            DrawPanelGlyph(g, new RectangleF(10f, 3.5f, 12.5f, 17));
+        }));
+
+        /// <summary>Cartão com cabeçalho violeta, um trilho de slider e um switch (linguagem do Slider Pool).</summary>
+        private static void DrawPanelGlyph(Graphics g, RectangleF r)
+        {
+            using (var path = RoundedPath(r, 2.5f))
+            using (var body = new SolidBrush(Color.FromArgb(248, 250, 252)))
+            using (var border = new Pen(IconInk, 1.1f))
+            {
+                g.FillPath(body, path);
+                var header = new RectangleF(r.X, r.Y, r.Width, r.Height * 0.26f);
+                var old = g.Clip;
+                g.SetClip(path, CombineMode.Intersect);
+                using (var head = new SolidBrush(IconDash))
+                {
+                    g.FillRectangle(head, header);
+                }
+                g.Clip = old;
+                g.DrawPath(border, path);
+            }
+
+            float left = r.X + r.Width * 0.14f, right = r.Right - r.Width * 0.14f;
+            float y1 = r.Y + r.Height * 0.5f, y2 = r.Y + r.Height * 0.78f;
+            using (var rail = new Pen(Color.FromArgb(160, 170, 185), 1.4f))
+            using (var fill = new Pen(IconDash, 1.8f))
+            {
+                g.DrawLine(rail, left, y1, right, y1);
+                g.DrawLine(fill, left, y1, left + (right - left) * 0.6f, y1);
+            }
+            float kr = Math.Max(1.6f, r.Height * 0.11f);
+            float kx = left + (right - left) * 0.6f;
+            using (var knob = new SolidBrush(Color.White))
+            using (var knobPen = new Pen(IconDash, 1.1f))
+            {
+                g.FillEllipse(knob, kx - kr, y1 - kr, 2 * kr, 2 * kr);
+                g.DrawEllipse(knobPen, kx - kr, y1 - kr, 2 * kr, 2 * kr);
+            }
+
+            float sw = r.Width * 0.36f, sh = Math.Max(3f, r.Height * 0.17f);
+            var swRect = new RectangleF(right - sw, y2 - sh / 2f, sw, sh);
+            using (var swPath = RoundedPath(swRect, sh / 2f))
+            using (var on = new SolidBrush(IconOk))
+            {
+                g.FillPath(on, swPath);
+            }
+            using (var dot = new SolidBrush(Color.White))
+            {
+                g.FillEllipse(dot, swRect.Right - sh + 0.8f, swRect.Y + 0.8f, sh - 1.6f, sh - 1.6f);
+            }
+            using (var label = new Pen(Color.FromArgb(120, IconInk), 1.2f))
+            {
+                g.DrawLine(label, left, y2, swRect.X - 2.5f, y2);
+            }
+        }
+
+        private static GraphicsPath RoundedPath(RectangleF r, float radius)
+        {
+            var path = new GraphicsPath();
+            float d = Math.Min(radius * 2, Math.Min(r.Width, r.Height));
+            path.AddArc(r.X, r.Y, d, d, 180, 90);
+            path.AddArc(r.Right - d, r.Y, d, d, 270, 90);
+            path.AddArc(r.Right - d, r.Bottom - d, d, d, 0, 90);
+            path.AddArc(r.X, r.Bottom - d, d, d, 90, 90);
+            path.CloseFigure();
+            return path;
+        }
+
+        // ==========================================
         // PRIMITIVAS COMPARTILHADAS
         // ==========================================
 

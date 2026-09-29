@@ -627,23 +627,7 @@ namespace Buraqueira_Tools
             return null;
         }
 
-        public static FontFamily GetUIFontFamily()
-        {
-            try
-            {
-                if (GH_FontServer.Standard != null && GH_FontServer.Standard.FontFamily != null)
-                    return GH_FontServer.Standard.FontFamily;
-            }
-            catch { }
-            try
-            {
-                return new FontFamily("Segoe UI");
-            }
-            catch
-            {
-                return FontFamily.GenericSansSerif;
-            }
-        }
+        public static FontFamily GetUIFontFamily() => Visual.PillVisualKit.UIFontFamily();
 
         public static bool IsColumnsModeInput(object raw)
         {

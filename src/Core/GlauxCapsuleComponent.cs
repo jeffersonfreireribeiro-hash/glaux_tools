@@ -20,6 +20,7 @@ namespace Buraqueira_Tools
         public static readonly Color ColorDB = Color.FromArgb(99, 102, 241);
         public static readonly Color ColorVault = Color.FromArgb(245, 158, 11);
         public static readonly Color ColorDiagnostics = Color.FromArgb(236, 72, 153);
+        public static readonly Color ColorDashboard = Color.FromArgb(139, 92, 246);
 
         private const int MaxWarningsShown = 4;
 
