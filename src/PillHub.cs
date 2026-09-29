@@ -533,6 +533,14 @@ namespace Buraqueira_Tools
 
         private static bool _docListenerRegistered = false;
 
+        // Regex pré-compiladas: ParseKeyMetadata/CleanUpKey rodam em todo Publish, Subscribe, Notify e até no render do canvas
+        private static readonly Regex s_unitBracketRegex = new Regex(@"\[([^\]]+)\]", RegexOptions.Compiled | RegexOptions.CultureInvariant);
+        private static readonly Regex s_keyNormalizeRegex = new Regex(@"[\s_\-:]+", RegexOptions.Compiled | RegexOptions.CultureInvariant);
+        private static readonly char[] s_keySeparators = new char[] { '_', ':', '/' };
+
+        // Limite de comparações profundas (fingerprint) por Publish; acima disso o dado é tratado como alterado
+        private const int MaxDeepGooComparisons = 256;
+
         static PillHub()
         {
             try
@@ -584,6 +592,52 @@ namespace Buraqueira_Tools
             if (doc == null) return;
             doc.SolutionEnd -= OnDocumentSolutionEnd;
             PurgeDocumentChannels(doc.DocumentID);
+            PurgeDocumentConnections(doc);
+        }
+
+        /// <summary>
+        /// Fechar um documento não chama RemovedFromDocument nos objetos. Remove aqui as inscrições de receptores,
+        /// registros de transmissores e alvos pendentes dos objetos do documento, e solta eventos/timers estáticos
+        /// que manteriam o documento vivo na memória.
+        /// </summary>
+        private static void PurgeDocumentConnections(GH_Document doc)
+        {
+            var docGuids = new HashSet<Guid>();
+            foreach (var obj in doc.Objects)
+            {
+                docGuids.Add(obj.InstanceGuid);
+                if (obj is PillLayerPipeline_Component pipe)
+                {
+                    pipe.UnregisterRhinoDocEvents();
+                }
+                else if (obj is PillPulseTimer_Component timer)
+                {
+                    timer.StopTimer();
+                }
+            }
+            if (docGuids.Count == 0) return;
+
+            foreach (var kvp in _receivers)
+            {
+                var list = kvp.Value;
+                lock (list)
+                {
+                    list.RemoveAll(docGuids.Contains);
+                }
+            }
+
+            foreach (var kvp in _transmitters)
+            {
+                if (docGuids.Contains(kvp.Value))
+                {
+                    ((ICollection<KeyValuePair<string, Guid>>)_transmitters).Remove(kvp);
+                }
+            }
+
+            lock (_scheduleLock)
+            {
+                _pendingSolutionTargets.ExceptWith(docGuids);
+            }
         }
 
         private static void OnDocumentSolutionEnd(object sender, GH_SolutionEventArgs e)
@@ -605,6 +659,21 @@ namespace Buraqueira_Tools
                 if (_pendingSolutionTargets.Count == 0 || _solutionScheduled) return;
             }
             SafeScheduleExpiration(doc);
+        }
+
+        /// <summary>
+        /// Chamado pelos inscritos (Receiver, Hook, Bundle) ao calcular: eles leem o estado atual do barramento,
+        /// então uma notificação anterior a este cálculo já foi atendida. Remover o alvo da fila evita a segunda
+        /// solução que re-expiraria o receptor e recalcularia todo o seu downstream à toa (caso típico quando o
+        /// receptor está depois do transmissor na ordem de cálculo ou ligado por cabo oculto).
+        /// </summary>
+        public static void AcknowledgeReceiver(Guid receiverGuid)
+        {
+            if (receiverGuid == Guid.Empty) return;
+            lock (_scheduleLock)
+            {
+                _pendingSolutionTargets.Remove(receiverGuid);
+            }
         }
 
         private static void SafeScheduleExpiration(GH_Document targetDoc)
@@ -767,7 +836,15 @@ namespace Buraqueira_Tools
                 _channelsByComponent.TryRemove(compKey, out _);
             }
 
-            _transmitters.TryRemove(cleanKey, out _);
+            // Só remove o registro se ainda pertencer a este componente (outro transmissor pode publicar a mesma chave)
+            if (sourceComponentGuid == Guid.Empty)
+            {
+                _transmitters.TryRemove(cleanKey, out _);
+            }
+            else
+            {
+                ((ICollection<KeyValuePair<string, Guid>>)_transmitters).Remove(new KeyValuePair<string, Guid>(cleanKey, sourceComponentGuid));
+            }
 
             if (_channels.TryGetValue(cleanKey, out var ch))
             {
@@ -803,24 +880,46 @@ namespace Buraqueira_Tools
                 {
                     activeTxKeys.Add(pipe.CurrentCleanKey);
                 }
+                else if (obj is PillDomainFilter_Component domFilter && !string.IsNullOrWhiteSpace(domFilter.CurrentCleanKey))
+                {
+                    activeTxKeys.Add(CleanUpKey(domFilter.CurrentCleanKey));
+                }
+                else if (obj is PillGeometryFilter_Component geoFilter && !string.IsNullOrWhiteSpace(geoFilter.CurrentCleanKey))
+                {
+                    activeTxKeys.Add(CleanUpKey(geoFilter.CurrentCleanKey));
+                }
+                else if (obj is PillInterpolator_Component interp && !string.IsNullOrWhiteSpace(interp.CurrentCleanKey))
+                {
+                    activeTxKeys.Add(CleanUpKey(interp.CurrentCleanKey));
+                }
                 else if (obj is PillSliderPool_Component pool)
                 {
                     foreach (var s in pool.Sliders)
                     {
                         activeTxKeys.Add(s.CleanKey);
                         activeTxKeys.Add(PillHub.CleanUpKey(s.FullKey));
+                        activeTxKeys.Add(PillHub.CleanUpKey($"{s.Category}_{s.Name}"));
                     }
                 }
             }
 
-            var orphanKeys = _channels.Keys.Where(k => !activeTxKeys.Contains(k)).ToList();
+            // Só considera canais deste documento: canais de outros documentos abertos não são órfãos
+            var orphanKeys = _channels
+                .Where(kvp => (kvp.Value.DocumentGuid == doc.DocumentID || kvp.Value.DocumentGuid == Guid.Empty)
+                              && !activeTxKeys.Contains(kvp.Key))
+                .Select(kvp => kvp.Key)
+                .ToList();
             foreach (var k in orphanKeys)
             {
                 _channels.TryRemove(k, out _);
                 _transmitters.TryRemove(k, out _);
             }
 
-            var orphanCompKeys = _channelsByComponent.Where(kvp => !activeGuids.Contains(kvp.Value.SourceComponentGuid)).Select(kvp => kvp.Key).ToList();
+            var orphanCompKeys = _channelsByComponent
+                .Where(kvp => (kvp.Value.DocumentGuid == doc.DocumentID || kvp.Value.DocumentGuid == Guid.Empty)
+                              && !activeGuids.Contains(kvp.Value.SourceComponentGuid))
+                .Select(kvp => kvp.Key)
+                .ToList();
             foreach (var k in orphanCompKeys)
             {
                 _channelsByComponent.TryRemove(k, out _);
@@ -1194,7 +1293,7 @@ namespace Buraqueira_Tools
             }
 
             // 3. Prefixo extraído diretamente da cleanKey (ex: "U_GRID" -> prefixo "U")
-            int sepIdx = cleanKey.IndexOfAny(new char[] { '_', ':', '/' });
+            int sepIdx = cleanKey.IndexOfAny(s_keySeparators);
             if (sepIdx > 0)
             {
                 string pfx = cleanKey.Substring(0, sepIdx).Trim();
@@ -1258,24 +1357,7 @@ namespace Buraqueira_Tools
         public static bool TryGetChannel(string keyOrCleanKey, out PillChannel channel)
         {
             channel = null;
-            if (string.IsNullOrWhiteSpace(keyOrCleanKey)) return false;
-
-            string cleanKey = CleanUpKey(keyOrCleanKey);
-            if (!_channels.TryGetValue(cleanKey, out var found))
-            {
-                // Fallback 1: chave bruta direta
-                _channels.TryGetValue(keyOrCleanKey.Trim(), out found);
-            }
-
-            if (found == null)
-            {
-                // Fallback 2: busca por sufixo (ex: buscou "Raio", mas canal está registrado como "GEO_Raio")
-                found = _channels.Values.FirstOrDefault(c => 
-                    c.CleanKey.Equals(cleanKey, StringComparison.OrdinalIgnoreCase) ||
-                    c.CleanKey.EndsWith("_" + cleanKey, StringComparison.OrdinalIgnoreCase) ||
-                    c.CleanKey.EndsWith("::" + cleanKey, StringComparison.OrdinalIgnoreCase) ||
-                    cleanKey.EndsWith("_" + c.CleanKey, StringComparison.OrdinalIgnoreCase));
-            }
+            var found = FindChannel(keyOrCleanKey);
 
             if (found != null)
             {
@@ -1302,6 +1384,45 @@ namespace Buraqueira_Tools
         }
 
         /// <summary>
+        /// Igual a TryGetChannel, mas devolve o canal do barramento sem clonar a árvore (O(1), sem alocação).
+        /// Use apenas para leitura: DA.SetDataTree já copia os ramos para o parâmetro de saída.
+        /// Nunca altere channel.Data.
+        /// </summary>
+        public static bool TryPeekChannel(string keyOrCleanKey, out PillChannel channel)
+        {
+            channel = FindChannel(keyOrCleanKey);
+            return channel != null;
+        }
+
+        private static PillChannel FindChannel(string keyOrCleanKey)
+        {
+            if (string.IsNullOrWhiteSpace(keyOrCleanKey)) return null;
+
+            string cleanKey = CleanUpKey(keyOrCleanKey);
+            if (_channels.TryGetValue(cleanKey, out var found)) return found;
+
+            // Fallback 1: chave bruta direta
+            if (_channels.TryGetValue(keyOrCleanKey.Trim(), out found)) return found;
+
+            // Fallback 2: busca por sufixo (ex: buscou "Raio", mas canal está registrado como "GEO_Raio").
+            // Enumera o dicionário direto: .Values tiraria um snapshot travando todos os buckets a cada chamada.
+            string underscoreSuffix = "_" + cleanKey;
+            string scopeSuffix = "::" + cleanKey;
+            foreach (var kvp in _channels)
+            {
+                var c = kvp.Value;
+                if (c.CleanKey.Equals(cleanKey, StringComparison.OrdinalIgnoreCase) ||
+                    c.CleanKey.EndsWith(underscoreSuffix, StringComparison.OrdinalIgnoreCase) ||
+                    c.CleanKey.EndsWith(scopeSuffix, StringComparison.OrdinalIgnoreCase) ||
+                    cleanKey.EndsWith("_" + c.CleanKey, StringComparison.OrdinalIgnoreCase))
+                {
+                    return c;
+                }
+            }
+            return null;
+        }
+
+        /// <summary>
         /// Lista todas as chaves ativas no barramento.
         /// </summary>
         public static List<string> GetAllActiveKeys()
@@ -1314,7 +1435,7 @@ namespace Buraqueira_Tools
         /// </summary>
         public static List<PillChannel> GetAllChannels()
         {
-            var pool = _channelsByComponent.Values.Count > 0 ? (IEnumerable<PillChannel>)_channelsByComponent.Values : _channels.Values;
+            var pool = !_channelsByComponent.IsEmpty ? (IEnumerable<PillChannel>)_channelsByComponent.Values : _channels.Values;
             return pool.OrderBy(c => c.Category).ThenBy(c => c.CleanKey).ToList();
         }
 
@@ -1339,7 +1460,7 @@ namespace Buraqueira_Tools
             bool hasParamSeparator = cleanQuery.Contains("_") || cleanQuery.Contains("::") || cleanQuery.Contains(":");
             if (hasParamSeparator && !cleanQuery.EndsWith("_") && !cleanQuery.EndsWith("::") && !cleanQuery.EndsWith(":"))
             {
-                if (TryGetChannel(cleanQuery, out var singleCh))
+                if (TryPeekChannel(cleanQuery, out var singleCh))
                 {
                     return new List<PillChannel> { singleCh };
                 }
@@ -1349,7 +1470,7 @@ namespace Buraqueira_Tools
             string prefix = cleanQuery.TrimEnd('_', ':', '/');
             string normCat = NormalizeCategory(prefix);
 
-            var pool = _channelsByComponent.Values.Count > 0 ? (IEnumerable<PillChannel>)_channelsByComponent.Values : _channels.Values;
+            var pool = !_channelsByComponent.IsEmpty ? (IEnumerable<PillChannel>)_channelsByComponent.Values : _channels.Values;
 
             var matches = pool.Where(ch =>
             {
@@ -1406,20 +1527,20 @@ namespace Buraqueira_Tools
             }
 
             // 2. Detecta unidade no restante entre colchetes ex: Nome [s] ou [dB]
-            var matchUnit = Regex.Match(trimmed, @"\[([^\]]+)\]");
+            var matchUnit = s_unitBracketRegex.Match(trimmed);
             if (matchUnit.Success)
             {
                 if (string.IsNullOrEmpty(unit))
                 {
                     unit = matchUnit.Groups[1].Value.Trim();
                 }
-                trimmed = Regex.Replace(trimmed, @"\[[^\]]+\]", "").Trim();
+                trimmed = s_unitBracketRegex.Replace(trimmed, "").Trim();
             }
 
             // 3. Se não achou categoria no início, verifica prefixo com separador ex: ACU_RT60 ou GEO::Raio
             if (catCandidate == "GEN")
             {
-                int sepIdx = trimmed.IndexOfAny(new char[] { '_', ':', '/' });
+                int sepIdx = trimmed.IndexOfAny(s_keySeparators);
                 if (sepIdx > 0)
                 {
                     catCandidate = trimmed.Substring(0, sepIdx).Trim().ToUpperInvariant();
@@ -1437,6 +1558,9 @@ namespace Buraqueira_Tools
             if (string.IsNullOrWhiteSpace(rawKey)) return "";
             string trimmed = rawKey.Trim();
             if (trimmed == "*" || trimmed.Equals("ALL", StringComparison.OrdinalIgnoreCase)) return trimmed;
+
+            // Caminho rápido: sem colchetes não há [CAT] nem [unidade] a remover, a chave limpa é a própria chave aparada
+            if (trimmed.IndexOf('[') < 0) return trimmed;
 
             ParseKeyMetadata(rawKey, null, out string cleanKey, out _, out _, out _);
             return cleanKey;
@@ -1507,8 +1631,10 @@ namespace Buraqueira_Tools
         }
 
         /// <summary>
-        /// Compara árvores de dados (GH_Structure de IGH_Goo) de forma ultra-rápida.
-        /// Valida topologia, contagens e amostragem de dados para não travar a UI/Engine com árvores gigantes.
+        /// Compara árvores de dados (GH_Structure de IGH_Goo) para decidir se os receptores precisam ser notificados.
+        /// Percorre todos os itens: mesma instância e primitivos são baratos; tipos complexos (fingerprint) têm orçamento
+        /// limitado e, quando ele se esgota, a árvore é tratada como alterada. Nunca responde "igual" sem ter verificado,
+        /// para que um receptor não fique com dados velhos quando só itens do meio de uma lista grande mudam.
         /// </summary>
         public static bool AreStructuresEqual(GH_Structure<IGH_Goo> a, GH_Structure<IGH_Goo> b)
         {
@@ -1517,6 +1643,8 @@ namespace Buraqueira_Tools
             if (a.DataCount != b.DataCount) return false;
             if (a.Paths.Count != b.Paths.Count) return false;
             if (a.DataCount == 0 && b.DataCount == 0) return true;
+
+            int deepBudget = MaxDeepGooComparisons;
 
             for (int p = 0; p < a.Paths.Count; p++)
             {
@@ -1529,29 +1657,30 @@ namespace Buraqueira_Tools
                 if (branchA == null || branchB == null) return false;
                 if (branchA.Count != branchB.Count) return false;
 
-                int count = branchA.Count;
-                if (count == 0) continue;
+                for (int i = 0; i < branchA.Count; i++)
+                {
+                    var gooA = branchA[i];
+                    var gooB = branchB[i];
+                    if (ReferenceEquals(gooA, gooB)) continue;
+                    if (gooA == null || gooB == null) return false;
 
-                if (count <= 20)
-                {
-                    for (int i = 0; i < count; i++)
+                    if (!IsPrimitiveGoo(gooA) || !IsPrimitiveGoo(gooB))
                     {
-                        if (!AreGooEqual(branchA[i], branchB[i])) return false;
+                        if (deepBudget <= 0) return false;
+                        deepBudget--;
                     }
-                }
-                else
-                {
-                    // Amostragem nos limites e pontos-chave para validação instantânea sem lag
-                    int[] samples = new int[] { 0, 1, count / 4, count / 2, (3 * count) / 4, count - 2, count - 1 };
-                    foreach (int idx in samples)
-                    {
-                        if (idx >= 0 && idx < count && !AreGooEqual(branchA[idx], branchB[idx]))
-                            return false;
-                    }
+
+                    if (!AreGooEqual(gooA, gooB)) return false;
                 }
             }
 
             return true;
+        }
+
+        private static bool IsPrimitiveGoo(IGH_Goo goo)
+        {
+            return goo is GH_Number || goo is GH_Integer || goo is GH_Boolean || goo is GH_String
+                || goo is GH_Point || goo is GH_Vector || goo is GH_Colour;
         }
 
         /// <summary>
@@ -1585,8 +1714,10 @@ namespace Buraqueira_Tools
 
             foreach (var src in wireParam.Sources)
             {
-                pool = src.Attributes?.GetTopLevel?.DocObject as PillSliderPool_Component;
-                if (pool == null && doc != null)
+                var topLevel = src.Attributes?.GetTopLevel?.DocObject;
+                pool = topLevel as PillSliderPool_Component;
+                // Varre o documento só quando a fonte não tem atributos; senão o dono já é conhecido (evita O(N) por solução)
+                if (pool == null && topLevel == null && doc != null)
                 {
                     pool = doc.Objects.OfType<PillSliderPool_Component>().FirstOrDefault(p => p.Params.Output.Contains(src));
                 }
@@ -1611,6 +1742,8 @@ namespace Buraqueira_Tools
             {
                 cleanKey = cleanKey.Substring(nsIdx + 2).Trim();
             }
+
+            string normQuery = s_keyNormalizeRegex.Replace(cleanKey, "").ToLowerInvariant();
 
             // Encontrar o índice do slider no pool com múltiplas estratégias de matching
             int sliderIdx = -1;
@@ -1653,8 +1786,7 @@ namespace Buraqueira_Tools
                     break;
                 }
 
-                string normQuery = Regex.Replace(cleanKey, @"[\s_\-:]+", "").ToLowerInvariant();
-                string normSlider = Regex.Replace(sCleanName, @"[\s_\-:]+", "").ToLowerInvariant();
+                string normSlider = s_keyNormalizeRegex.Replace(sCleanName, "").ToLowerInvariant();
                 if (!string.IsNullOrEmpty(normSlider) && (normQuery == normSlider || normQuery.EndsWith(normSlider)))
                 {
                     sliderIdx = i;
