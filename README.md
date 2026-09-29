@@ -22,12 +22,13 @@
 
 **Glaux Tools** é uma suíte de alta performance desenvolvida em C# nativo para o **Grasshopper / Rhino 8**, projetada para superar as limitações computacionais de fluxos paramétricos complexos. 
 
-O plugin reúne mais de **95 componentes especializados** em cinco áreas fundamentais:
+O plugin reúne mais de **110 componentes especializados** em seis áreas fundamentais:
 1. **💊 Arquitetura Pill**: Comunicação sem fios (*Wireless*), barramento de dados centralizado (`PillHub`), caching com hashing criptográfico (SHA-256), gerenciamento de presets, diagramação de pranchas e automação de layers.
 2. **🌳 Engenharia de Árvores de Dados (`DataTree`)**: Diferenciação topológica estrutural (`Diff`), alinhamento de ramos, agrupamentos dinâmicos, buscas vetoriais e aritmética de caminhos.
 3. **📐 Álgebra Linear & Matrizes**: Autovalores/autovetores (`Eigen`), inversão, determinantes, multiplicação matricial e resolução de sistemas lineares $A \cdot x = b$.
 4. **📊 Estatística, Inferência & Machine Learning**: 50 fórmulas canônicas cobrindo distribuições (Normal, Poisson, Beta, Binomial, Chi-Square), inferência (Intervalos de Confiança, t-score, ANOVA, teste F), regressão linear OLS, árvores (Gini, Information Gain, Logit) e validação de clusters (Silhueta e Mahalanobis).
 5. **🗺️ Visualização de Dados, Desenho Técnico & Gráficos**: Diagramação de pranchas vetoriais (SVG/PDF com visualizador web instantâneo), simbologia técnica estilo QGIS/ABNT (`PillPen`), mapas de calor espaciais no viewport (`Spatial Heatmap`), superfícies 3D e box plots.
+6. **💾 Dados, Persistência, Proveniência & Diagnóstico**: serialização de DataTrees sem perda, store local com revisões (`.glauxdb`), consultas, validação e sincronização sem laços, snapshots de projeto com histórico/comparação/restauração, registro de experimentos e profiler de execução.
 
 <p align="center">
   <img src="assets/Glaux_Tools_Components_Map.png" alt="Mapa de Componentes do Glaux Tools" width="95%" />
@@ -136,6 +137,50 @@ Transforme dados numéricos em diagnósticos visuais e pranchas técnicas public
 
 ---
 
+### 6. 💾 Dados, Persistência, Proveniência & Diagnóstico
+Pilhas construídas sobre um núcleo compartilhado (modelo canônico de DataTree, hash de identidade exato, store local), sem dependências externas. Cada pilha tem documentação própria em [`docs/stacks/`](docs/stacks/) (arquitetura, tipos, limitações, desempenho, persistência e testes).
+
+**I/O — Serialização de DataTrees** ([Pilha 1](docs/stacks/01_Data_Core.md)): complementa o `Import CSV` / `Export CSV` tabular existente.
+
+| Componente | Nickname | Descrição |
+| :--- | :---: | :--- |
+| **Pill Tree Export** | `PillExport` | Serializa qualquer DataTree sem perda (caminhos profundos, ramos vazios, nulos, tipos mistos) em JSON tipado, CSV longo, binário Glaux ou `.pilldata`, com hash SHA-256 de identidade. |
+| **Pill Tree Import** | `PillImport` | Lê os mesmos formatos (detecção automática) e reconstrói a árvore idêntica; tipos de plugins não carregados ficam opacos, sem perda ao reexportar. |
+| **Pill Tree Table** | `PillTable` | Árvore → tabela colunar (path, index, type, value) para inspeção, consulta e validação. |
+| **Pill Table To Tree** | `PillToTree` | Tabela colunar → árvore (operação inversa, round-trip exato). |
+
+**Data — Store local & sincronização** ([Pilha 2](docs/stacks/02_Persistence.md)):
+
+| Componente | Nickname | Descrição |
+| :--- | :---: | :--- |
+| **Pill DB Connect** | `PillDB` | Abre/cria um store `.glauxdb` (arquivo único, append-only, com revisões, CRC e recuperação após falha). |
+| **Pill DB Write** | `PillDBWrite` | Grava uma DataTree como nova revisão de uma chave (sem revisão se o dado não mudou). |
+| **Pill DB Read** | `PillDBRead` | Lê a última revisão ou uma revisão específica de uma chave; atualiza sozinho quando o store muda. |
+| **Pill DB Query** | `PillQuery` | Consultas com filtros tipados (padrão de chave, tipo, revisões, metadados; itens por máscara de caminho, tipo, faixa e texto) — nunca consultas montadas a partir de texto. |
+| **Pill Schema Inspector** | `PillSchema` | Chaves, revisões, tipos, tamanhos e saúde do store. |
+| **Pill Data Validation** | `PillValidate` | Regras de tipo, nulos, duplicatas, faixa numérica e estrutura (profundidade, ramos, comprimento, ramos obrigatórios), com problemas por caminho/índice e árvore só com os itens aprovados. |
+| **Pill DB Sync** | `PillSync` | Sincronização Push/Pull/Two-Way com estado explícito (Clean, LocalDirty, StoreAhead, Conflict) e sem laços GH ↔ store. |
+
+**Vault — Proveniência do projeto** ([Pilha 3](docs/stacks/03_Project_Vault.md)): *"com quais parâmetros esse resultado foi produzido?"*
+
+| Componente | Nickname | Descrição |
+| :--- | :---: | :--- |
+| **Pill Snapshot** | `PillSnap` | Captura parâmetros, sliders/toggles, canais do PillHub, entradas e resultados numa revisão do store. |
+| **Pill History** | `PillHistory` | Linha do tempo das revisões (snapshots, experimentos, métricas) e extração de uma árvore de cada revisão para gráficos. |
+| **Pill Compare** | `PillCompare` | Diferença entre duas revisões: parâmetros, controles e resultados alterados. |
+| **Pill Restore** | `PillRestore` | Devolve os dados de uma revisão e, opcionalmente, reaplica sliders/toggles no canvas. |
+| **Pill Experiment Logger** | `PillExpLog` | Registra cada execução (entradas → resultados) em lote, para otimização e estudos paramétricos. |
+
+**Diagnostics — Desempenho** ([Pilha 4](docs/stacks/04_Diagnostics.md)):
+
+| Componente | Nickname | Descrição |
+| :--- | :---: | :--- |
+| **Pill Runtime Profiler** | `PillProfiler` | Ranking de tempo por componente (média, mediana, p95), tempo da solução × componentes × Grasshopper, memória, cache e custo do próprio profiler; grava a série no store. |
+
+> A auditoria que levou a essas pilhas (o que já existia, o que foi reaproveitado, dependências avaliadas, MVPs e próximas pilhas: Dashboard, Visualização Avançada, Animação/Timeline) está em [`docs/stacks/00_Auditoria_e_Proposta.md`](docs/stacks/00_Auditoria_e_Proposta.md).
+
+---
+
 ## 🏷️ Histórico de Versões & Releases
 
 | Versão | Data | Principais Novidades & Melhorias |
@@ -168,6 +213,17 @@ dotnet build -c Release Glaux_Tools.sln
 O binário do plugin será gerado em:
 `src/bin/Release/net48/Glaux_Tools.gha`
 
+Sem o Rhino instalado (ex.: CI ou Linux), o projeto compila contra os pacotes NuGet `Grasshopper`/`RhinoCommon` automaticamente.
+
+### Testes automatizados
+O projeto [`tests/Glaux_Tools.Tests`](tests/) (xUnit, .NET 8) carrega o `.gha` compilado e testa os núcleos fora do Rhino: round-trip de DataTrees, store (revisões, corrupção, compactação), sincronização, snapshot → alteração → restauração, cache, import/export e profiler × medição de referência.
+
+```powershell
+dotnet test tests/Glaux_Tools.Tests
+```
+
+Detalhes e limitações (geometria que exige o Rhino) em [`tests/README.md`](tests/README.md).
+
 ---
 
 ## 🔌 Instalação no Grasshopper
@@ -189,7 +245,7 @@ O binário do plugin será gerado em:
 ---
 
 ## 📚 Documentação Técnica Adicional
-O repositório inclui a pasta [`docs/`](docs/) com **87 fichas técnicas individuais** detalhando a formulação matemática, diagramas Mermaid de fluxo de dados montante/jusante (*upstream/downstream*), contratos de conexão e exemplos práticos para cada componente.
+O repositório inclui a pasta [`docs/`](docs/) com **104 fichas técnicas individuais** detalhando a formulação matemática, diagramas Mermaid de fluxo de dados montante/jusante (*upstream/downstream*), contratos de conexão e exemplos práticos para cada componente. A pasta [`docs/stacks/`](docs/stacks/) documenta as pilhas funcionais (Data Core, Persistence, Project Vault, Diagnostics) e a proposta das próximas.
 
 ---
 

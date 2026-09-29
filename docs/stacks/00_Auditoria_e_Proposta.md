@@ -42,6 +42,7 @@
 | **DataTree Serializer** | Parcial | Binário `.pilldata` (Disk Save); JSON só para `PillBundle` | Disk Save (formato lido como adapter), `PillJson` | **Sim**, como adapters do Mapper (JSON, CSV longo, binário) |
 | **CSV / Table Import-Export** | **Sim** | — | `CSV_In` / `CSV_Out` (tabelas 2D, multi-aba) | Não duplicar. O CSV *longo* (path,index,type,value) entra como adapter do Serializer |
 | **JSON Import/Export** | Parcial | Bundle JSON, Accumulator JSON | `PillJson` | Adapter JSON do Serializer (árvores tipadas) |
+| *(Pill Tree Table Exporter)* | Descontinuado | Relatório Excel com ranking de fitness (doc mantida, fonte fora do build) | — | Não reviver. **Pill Tree Table** é outra coisa: tabela colunar sem perda, no canvas, para Query/Validation/Store |
 | **Pill DB Connect** | Não | — | Pasta padrão `PillVault` do Disk Save | **Sim** (provider local sem dependências; ver §4) |
 | **Pill DB Read / Write** | Não | Disk Save/Load (1 arquivo por chave, sem revisões) | Mapper + codec binário | **Sim** |
 | **Pill Query** | Não | Tree Search / Tree Filter atuam só na árvore viva | — | **Sim**, filtros estruturados (nunca SQL concatenado) |

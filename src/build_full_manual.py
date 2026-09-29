@@ -34,7 +34,11 @@ groups_order = [
     "Evaluation",
     "Visual",
     "Transform",
+    "Matrix",
     "I/O",
+    "Data",
+    "Vault",
+    "Diagnostics",
     "Utilitários"
 ]
 
@@ -67,12 +71,28 @@ group_titles = {
         "Title": "7. Matemática em Massa e Agrupamento",
         "Desc": "Operações matemáticas de alto desempenho vetorizadas em árvores, somas condicionais (SumIf) e agrupamento rápido por similaridade."
     },
+    "Matrix": {
+        "Title": "8. Álgebra Linear e Matrizes",
+        "Desc": "Construção e inspeção de matrizes, multiplicação, inversa, determinante, sistemas lineares e autovalores."
+    },
     "I/O": {
-        "Title": "8. Importação e Exportação de Dados (I/O)",
-        "Desc": "Leitores e exportadores de dados tabulares (CSV, texto delimitado e planilhas multi-abas) com tipagem automática e alta velocidade."
+        "Title": "9. Importação e Exportação de Dados (I/O)",
+        "Desc": "Leitores e exportadores de dados tabulares (CSV, texto delimitado e planilhas multi-abas) e serialização de DataTrees sem perda (JSON tipado, CSV longo, binário Glaux, .pilldata) com hash de identidade."
+    },
+    "Data": {
+        "Title": "10. Dados & Persistência (Store Local)",
+        "Desc": "Store local .glauxdb com revisões, consultas estruturadas, inspeção de esquema, validação de dados e sincronização sem laços entre o Grasshopper e o store."
+    },
+    "Vault": {
+        "Title": "11. Project Vault & Proveniência",
+        "Desc": "Snapshots de parâmetros, controles, entradas e resultados; histórico, comparação, restauração e registro de experimentos: com quais parâmetros cada resultado foi produzido."
+    },
+    "Diagnostics": {
+        "Title": "12. Desempenho & Diagnóstico",
+        "Desc": "Profiler de execução sem instrumentação: tempo por componente × tempo da solução, percentis, memória, cache e custo do próprio profiler, com série histórica no store."
     },
     "Utilitários": {
-        "Title": "9. Utilitários Gerais",
+        "Title": "13. Utilitários Gerais",
         "Desc": "Funções auxiliares e de suporte operacional ao Canvas do Grasshopper."
     }
 }
@@ -350,7 +370,7 @@ for g in groups_order:
         count = len([x for x in catalog if x.get("SubCategory") == g])
         if count > 0:
             html_parts.append(f"""    <div class="toc-card">
-      <h3>{html.escape(info["Title"])} <span class="badge-cat">{count} Pilhas</span></h3>
+      <h3>{html.escape(info["Title"])} <span class="badge-cat">{count} {"Pilha" if count == 1 else "Pilhas"}</span></h3>
       <p>{html.escape(info["Desc"])}</p>
     </div>
 """)
