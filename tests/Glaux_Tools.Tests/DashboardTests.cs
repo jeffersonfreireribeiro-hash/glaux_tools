@@ -346,6 +346,25 @@ namespace Glaux_Tools.Tests
             Assert.True(empty.Content.Height > 0 && empty.Size.Height > o.HeaderHeight);
         }
 
+        [Theory]
+        [InlineData(0)]   // painel vazio (o caso mais baixo)
+        [InlineData(1)]
+        [InlineData(12)]
+        public void ParamBand_KeepsEveryGripInsideThePanel_AndWidgetsBelowIt(int widgets)
+        {
+            var m = DashboardMetrics.Default;
+            int inputs = 3, outputs = 5;
+            float top = m.ContentTop(inputs, outputs);
+            Assert.Equal(m.HeaderHeight + m.ParamBandHeight(inputs, outputs), top);
+            Assert.True(m.ParamRowCenterY(outputs - 1) + m.ParamRowHeight / 2f <= top); // última linha dentro da faixa
+
+            var items = Enumerable.Range(0, widgets).Select(_ => Item(20)).ToList();
+            var r = DashboardLayoutEngine.Arrange(new LayoutOptions { Kind = LayoutKind.Stack, Width = 300, HeaderHeight = top }, items);
+            Assert.True(r.Size.Height > top); // o painel sempre contém a faixa inteira (todos os grips)
+            Assert.All(r.Items, it => Assert.True(it.Top >= top)); // widgets começam abaixo dos nomes
+            Assert.Equal(0f, m.ParamBandHeight(0, 0));
+        }
+
         [Fact]
         public void ManyWidgets_StayOrderedAndSane()
         {

@@ -32,7 +32,7 @@ class DashboardGallery
     {
         var c = new DashboardController { LiveSource = hub };
         c.SetSpec(DashboardSpecParser.Parse(lines));
-        c.Arrange(26);
+        c.Arrange(DashboardMetrics.Default.ContentTop(3, 5)); // cabeçalho + faixa de parâmetros (3 entradas, 5 saídas)
         return c;
     }
 
@@ -43,6 +43,8 @@ class DashboardGallery
         g.ScaleTransform(zoom, zoom);
         var ctx = new DashboardRenderContext(g, DashboardTheme.Default, zoom);
         var chrome = new DashboardChrome { Title = title, Badge = c.Widgets.Count + " widgets", Locked = locked, MessageLevel = msg, Selected = selected,
+            InputLabels = new[] { "Widgets", "Data", "Load State" },
+            OutputLabels = new[] { "Values", "Names", "State", "Changed", "Info" },
             AccentOf = s => s.HubKey != null && s.HubKey.StartsWith("[ACU]") ? Color.FromArgb(0, 180, 216) : s.HubKey != null && s.HubKey.StartsWith("[GEO]") ? Color.FromArgb(46, 175, 100) : Color.Empty };
         DashboardRenderer.Render(ctx, c, new RectangleF(0, 0, c.Layout.Size.Width, c.Layout.Size.Height), chrome);
         g.Restore(state);
@@ -96,19 +98,24 @@ class DashboardGallery
         var row = Make(hub, "title = Linha", "layout = row", "width = 300", "button A", "button B | span=2", "toggle C", "number D | value=42");
         var empty = Make(hub, "title = Painel novo");
 
-        using (var bmp = new Bitmap(1300, 1250))
+        // Posições calculadas pelas alturas reais (o painel cresce com a faixa de parâmetros e os widgets)
+        const float S = 1.5f, gap = 30f;
+        float rowY = 20 + Math.Max(full.Layout.Size.Height, stack.Layout.Size.Height) * S + gap;
+        float emptyY = rowY + row.Layout.Size.Height * S + gap;
+        int height = (int)(emptyY + Math.Max(empty.Layout.Size.Height * S, full.Layout.Size.Height * 0.4f) + 30);
+        using (var bmp = new Bitmap(1300, height))
         using (var g = Graphics.FromImage(bmp))
         {
             g.Clear(Color.FromArgb(212, 208, 200));
-            Draw(g, full, 20, 20, 1.5f, "Estudo Acústico — Sala 2", selected: true);
-            Draw(g, stack, 620, 20, 1.5f, stack.Spec.Title, msg: 1);
-            Draw(g, row, 20, 700, 1.5f, "Linha");
-            Draw(g, empty, 20, 860, 1.5f, "Painel novo");
-            Draw(g, full, 520, 900, 0.4f, "zoom baixo");
-            Draw(g, row, 720, 900, 1.5f, "Desativado", locked: true);
+            Draw(g, full, 20, 20, S, "Estudo Acústico — Sala 2", selected: true);
+            Draw(g, stack, 620, 20, S, stack.Spec.Title, msg: 1);
+            Draw(g, row, 20, rowY, S, "Linha");
+            Draw(g, row, 620, rowY, S, "Desativado", locked: true);
+            Draw(g, empty, 20, emptyY, S, "Painel novo");
+            Draw(g, full, 520, emptyY, 0.4f, "zoom baixo");
             bmp.Save("gallery.png", ImageFormat.Png);
         }
-        using (var bmp = new Bitmap(1200, 900))
+        using (var bmp = new Bitmap(1200, 1250))
         using (var g = Graphics.FromImage(bmp))
         {
             g.Clear(Color.FromArgb(212, 208, 200));

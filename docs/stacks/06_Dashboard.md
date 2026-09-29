@@ -118,7 +118,7 @@ Fluxo de um commit: o controlador grava o estado → o painel publica no PillHub
 | Changed (C) | Id do controle que disparou a solução (vazio se veio de outro lugar). |
 | Info (I) | Widgets, valores, ligações com o Hub, commits, última solução, modo Auto atual, avisos. |
 
-No canvas: clique no trilho salta, arraste para ajustar, **duplo clique no slider para digitar o valor**; clique no dropdown abre a lista; passe o mouse sobre um widget para ver rótulo completo, id, chave e valor (tooltip). Menu: *Restaurar valores padrão*, *Copiar definição*, *Copiar estado*. Com zoom abaixo de 45 % o painel vira blocos sem texto e os widgets não reagem (fica fácil arrastar o painel inteiro).
+No canvas: os nomes das entradas e saídas ficam numa faixa logo abaixo do título, alinhados aos grips (nome completo ou apelido, conforme a opção *Draw Full Names* do Grasshopper); passe o mouse ou clique com o botão direito num nome para ver o tooltip e o menu do parâmetro, como num componente comum. Clique no trilho salta, arraste para ajustar, **duplo clique no slider para digitar o valor**; clique no dropdown abre a lista; passe o mouse sobre um widget para ver rótulo completo, id, chave e valor (tooltip). Menu: *Restaurar valores padrão*, *Copiar definição*, *Copiar estado*. Com zoom abaixo de 45 % o painel vira blocos sem texto e os widgets não reagem (fica fácil arrastar o painel inteiro).
 
 ### Pill Dashboard Builder (`DashBuild`)
 

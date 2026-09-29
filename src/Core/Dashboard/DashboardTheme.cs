@@ -20,6 +20,24 @@ namespace Buraqueira_Tools.Dashboard
         public float FieldHeight { get; set; } = 18f;
         public float KnobMargin { get; set; } = 7f;
 
+        /// <summary>Altura de cada linha da faixa de parâmetros (nomes das entradas/saídas alinhados aos grips).</summary>
+        public float ParamRowHeight { get; set; } = 14f;
+
+        public float ParamBandPadding { get; set; } = 3f;
+
+        /// <summary>Altura da faixa de parâmetros abaixo do cabeçalho (0 sem parâmetros).</summary>
+        public float ParamBandHeight(int inputs, int outputs)
+        {
+            int rows = Math.Max(inputs, outputs);
+            return rows <= 0 ? 0f : 2 * ParamBandPadding + rows * ParamRowHeight;
+        }
+
+        /// <summary>Centro vertical (coordenada local do painel) da linha <paramref name="index"/> da faixa de parâmetros.</summary>
+        public float ParamRowCenterY(int index) => HeaderHeight + ParamBandPadding + (index + 0.5f) * ParamRowHeight;
+
+        /// <summary>Topo da área de widgets: cabeçalho + faixa de parâmetros.</summary>
+        public float ContentTop(int inputs, int outputs) => HeaderHeight + ParamBandHeight(inputs, outputs);
+
         public static DashboardMetrics Default { get; } = new DashboardMetrics();
     }
 

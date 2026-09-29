@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using Buraqueira_Tools.Visual;
@@ -19,6 +20,11 @@ namespace Buraqueira_Tools.Dashboard
 
         public string Badge { get; set; }
         public Func<WidgetSpec, Color> AccentOf { get; set; }
+
+        /// <summary>Nomes das entradas (à esquerda) e saídas (à direita), na ordem dos grips.</summary>
+        public IList<string> InputLabels { get; set; } = Array.Empty<string>();
+
+        public IList<string> OutputLabels { get; set; } = Array.Empty<string>();
     }
 
     /// <summary>
@@ -33,7 +39,7 @@ namespace Buraqueira_Tools.Dashboard
         {
             var g = ctx.Graphics;
             var t = ctx.Theme;
-            var layout = controller.Layout ?? controller.Arrange(t.Metrics.HeaderHeight);
+            var layout = controller.Layout ?? controller.Arrange(t.Metrics.ContentTop(chrome.InputLabels?.Count ?? 0, chrome.OutputLabels?.Count ?? 0));
             var oldSmoothing = g.SmoothingMode;
             var oldText = g.TextRenderingHint;
             g.SmoothingMode = SmoothingMode.AntiAlias;
@@ -41,6 +47,7 @@ namespace Buraqueira_Tools.Dashboard
 
             DrawCard(g, bounds, chrome, t);
             DrawHeader(ctx, bounds, chrome);
+            DrawParamBand(ctx, bounds, chrome);
 
             var oldClip = g.Clip;
             g.SetClip(RectangleF.Inflate(bounds, -1f, -1f), CombineMode.Intersect);
@@ -157,6 +164,45 @@ namespace Buraqueira_Tools.Dashboard
             }
         }
 
+        /// <summary>
+        /// Faixa com os nomes das entradas e saídas alinhados aos grips (como num componente comum do Grasshopper):
+        /// sem ela, um painel só mostra bolinhas nas bordas e não dá para saber onde ligar cada fio.
+        /// </summary>
+        private static void DrawParamBand(DashboardRenderContext ctx, RectangleF b, DashboardChrome chrome)
+        {
+            var m = ctx.Theme.Metrics;
+            int nIn = chrome.InputLabels?.Count ?? 0, nOut = chrome.OutputLabels?.Count ?? 0;
+            float h = m.ParamBandHeight(nIn, nOut);
+            if (h <= 0) return;
+            var g = ctx.Graphics;
+            var band = new RectangleF(b.X + 1f, b.Y + m.HeaderHeight, b.Width - 2f, h);
+            using (var bg = new SolidBrush(Color.FromArgb(120, PillVisualKit.Field)))
+            using (var line = new Pen(PillVisualKit.FieldBorder, 0.8f))
+            {
+                g.FillRectangle(bg, band);
+                g.DrawLine(line, band.X + 6f, band.Bottom, band.Right - 6f, band.Bottom);
+            }
+            if (ctx.LowDetail) return;
+
+            var font = ctx.Theme.SmallFont;
+            float half = b.Width / 2f - 12f;
+            using (var ink = new SolidBrush(chrome.Locked ? PillVisualKit.Faint : PillVisualKit.Muted))
+            using (var left = new StringFormat { Alignment = StringAlignment.Near, LineAlignment = StringAlignment.Center, Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap })
+            using (var right = new StringFormat { Alignment = StringAlignment.Far, LineAlignment = StringAlignment.Center, Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap })
+            {
+                for (int i = 0; i < nIn; i++)
+                {
+                    float cy = b.Y + m.ParamRowCenterY(i);
+                    g.DrawString(chrome.InputLabels[i], font, ink, new RectangleF(b.X + 8f, cy - m.ParamRowHeight / 2f, half, m.ParamRowHeight), left);
+                }
+                for (int i = 0; i < nOut; i++)
+                {
+                    float cy = b.Y + m.ParamRowCenterY(i);
+                    g.DrawString(chrome.OutputLabels[i], font, ink, new RectangleF(b.Right - 8f - half, cy - m.ParamRowHeight / 2f, half, m.ParamRowHeight), right);
+                }
+            }
+        }
+
         private static void DrawEmpty(DashboardRenderContext ctx, RectangleF content, bool allHidden)
         {
             if (ctx.LowDetail) return;
@@ -167,7 +213,7 @@ namespace Buraqueira_Tools.Dashboard
                 ctx.Graphics.DrawPath(pen, path);
             }
             string title = allHidden ? "Todos os widgets estão ocultos" : "Painel vazio";
-            string hint = allHidden ? "remova 'hidden' ou 'visible=false'" : "Conecte em W linhas como:  slider Largura | min=0 | max=10";
+            string hint = allHidden ? "remova 'hidden' ou 'visible=false'" : "Ligue em Widgets:  slider Largura | min=0 | max=10";
             using (var titleBrush = new SolidBrush(PillVisualKit.Muted))
             using (var hintBrush = new SolidBrush(PillVisualKit.Faint))
             using (var sf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center, Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap })

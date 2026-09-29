@@ -33,30 +33,50 @@ namespace Buraqueira_Tools
 
         protected override void Layout()
         {
-            var theme = DashboardTheme.Default;
-            var layout = Controller.Arrange(theme.Metrics.HeaderHeight);
+            var metrics = DashboardTheme.Default.Metrics;
+            int nIn = Owner.Params.Input.Count, nOut = Owner.Params.Output.Count;
+            // A área de widgets começa abaixo da faixa com os nomes das entradas e saídas
+            var layout = Controller.Arrange(metrics.ContentTop(nIn, nOut));
             // Canto superior esquerdo fixo no Pivot: o painel cresce para baixo/direita ao ganhar widgets
             var pivot = new PointF((float)Math.Round(Pivot.X), (float)Math.Round(Pivot.Y));
             Bounds = new RectangleF(pivot.X, pivot.Y, layout.Size.Width, layout.Size.Height);
-            PlaceGrips(Owner.Params.Input, Bounds.Left, true);
-            PlaceGrips(Owner.Params.Output, Bounds.Right, false);
+            PlaceGrips(Owner.Params.Input, true, metrics);
+            PlaceGrips(Owner.Params.Output, false, metrics);
         }
 
-        private void PlaceGrips(System.Collections.Generic.List<IGH_Param> list, float x, bool input)
+        /// <summary>
+        /// Cada parâmetro ocupa a linha do seu nome na faixa de parâmetros: o grip fica na borda do painel, na altura do
+        /// nome, e os bounds cobrem o nome (tooltip e menu do parâmetro com o botão direito, como num componente comum).
+        /// </summary>
+        private void PlaceGrips(System.Collections.Generic.List<IGH_Param> list, bool input, DashboardMetrics m)
         {
-            int n = list.Count;
-            if (n == 0) return;
-            float h = DashboardTheme.Default.Metrics.HeaderHeight;
-            float top = Bounds.Y + h + 4f;
-            float available = Math.Max(n * 14f, Bounds.Bottom - top - 4f);
-            float step = Math.Min(18f, available / n);
-            for (int i = 0; i < n; i++)
+            float half = Math.Max(20f, Bounds.Width / 2f - 4f);
+            for (int i = 0; i < list.Count; i++)
             {
                 var p = list[i];
-                float y = top + step * (i + 0.5f);
-                p.Attributes.Bounds = input ? new RectangleF(x, y - 6f, 10f, 12f) : new RectangleF(x - 10f, y - 6f, 10f, 12f);
-                p.Attributes.Pivot = new PointF(x, y);
+                float y = Bounds.Y + m.ParamRowCenterY(i);
+                p.Attributes.Bounds = input
+                    ? new RectangleF(Bounds.Left, y - m.ParamRowHeight / 2f, half, m.ParamRowHeight)
+                    : new RectangleF(Bounds.Right - half, y - m.ParamRowHeight / 2f, half, m.ParamRowHeight);
+                p.Attributes.Pivot = new PointF(input ? Bounds.Left : Bounds.Right, y);
             }
+        }
+
+        /// <summary>Nomes completos ou apelidos, conforme a opção "Draw Full Names" do Grasshopper.</summary>
+        private static string[] ParamLabels(System.Collections.Generic.List<IGH_Param> list)
+        {
+            bool full = true;
+            try
+            {
+                full = Grasshopper.CentralSettings.CanvasFullNames;
+            }
+            catch
+            {
+                // Configurações indisponíveis: nomes completos
+            }
+            var labels = new string[list.Count];
+            for (int i = 0; i < list.Count; i++) labels[i] = full ? list[i].Name : list[i].NickName;
+            return labels;
         }
 
         private PointF ToLocal(PointF canvasPoint) => new PointF(canvasPoint.X - Bounds.X, canvasPoint.Y - Bounds.Y);
@@ -82,7 +102,9 @@ namespace Buraqueira_Tools
                 Locked = Owner.Locked,
                 MessageLevel = Owner.RuntimeMessageLevel == GH_RuntimeMessageLevel.Error ? 2 : Owner.RuntimeMessageLevel == GH_RuntimeMessageLevel.Warning ? 1 : 0,
                 Badge = _owner.Badge,
-                AccentOf = spec => DashboardColors.Resolve(spec, DashboardTheme.Default.Accent)
+                AccentOf = spec => DashboardColors.Resolve(spec, DashboardTheme.Default.Accent),
+                InputLabels = ParamLabels(Owner.Params.Input),
+                OutputLabels = ParamLabels(Owner.Params.Output)
             };
             DashboardRenderer.Render(ctx, Controller, Bounds, chrome);
 
