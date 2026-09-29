@@ -21,30 +21,34 @@ namespace Buraqueira_Tools
 
         private static Bitmap _pillTreeExport, _pillTreeImport, _pillTreeTable, _pillTableToTree;
 
+        // Mesma linguagem dos ícones de banco: seta para baixo = gravar, para cima = ler
         public static Bitmap PillTreeExport => _pillTreeExport ?? (_pillTreeExport = DrawStackIcon(g =>
         {
-            DrawTreeGlyph(g, 2, 4, IconIO);
-            DrawArrow(g, new PointF(12, 12), new PointF(22, 12), IconInk, 1.8f);
+            DrawFileGlyph(g, new RectangleF(1.5f, 2, 13.5f, 20), IconIO, false);
+            DrawTreeGlyph(g, 3, 8, IconIO, 0.72f);
+            DrawArrow(g, new PointF(19.5f, 1.5f), new PointF(19.5f, 13), IconInk, 1.8f);
         }));
 
         public static Bitmap PillTreeImport => _pillTreeImport ?? (_pillTreeImport = DrawStackIcon(g =>
         {
-            DrawTreeGlyph(g, 10, 4, IconIO);
-            DrawArrow(g, new PointF(1, 12), new PointF(10, 12), IconInk, 1.8f);
+            DrawFileGlyph(g, new RectangleF(1.5f, 2, 13.5f, 20), IconIO, false);
+            DrawTreeGlyph(g, 3, 8, IconIO, 0.72f);
+            DrawArrow(g, new PointF(19.5f, 13), new PointF(19.5f, 1.5f), IconInk, 1.8f);
         }));
 
+        // Conversão lida da esquerda para a direita, com a seta embaixo
         public static Bitmap PillTreeTable => _pillTreeTable ?? (_pillTreeTable = DrawStackIcon(g =>
         {
-            DrawTreeGlyph(g, 0, 4, IconIO, 0.75f);
-            DrawArrow(g, new PointF(9, 12), new PointF(13, 12), IconInk, 1.4f);
-            DrawTableGlyph(g, new RectangleF(13.5f, 4.5f, 9, 15), IconIO);
+            DrawTreeGlyph(g, 0.5f, 2.5f, IconIO, 0.85f);
+            DrawTableGlyph(g, new RectangleF(12.5f, 2, 10, 14), IconIO);
+            DrawArrow(g, new PointF(4, 20.5f), new PointF(20, 20.5f), IconInk, 1.5f);
         }));
 
         public static Bitmap PillTableToTree => _pillTableToTree ?? (_pillTableToTree = DrawStackIcon(g =>
         {
-            DrawTableGlyph(g, new RectangleF(1.5f, 4.5f, 9, 15), IconIO);
-            DrawArrow(g, new PointF(11, 12), new PointF(15, 12), IconInk, 1.4f);
-            DrawTreeGlyph(g, 15, 4, IconIO, 0.75f);
+            DrawTableGlyph(g, new RectangleF(1.5f, 2, 10, 14), IconIO);
+            DrawTreeGlyph(g, 13.5f, 2.5f, IconIO, 0.85f);
+            DrawArrow(g, new PointF(4, 20.5f), new PointF(20, 20.5f), IconInk, 1.5f);
         }));
 
         // ==========================================
@@ -307,6 +311,33 @@ namespace Buraqueira_Tools
                     g.DrawRectangle(outline, leaf.X - r, leaf.Y - r, 2 * r, 2 * r);
                 }
             }
+        }
+
+        /// <summary>Folha de arquivo com canto dobrado e linhas de texto.</summary>
+        private static void DrawFileGlyph(Graphics g, RectangleF r, Color accent, bool textLines = true)
+        {
+            float fold = Math.Min(r.Width, r.Height) * 0.35f;
+            var page = new GraphicsPath();
+            page.AddLines(new[]
+            {
+                new PointF(r.X, r.Y), new PointF(r.Right - fold, r.Y), new PointF(r.Right, r.Y + fold),
+                new PointF(r.Right, r.Bottom), new PointF(r.X, r.Bottom)
+            });
+            page.CloseFigure();
+            using (var body = new SolidBrush(Color.White))
+            using (var pen = new Pen(IconInk, 1.1f))
+            using (var lines = new Pen(accent, 1.4f))
+            {
+                g.FillPath(body, page);
+                for (int i = 0; textLines && i < 3; i++)
+                {
+                    float yy = r.Y + fold + 2.5f + i * 3.2f;
+                    if (yy < r.Bottom - 1.5f) g.DrawLine(lines, r.X + 1.8f, yy, r.Right - 1.8f, yy);
+                }
+                g.DrawPath(pen, page);
+                g.DrawLines(pen, new[] { new PointF(r.Right - fold, r.Y), new PointF(r.Right - fold, r.Y + fold), new PointF(r.Right, r.Y + fold) });
+            }
+            page.Dispose();
         }
 
         private static void DrawTableGlyph(Graphics g, RectangleF r, Color header)
