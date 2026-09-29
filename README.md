@@ -5,7 +5,8 @@
 <h1 align="center">🦉 Glaux Tools</h1>
 
 <p align="center">
-  <strong>The High-Performance Parametric Computing, Data Science & Viewport Analytics Suite for Grasshopper (Rhino 8)</strong>
+  <strong>Dados, análise, controle e visualização para definições paramétricas no Grasshopper (Rhino 8).</strong><br>
+  <em>Data, analysis, control and visualization for parametric definitions in Grasshopper (Rhino 8).</em>
 </p>
 
 <p align="center">
@@ -16,25 +17,64 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT" /></a>
 </p>
 
+<p align="center">
+  <a href="#pt-br">🇧🇷 Português</a> &nbsp;·&nbsp; <a href="#english">🇺🇸 English</a>
+</p>
+
 ---
 
-## 📖 Visão Geral
+<a name="pt-br"></a>
 
-**Glaux Tools** é uma suíte de alta performance desenvolvida em C# nativo para o **Grasshopper / Rhino 8**, projetada para superar as limitações computacionais de fluxos paramétricos complexos. 
+## 📖 Visão geral
 
-O plugin reúne mais de **115 componentes especializados** em sete áreas fundamentais:
-1. **💊 Arquitetura Pill**: Comunicação sem fios (*Wireless*), barramento de dados centralizado (`PillHub`), caching com hashing criptográfico (SHA-256), gerenciamento de presets, diagramação de pranchas e automação de layers.
-2. **🌳 Engenharia de Árvores de Dados (`DataTree`)**: Diferenciação topológica estrutural (`Diff`), alinhamento de ramos, agrupamentos dinâmicos, buscas vetoriais e aritmética de caminhos.
-3. **📐 Álgebra Linear & Matrizes**: Autovalores/autovetores (`Eigen`), inversão, determinantes, multiplicação matricial e resolução de sistemas lineares $A \cdot x = b$.
-4. **📊 Estatística, Inferência & Machine Learning**: 50 fórmulas canônicas cobrindo distribuições (Normal, Poisson, Beta, Binomial, Chi-Square), inferência (Intervalos de Confiança, t-score, ANOVA, teste F), regressão linear OLS, árvores (Gini, Information Gain, Logit) e validação de clusters (Silhueta e Mahalanobis).
-5. **🗺️ Visualização de Dados, Desenho Técnico & Gráficos**: Diagramação de pranchas vetoriais (SVG/PDF com visualizador web instantâneo), simbologia técnica estilo QGIS/ABNT (`PillPen`), mapas de calor espaciais no viewport (`Spatial Heatmap`), superfícies 3D e box plots.
-6. **💾 Dados, Persistência, Proveniência & Diagnóstico**: serialização de DataTrees sem perda, store local com revisões (`.glauxdb`), consultas, validação e sincronização sem laços, snapshots de projeto com histórico/comparação/restauração, registro de experimentos e profiler de execução.
-7. **🎛️ Dashboard & Controles**: painéis interativos no canvas que reúnem controles e indicadores ligados ao PillHub, sem espalhar sliders e panels e sem recomputações em cascata durante o arrasto.
+O **Glaux Tools** é um plugin para **Grasshopper (Rhino 8)**, escrito em C#, com mais de 110 componentes voltados a definições paramétricas grandes e exigentes, como estudos de acústica arquitetônica, otimização multiobjetivo e análise de dados de projeto.
+
+Ele foi pensado para três problemas comuns nesse tipo de definição:
+
+- **Organização:** fios atravessando o canvas inteiro. O barramento sem fios **Pill** e os painéis de controle substituem dezenas de conexões e sliders espalhados.
+- **Desempenho:** recálculos que não precisavam acontecer. Cache por impressão digital dos dados, notificações só quando algo realmente muda e um profiler que mostra onde o tempo de cada solução é gasto.
+- **Rastreabilidade:** resultados sem registro de como foram obtidos. Snapshots, histórico e um banco de dados local guardam os parâmetros, as versões e os resultados de cada execução.
+
+### O que o plugin oferece
+
+1. **💊 Ecossistema Pill:** transmissão de dados sem fios pelo `PillHub`, cache de cálculos pesados, presets e variantes, controle de sliders em lote, camadas do Rhino e captura do viewport.
+2. **🌳 DataTrees:** comparação e alinhamento de estruturas, filtros que preservam os caminhos, agrupamentos, busca e aritmética de caminhos.
+3. **📐 Álgebra linear:** construção e inspeção de matrizes, multiplicação, inversa, determinante, sistemas lineares e autovalores.
+4. **📊 Estatística e aprendizado de máquina:** distribuições de probabilidade, inferência (intervalos de confiança, ANOVA, teste F), regressão linear, métricas de classificação e validação de agrupamentos.
+5. **🗺️ Visualização e desenho técnico:** gráficos no próprio canvas, mapas de calor no viewport, superfícies de resposta e pranchas vetoriais (SVG/PDF) com simbologia técnica inspirada no QGIS e na ABNT.
+6. **💾 Dados, proveniência e diagnóstico:** serialização de DataTrees sem perda, banco local com revisões, snapshots do projeto, registro de experimentos e profiler de execução.
+7. **🎛️ Dashboard:** painéis interativos no canvas que reúnem controles e indicadores ligados ao `PillHub`.
+
+<a name="english"></a>
+
+## 📖 Overview
+
+**Glaux Tools** is a C# plugin for **Grasshopper (Rhino 8)** with more than 110 components for large, demanding parametric definitions, such as architectural acoustics studies, multi-objective optimization and design data analysis.
+
+It targets three problems that are common in this kind of definition:
+
+- **Organization:** wires running across the whole canvas. The **Pill** wireless bus and on-canvas control panels replace dozens of connections and scattered sliders.
+- **Performance:** recomputations that did not need to happen. Fingerprint-based caching, notifications only when something actually changes, and a profiler that shows where each solution spends its time.
+- **Traceability:** results with no record of how they were produced. Snapshots, history and a local database keep the parameters, versions and results of every run.
+
+### What's inside
+
+1. **💊 Pill ecosystem:** wireless data transmission through `PillHub`, caching of heavy computations, presets and variants, batch slider control, Rhino layers and viewport capture.
+2. **🌳 DataTrees:** structural comparison and alignment, path-preserving filters, grouping, search and path arithmetic.
+3. **📐 Linear algebra:** matrix construction and inspection, multiplication, inverse, determinant, linear systems and eigenvalues.
+4. **📊 Statistics and machine learning:** probability distributions, inference (confidence intervals, ANOVA, F-test), linear regression, classification metrics and cluster validation.
+5. **🗺️ Visualization and technical drawing:** charts drawn on the canvas, viewport heatmaps, response surfaces and vector sheets (SVG/PDF) with QGIS/ABNT-inspired technical line styles.
+6. **💾 Data, provenance and diagnostics:** lossless DataTree serialization, a local database with revisions, project snapshots, experiment logging and a runtime profiler.
+7. **🎛️ Dashboard:** interactive on-canvas panels that combine controls and indicators linked to `PillHub`.
+
+**Quick start:** run [`INSTALAR.bat`](INSTALAR.bat) (or `install.ps1`) on Windows, or copy [`dist/Glaux_Tools.gha`](dist/Glaux_Tools.gha) to `%APPDATA%\Grasshopper\Libraries\Glaux\` and unblock the file. The **Glaux Tools** tab appears in Grasshopper after restarting Rhino 8.
+
+> The component catalog, build instructions and technical documentation below are written in Portuguese. Each component has its own page in [`docs/`](docs/), and the design of each functional stack is described in [`docs/stacks/`](docs/stacks/).
 
 <p align="center">
-  <img src="assets/Glaux_Tools_Components_Map.png" alt="Mapa de Componentes do Glaux Tools" width="95%" />
+  <img src="assets/Glaux_Tools_Components_Map.png" alt="Mapa de componentes do Glaux Tools / Glaux Tools component map" width="95%" />
   <br>
-  <em>Mapa topológico dos componentes do Glaux Tools organizados por domínio de atuação.</em>
+  <em>Mapa dos componentes por área &nbsp;·&nbsp; Component map by area</em>
 </p>
 
 ---

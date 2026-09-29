@@ -10,7 +10,13 @@ namespace Buraqueira_Tools
     public class BuraqueiraToolsAssemblyInfo : GH_AssemblyInfo
     {
         public override string Name => "Glaux Tools";
-        public override string Description => "Suíte modular de alta performance para Grasshopper (Rhino 8): arquitetura sem fio Pill, manipulação avançada de DataTrees, álgebra linear, estatística descritiva e mapas de calor espaciais.";
+        public override string Description =>
+            "Dados, análise, controle e visualização para definições paramétricas no Grasshopper (Rhino 8): barramento sem fios Pill, " +
+            "DataTrees, álgebra linear, estatística e aprendizado de máquina, gráficos e desenho técnico, persistência e proveniência de dados, " +
+            "diagnóstico de desempenho e dashboards no canvas.\n\n" +
+            "Data, analysis, control and visualization for parametric definitions in Grasshopper (Rhino 8): Pill wireless bus, " +
+            "DataTrees, linear algebra, statistics and machine learning, charts and technical drawing, data persistence and provenance, " +
+            "performance diagnostics and on-canvas dashboards.";
         public override string AuthorName => "Jefferson Freire Ribeiro";
         public override string AuthorContact => "https://github.com/jeffersonfreireribeiro-hash/glaux_tools";
         public override string Version => "1.0.1.0";
