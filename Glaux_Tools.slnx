@@ -2,4 +2,7 @@
   <Folder Name="/src/">
     <Project Path="src/Glaux_Tools.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Glaux_Tools.Tests/Glaux_Tools.Tests.csproj" />
+  </Folder>
 </Solution>

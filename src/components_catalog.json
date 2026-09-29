@@ -1,9 +1,87 @@
 ﻿[
   {
+    "File": "AnovaFTest_Component.cs",
+    "Name": "ANOVA & F-Test (Variance & Means)",
+    "NickName": "ANOVA",
+    "Category": "Glaux Tools",
+    "SubCategory": "Statistics",
+    "Description": "Executa a Análise de Variância One-Way (ANOVA F-Test = MS_between / MS_within), Teste F de Razão de Variâncias (F = s1² / s2²) e Teste de Aderência Qui-Quadrado (χ² = Σ(O - E)² / E) com p-valores exatos e tabela ANOVA.",
+    "Inputs": [
+      {
+        "Name": "Groups / Data",
+        "Nick": "D",
+        "Type": "Generic",
+        "Desc": "Árvore de dados numéricos onde cada ramo {k} representa um grupo/tratamento para ANOVA One-Way (ou lista de dados observados)."
+      },
+      {
+        "Name": "Second Group",
+        "Nick": "G2",
+        "Type": "Number",
+        "Desc": "Opcional: segundo grupo de dados numéricos para teste F de duas variâncias F = s1² / s2²."
+      },
+      {
+        "Name": "Expected",
+        "Nick": "Exp",
+        "Type": "Number",
+        "Desc": "Opcional: frequências ou valores esperados E para teste Qui-Quadrado χ² = Σ(O - E)² / E."
+      },
+      {
+        "Name": "Alpha Level",
+        "Nick": "α",
+        "Type": "Number",
+        "Desc": "Nível de significância estatística α (ex.: 0.05 para 95% de confiança). Padrão: 0.05."
+      }
+    ],
+    "Outputs": [
+      {
+        "Name": "F-Statistic",
+        "Nick": "F",
+        "Type": "Number",
+        "Desc": "Estatística F calculada: MS_between / MS_within para ANOVA ou s1² / s2² para 2 grupos."
+      },
+      {
+        "Name": "p-Value",
+        "Nick": "p",
+        "Type": "Number",
+        "Desc": "P-valor exato da distribuição F sob a hipótese nula H0."
+      },
+      {
+        "Name": "F-Critical",
+        "Nick": "F_crit",
+        "Type": "Number",
+        "Desc": "Valor crítico de corte F_(α, df1, df2)."
+      },
+      {
+        "Name": "Reject H0",
+        "Nick": "H0_Rej",
+        "Type": "Boolean",
+        "Desc": "Booleano True se p < α (há diferença estatisticamente significativa entre as médias/variâncias dos grupos)."
+      },
+      {
+        "Name": "Chi-Square χ²",
+        "Nick": "χ²",
+        "Type": "Number",
+        "Desc": "Estatística Qui-Quadrado de aderência χ² = Σ(O - E)² / E."
+      },
+      {
+        "Name": "Chi p-Value",
+        "Nick": "p_Chi",
+        "Type": "Number",
+        "Desc": "P-valor da distribuição Qui-Quadrado para a estatística χ²."
+      },
+      {
+        "Name": "Report",
+        "Nick": "Rep",
+        "Type": "Text",
+        "Desc": "Tabela ANOVA completa e relatório interpretativo de hipótese."
+      }
+    ]
+  },
+  {
     "File": "BatchDistinct_Component.cs",
     "Name": "Batch Distinct (Keep Order & Map)",
     "NickName": "Distinct",
-    "Category": "Buraqueira Tools",
+    "Category": "Glaux Tools",
     "SubCategory": "Tree",
     "Description": "Extrai elementos únicos preservando a ordem original de aparição, retornando a contagem de frequências, índices da primeira ocorrência e o mapa de índices mapeados.",
     "Inputs": [
@@ -63,7 +141,7 @@
     "File": "BetaDistribution_Component.cs",
     "Name": "Beta Distribution (BETA.DIST / BETA.INV)",
     "NickName": "BetaDist",
-    "Category": "Buraqueira Tools",
+    "Category": "Glaux Tools",
     "SubCategory": "Statistics",
     "Description": "Calcula a distribuição cumulativa Beta (BETA.DIST), a função de densidade de probabilidade (PDF) e a função inversa (BETA.INV), compatível com Microsoft Excel 2010+.",
     "Inputs": [
@@ -135,7 +213,7 @@
     "File": "BinomialDistribution_Component.cs",
     "Name": "Binomial Distribution (BINOM.DIST / BINOM.INV)",
     "NickName": "BinomDist",
-    "Category": "Buraqueira Tools",
+    "Category": "Glaux Tools",
     "SubCategory": "Statistics",
     "Description": "Calcula a probabilidade da distribuição binomial individual ou cumulativa (BINOM.DIST), intervalo de probabilidade (BINOM.DIST.INTERVALO / BINOM.DIST.RANGE) e o inverso (BINOM.INV), compatível com Microsoft Excel 2010/2013+.",
     "Inputs": [
@@ -210,10 +288,106 @@
     ]
   },
   {
+    "File": "ChartBoxPlot_Component.cs",
+    "Name": "Box Plot Distribution",
+    "NickName": "ChartBoxPlot",
+    "Category": "Glaux Tools",
+    "SubCategory": "Visual",
+    "Description": "Gera gráficos Box Plot (Box-and-Whisker plot / gráfico de dispersão populacional com quartis, mediana, bigodes e outliers) diretamente dentro da caixa do componente no Canvas do Grasshopper. - Aceita dados numéricos por Árvore (DataTree) onde cada ramo é uma banda de oitava ou grupo independente; - Calcula Min, Q1 (25%), Mediana (50%), Média, Q3 (75%), Max, IQR e pontos Outliers de forma analítica; - Renderiza no Canvas com tema escuro e inclui botão '📷 Salvar PNG' para exportação em altíssima resolução com fundo branco pronta para publicação.",
+    "Inputs": [
+      {
+        "Name": "Data",
+        "Nick": "D",
+        "Type": "Generic",
+        "Desc": "Dados numéricos organizados em Árvore (DataTree) ou Lista. "
+      },
+      {
+        "Name": "Labels",
+        "Nick": "L",
+        "Type": "Text",
+        "Desc": "Rótulos para cada coluna/banda no eixo X (ex: '125 Hz', '250 Hz', '500 Hz'...). Se omitido, adota as frequências de oitava padrão ou caminhos do ramo."
+      },
+      {
+        "Name": "Title",
+        "Nick": "T",
+        "Type": "Text",
+        "Desc": "Título principal do gráfico. Padrão: 'Dispersão populacional por banda de oitava'."
+      },
+      {
+        "Name": "Y Label",
+        "Nick": "YLab",
+        "Type": "Text",
+        "Desc": "Rótulo do eixo vertical Y (ex: 'Valor da média' ou 'Valor da variância'). Padrão: 'Valor da média'."
+      },
+      {
+        "Name": "X Label",
+        "Nick": "XLab",
+        "Type": "Text",
+        "Desc": "Rótulo do eixo horizontal X (ex: 'Banda de oitava'). Padrão: 'Banda de oitava'."
+      },
+      {
+        "Name": "Box Colors",
+        "Nick": "Col",
+        "Type": "Generic",
+        "Desc": "Cor(es) de preenchimento das caixas do gráfico. Aceita cor única (ex: Coral '#EC949A' ou Ardósia '#8E9EB2') ou lista de cores."
+      },
+      {
+        "Name": "Show Outliers",
+        "Nick": "Out",
+        "Type": "Boolean",
+        "Desc": "Exibir marcadores circulares de outliers além dos bigodes (1.5 * IQR). Padrão: true."
+      },
+      {
+        "Name": "Export Folder",
+        "Nick": "Folder",
+        "Type": "Text",
+        "Desc": "Pasta de destino para exportação da imagem PNG. Se vazio, adota a Área de Trabalho (Desktop)."
+      },
+      {
+        "Name": "Save Image",
+        "Nick": "Save",
+        "Type": "Boolean",
+        "Desc": "Gatilho booleano para salvar imagem PNG em alta resolução (300 DPI) com fundo branco pronta para publicação."
+      }
+    ],
+    "Outputs": [
+      {
+        "Name": "Chart Image",
+        "Nick": "Img",
+        "Type": "Generic",
+        "Desc": "Imagem renderizada do gráfico Box Plot (System.Drawing.Bitmap)."
+      },
+      {
+        "Name": "Statistics",
+        "Nick": "Stats",
+        "Type": "Number",
+        "Desc": "Árvore com o resumo estatístico por coluna: "
+      },
+      {
+        "Name": "Outliers",
+        "Nick": "Outliers",
+        "Type": "Number",
+        "Desc": "Árvore contendo os valores exatos identificados como outliers em cada coluna."
+      },
+      {
+        "Name": "Summary Table",
+        "Nick": "Table",
+        "Type": "Text",
+        "Desc": "Tabela textual formatada com o resumo estatístico descritivo de cada grupo/banda."
+      },
+      {
+        "Name": "Saved PNG",
+        "Nick": "PNG",
+        "Type": "Text",
+        "Desc": "Caminho absoluto do arquivo de imagem PNG salvo."
+      }
+    ]
+  },
+  {
     "File": "CentralTendency_Component.cs",
     "Name": "Central Tendency",
     "NickName": "CenterStat",
-    "Category": "Buraqueira Tools",
+    "Category": "Glaux Tools",
     "SubCategory": "Statistics",
     "Description": "Calcula medidas de tendência central: Média Aritmética (Mean), Mediana (Median), Moda(s) (Mode), Mínimo, Máximo, Amplitude e Contagem.",
     "Inputs": [
@@ -273,7 +447,7 @@
     "File": "ChiSquareDistribution_Component.cs",
     "Name": "Chi-Square Distribution (CHISQ.DIST / CHISQ.INV)",
     "NickName": "ChiSqDist",
-    "Category": "Buraqueira Tools",
+    "Category": "Glaux Tools",
     "SubCategory": "Statistics",
     "Description": "Calcula a distribuição Qui-Quadrado cumulativa (CHISQ.DIST), densidade de probabilidade (PDF) e a função inversa (CHISQ.INV), compatível com Microsoft Excel 2010+.",
     "Inputs": [
@@ -324,10 +498,166 @@
     ]
   },
   {
+    "File": "ClassificationMetrics_Component.cs",
+    "Name": "Classification & Tree Metrics (Gini, InfoGain, Logit)",
+    "NickName": "ClassMetrics",
+    "Category": "Glaux Tools",
+    "SubCategory": "Evaluation",
+    "Description": "Calcula métricas essenciais de classificação, regressão logística e árvores de decisão (CART, C4.5, ID3): - Odds = p / (1 - p) - Logit = ln(p / (1 - p)) - Sigmóide Inversa = 1 / (1 + e^-z) - Gini Impurity (Índice de Gini) = 1 - Σ p_i² - Information Gain (Ganho de Informação) = H(parent) - Σ (n_i / n) * H(child_i) - Gini Gain / Redução de Impureza no split.",
+    "Inputs": [
+      {
+        "Name": "Probabilities / Counts",
+        "Nick": "P",
+        "Type": "Number",
+        "Desc": "Probabilidade escalar p em (0, 1) ou lista com as contagens/frequências das classes no nó pai (Parent)."
+      },
+      {
+        "Name": "Child Partitions",
+        "Nick": "Children",
+        "Type": "Generic",
+        "Desc": "Árvore opcional onde cada ramo {k} representa um nó filho após uma partição, contendo as contagens das classes naquele ramo."
+      },
+      {
+        "Name": "Log Base",
+        "Nick": "Base",
+        "Type": "Integer",
+        "Desc": "Base do logaritmo para cálculo da entropia: 0 = Base 2 (Bits / Shannons - Padrão C4.5/ID3) 1 = Base e (Nats) 2 = Base 10 (Hartleys)"
+      }
+    ],
+    "Outputs": [
+      {
+        "Name": "Odds",
+        "Nick": "Odds",
+        "Type": "Number",
+        "Desc": "Razão de chances: Odds = p / (1 - p)."
+      },
+      {
+        "Name": "Logit",
+        "Nick": "Logit",
+        "Type": "Number",
+        "Desc": "Log dos odds: Logit(p) = ln(p / (1 - p))."
+      },
+      {
+        "Name": "Sigmoid",
+        "Nick": "Sigmoid",
+        "Type": "Number",
+        "Desc": "Função sigmóide inversa σ(z) = 1 / (1 + e^-z) calculada a partir do primeiro valor de P."
+      },
+      {
+        "Name": "Gini Impurity",
+        "Nick": "Gini",
+        "Type": "Number",
+        "Desc": "Impureza de Gini do nó pai: G = 1 - Σ p_i² (0 = 100% puro; máx 0.5 para binário)."
+      },
+      {
+        "Name": "Parent Entropy",
+        "Nick": "H",
+        "Type": "Number",
+        "Desc": "Entropia de Shannon do nó pai: H(X) = -Σ p_i log(p_i)."
+      },
+      {
+        "Name": "Information Gain",
+        "Nick": "IG",
+        "Type": "Number",
+        "Desc": "Ganho de Informação da partição: IG = H(pai) - Σ (n_i / n) * H(filho_i)."
+      },
+      {
+        "Name": "Gini Gain",
+        "Nick": "ΔGini",
+        "Type": "Number",
+        "Desc": "Redução da impureza de Gini com a partição: G(pai) - Σ (n_i / n) * G(filho_i)."
+      },
+      {
+        "Name": "Split Entropy",
+        "Nick": "H_split",
+        "Type": "Number",
+        "Desc": "Entropia residual ponderada média dos nós filhos."
+      },
+      {
+        "Name": "Report",
+        "Nick": "Rep",
+        "Type": "Text",
+        "Desc": "Relatório interpretativo detalhado de pureza e ganho de divisão."
+      }
+    ]
+  },
+  {
+    "File": "ClusterValidation_Component.cs",
+    "Name": "Cluster Validation (Mahalanobis & Silhouette)",
+    "NickName": "ClusterEval",
+    "Category": "Glaux Tools",
+    "SubCategory": "Evaluation",
+    "Description": "Avalia a qualidade de agrupamentos e distâncias multivariadas: - Coeficiente de Silhueta (Silhouette Score) s = (b - a) / max(a, b) pontual e global - Distância de Mahalanobis D² = (x - μ)ᵀ Σ⁻¹ (x - μ) sensível à covariância multivariada - Diagnóstico de coesão intra-cluster, separabilidade inter-cluster e detecção de anomalias.",
+    "Inputs": [
+      {
+        "Name": "Points / Vectors",
+        "Nick": "D",
+        "Type": "Generic",
+        "Desc": "Pontos ou vetores multidimensionais. Aceita lista de Point3d ou Árvore onde cada ramo {i} é um vetor de atributos numéricos."
+      },
+      {
+        "Name": "Cluster Labels",
+        "Nick": "Clusters",
+        "Type": "Integer",
+        "Desc": "Lista de rótulos de cluster para cada ponto (0, 1, ..., K-1)."
+      },
+      {
+        "Name": "Center / Mean μ",
+        "Nick": "μ",
+        "Type": "Generic",
+        "Desc": "Ponto ou vetor médio de referência opcional para a distância de Mahalanobis. Se omitido, calcula o centroide empírico dos dados."
+      },
+      {
+        "Name": "Covariance Matrix",
+        "Nick": "Cov",
+        "Type": "Generic",
+        "Desc": "Matriz de covariância opcional Σ (d x d). Se omitida, calcula a covariância empírica dos dados automaticamente."
+      }
+    ],
+    "Outputs": [
+      {
+        "Name": "Silhouette Scores",
+        "Nick": "s",
+        "Type": "Number",
+        "Desc": "Coeficiente de Silhueta individual de cada ponto s_i em [-1, 1]. (> 0.5 bom agrupamento; < 0 mal classificado)."
+      },
+      {
+        "Name": "Mean Silhouette",
+        "Nick": "Avg_s",
+        "Type": "Number",
+        "Desc": "Silhueta média global do modelo de clustering."
+      },
+      {
+        "Name": "Cluster Silhouettes",
+        "Nick": "Cluster_s",
+        "Type": "Number",
+        "Desc": "Silhueta média por cada cluster individual (K valores)."
+      },
+      {
+        "Name": "Mahalanobis D²",
+        "Nick": "D²",
+        "Type": "Number",
+        "Desc": "Distância quadrática de Mahalanobis D² de cada ponto em relação ao centro ponderada pela covariância."
+      },
+      {
+        "Name": "Mahalanobis Dist",
+        "Nick": "D",
+        "Type": "Number",
+        "Desc": "Distância de Mahalanobis métrica D = √(D²)."
+      },
+      {
+        "Name": "Report",
+        "Nick": "Rep",
+        "Type": "Text",
+        "Desc": "Diagnóstico de validação de agrupamento e separabilidade."
+      }
+    ]
+  },
+  {
     "File": "SumIf_Component.cs",
     "Name": "Conditional Math (SumIf / SomaSe)",
     "NickName": "SomaSe",
-    "Category": "Buraqueira Tools",
+    "Category": "Glaux Tools",
     "SubCategory": "Statistics",
     "Description": "Executa operações condicionais no estilo Excel (SOMASE, SOMASES, CONT.SE, MÉDIA.SE, MULT.SE). Avalia critérios numéricos ou expressões de texto (ex.: '>50', '<=0', '=A', '!=0') e máscaras booleanas, com suporte a intervalo de soma separado.",
     "Inputs": [
@@ -387,7 +717,7 @@
     "File": "ConditionalTimer_Component.cs",
     "Name": "Conditional Timer / Smart Watcher",
     "NickName": "SmartTimer",
-    "Category": "Buraqueira Tools",
+    "Category": "Glaux Tools",
     "SubCategory": "Automation",
     "Description": "Temporizador inteligente e sentinela condicional (Watcher). Executa ciclos ou gravações apenas quando critérios forem atingidos, com controle estrito de disparos máximos (One-Shot, Burst ou Polling) para prevenir loops infinitos e travamentos.",
     "Inputs": [
@@ -425,7 +755,7 @@
         "Name": "Mode",
         "Nick": "M",
         "Type": "Integer",
-        "Desc": "Modo de Operação:\\n0 = One-Shot (Dispara 1 vez na transição False->True e desarma)\\n1 = Burst Mode (Dispara N passos com intervalo 'ms' enquanto True)\\n2 = Polling Watcher (Checa a cada 'ms'; no momento em que a condição for True, dispara e desarma)\\n3 = Gated Stream (Timer contínuo enquanto True, com trava de segurança em Max)"
+        "Desc": "Modo de Operação: 0 = One-Shot (Dispara 1 vez na transição False->True e desarma) 1 = Burst Mode (Dispara N passos com intervalo 'ms' enquanto True) 2 = Polling Watcher (Checa a cada 'ms'; no momento em que a condição for True, dispara e desarma) 3 = Gated Stream (Timer contínuo enquanto True, com trava de segurança em Max)"
       },
       {
         "Name": "Reset / Re-Arm",
@@ -477,7 +807,7 @@
     "File": "ConditionalTrigger_Component.cs",
     "Name": "Conditional Trigger / Debounced Watcher",
     "NickName": "Trigger",
-    "Category": "Buraqueira Tools",
+    "Category": "Glaux Tools",
     "SubCategory": "Automation",
     "Description": "Dispara a recomputação a jusante apenas em borda de subida (False -> True), mudança de estado ou após um intervalo de estabilidade (Debounce) para evitar travamentos por sliders oscilantes.",
     "Inputs": [
@@ -497,7 +827,7 @@
         "Name": "Mode",
         "Nick": "M",
         "Type": "Integer",
-        "Desc": "Modo de disparo:\\n0 = Borda de Subida (Rising Edge: False -> True)\\n1 = Debounce / Estabilidade (espera ms sem oscilações antes de disparar)\\n2 = Mudança de Valor (qualquer transição True/False)\\n3 = Pass-Through contínuo enquanto True"
+        "Desc": "Modo de disparo: 0 = Borda de Subida (Rising Edge: False -> True) 1 = Debounce / Estabilidade (espera ms sem oscilações antes de disparar) 2 = Mudança de Valor (qualquer transição True/False) 3 = Pass-Through contínuo enquanto True"
       },
       {
         "Name": "Debounce Ms",
@@ -540,10 +870,94 @@
     ]
   },
   {
+    "File": "ConfidenceInterval_Component.cs",
+    "Name": "Confidence Interval & t-Score",
+    "NickName": "ConfInterval",
+    "Category": "Glaux Tools",
+    "SubCategory": "Statistics",
+    "Description": "Calcula o Intervalo de Confiança para a Média (com σ conhecido via Z-Score ou desconhecido via t de Student), Margem de Erro E, Erro Padrão SE, estatística de teste t/Z e p-valor bilateral para hipóteses.",
+    "Inputs": [
+      {
+        "Name": "Values",
+        "Nick": "V",
+        "Type": "Number",
+        "Desc": "Amostra de dados numéricos (lista)."
+      },
+      {
+        "Name": "Confidence Level",
+        "Nick": "Conf",
+        "Type": "Number",
+        "Desc": "Nível de confiança desejado (1 - α), por exemplo 0.90, 0.95 ou 0.99. Padrão: 0.95 (95%)."
+      },
+      {
+        "Name": "Known StdDev",
+        "Nick": "σ",
+        "Type": "Number",
+        "Desc": "Desvio padrão populacional conhecido opcional σ. Se omitido ou <= 0, utiliza o desvio padrão amostral s com a distribuição t de Student."
+      },
+      {
+        "Name": "Null Mean μ0",
+        "Nick": "μ0",
+        "Type": "Number",
+        "Desc": "Média sob a hipótese nula H0 (μ = μ0) para cálculo do t-score e z-score. Padrão: 0.0."
+      }
+    ],
+    "Outputs": [
+      {
+        "Name": "Confidence Interval",
+        "Nick": "CI",
+        "Type": "Interval",
+        "Desc": "Intervalo de confiança [x̄ - E, x̄ + E] como um Interval do Grasshopper."
+      },
+      {
+        "Name": "Margin of Error",
+        "Nick": "E",
+        "Type": "Number",
+        "Desc": "Margem de erro: E = t_(α/2) * (s / √n) ou Z_(α/2) * (σ / √n)."
+      },
+      {
+        "Name": "Standard Error",
+        "Nick": "SE",
+        "Type": "Number",
+        "Desc": "Erro padrão da média: SE = s / √n (ou σ / √n)."
+      },
+      {
+        "Name": "t-Score / Z-Score",
+        "Nick": "Score",
+        "Type": "Number",
+        "Desc": "Estatística de teste calculada para a média: t = (x̄ - μ0) / SE."
+      },
+      {
+        "Name": "p-Value",
+        "Nick": "p",
+        "Type": "Number",
+        "Desc": "P-valor bilateral correspondente à hipótese nula H0: μ = μ0."
+      },
+      {
+        "Name": "Critical Value",
+        "Nick": "Crit",
+        "Type": "Number",
+        "Desc": "Valor crítico de corte t_(α/2) ou Z_(α/2)."
+      },
+      {
+        "Name": "Sample Mean",
+        "Nick": "x̄",
+        "Type": "Number",
+        "Desc": "Média aritmética calculada da amostra."
+      },
+      {
+        "Name": "Report",
+        "Nick": "Rep",
+        "Type": "Text",
+        "Desc": "Relatório de inferência estatística formatado."
+      }
+    ]
+  },
+  {
     "File": "ConvergenceWatcher_Component.cs",
     "Name": "Convergence Watcher (Stop Condition)",
     "NickName": "Converge",
-    "Category": "Buraqueira Tools",
+    "Category": "Glaux Tools",
     "SubCategory": "Automation",
     "Description": "Monitora a taxa de variação (|Δx| / |x_t-1| < ε) em processos iterativos, otimizações ou solvers e emite um sinal booleano de parada (Stop) após N passos consecutivos estáveis.",
     "Inputs": [
@@ -569,7 +983,7 @@
         "Name": "Metric Mode",
         "Nick": "M",
         "Type": "Integer",
-        "Desc": "Métrica de convergência:\\n0 = Variação Relativa Média (|Δx| / |x_t-1|)\\n1 = Variação Absoluta Média (|Δx|)\\n2 = Variação Relativa Máxima (Max |Δx_i| / |x_t-1,i|)\\n3 = RMS Delta (Raiz do erro quadrático da variação)"
+        "Desc": "Métrica de convergência: 0 = Variação Relativa Média (|Δx| / |x_t-1|) 1 = Variação Absoluta Média (|Δx|) 2 = Variação Relativa Máxima (Max |Δx_i| / |x_t-1,i|) 3 = RMS Delta (Raiz do erro quadrático da variação)"
       },
       {
         "Name": "Reset",
@@ -621,7 +1035,7 @@
     "File": "CovarianceCorrelation_Component.cs",
     "Name": "Covariance & Correlation",
     "NickName": "CovCorr",
-    "Category": "Buraqueira Tools",
+    "Category": "Glaux Tools",
     "SubCategory": "Evaluation",
     "Description": "Calcula a Correlação Linear de Pearson (r), Correlação de Postos de Spearman (ρ) e a Covariância Amostral/Populacional entre dois conjuntos pareados de dados.",
     "Inputs": [
@@ -681,7 +1095,7 @@
     "File": "DataGenerationTimer_Component.cs",
     "Name": "Data Generation Stopwatch & Benchmark",
     "NickName": "DataTimer",
-    "Category": "Buraqueira Tools",
+    "Category": "Glaux Tools",
     "SubCategory": "Automation",
     "Description": "Contador de tempo de geração de dados, perfilador de performance (Profiler) e cronômetro analítico. - Mede o tempo exato (ms e s) gasto para calcular e gerar dados no Grasshopper. - Modo Pass-Through: repassa os dados intactos e computa custo unitário (ms/item) e vazão (itens/s). - Modos de Medição: Upstream Profiler (processador dos componentes a montante), Solução do Documento, Intervalo Delta e Cronômetro Contínuo. - Estatísticas acumuladas: Média, Mínimo, Máximo, Desvio Padrão e Histórico para gráficos (ChartLine).",
     "Inputs": [
@@ -701,7 +1115,7 @@
         "Name": "Mode",
         "Nick": "M",
         "Type": "Integer",
-        "Desc": "Modo de Medição do Tempo:\\n"
+        "Desc": "Modo de Medição do Tempo: "
       },
       {
         "Name": "Reset",
@@ -783,7 +1197,7 @@
     "File": "DataGroupFinder_Component.cs",
     "Name": "Data Group Finder (Cluster & Runs)",
     "NickName": "GroupFinder",
-    "Category": "Buraqueira Tools",
+    "Category": "Glaux Tools",
     "SubCategory": "Tree",
     "Description": "Encontra e segmenta automaticamente grupos de dados através de múltiplos métodos: ilhas de repetição consecutivas (runs), clusters de proximidade contínua, faixas de limiares (thresholds) ou quantis. Retorna grupos em DataTree com métricas e IDs 1:1.",
     "Inputs": [
@@ -846,10 +1260,88 @@
     ]
   },
   {
+    "File": "PillInterpolator_Component.cs",
+    "Name": "Data Interpolator (Gap Filler & Resampler)",
+    "NickName": "DataInterp",
+    "Category": "Glaux Tools",
+    "SubCategory": "Transform",
+    "Description": "Interpola valores numéricos em listas e árvores de dados (DataTree) preenchendo automaticamente lacunas (null, NaN, vazios, '?') e reamostrando tamanhos de listas. - Se informado um 'Target Count' (ex: 63), expande ou contrai suavemente uma lista de 29 valores para exatamente 63 valores; - Se informada uma lista de contagens [N1, N2...], particiona e interpola suavemente entre nós; - Se 'Target Count' for omitido, preenche apenas as lacunas mantendo o tamanho original da lista/ramos; - Suporta múltiplos métodos: Linear, Cosseno (Smooth), Cúbico (Spline) e Degrau (Nearest); - Emite a lista interpolada completa, árvore particionada, máscara booleana paralela (True = original, False = interpolado) e contagens; - Integrado à família Pill com badge [NUM] e transmissão sem fios no PillHub via parâmetro Key.",
+    "Inputs": [
+      {
+        "Name": "Values",
+        "Nick": "V",
+        "Type": "Generic",
+        "Desc": "Lista ou Árvore de dados (DataTree) contendo os valores numéricos e eventuais lacunas (null, NaN, vazios, '?')."
+      },
+      {
+        "Name": "Target Count / Slices",
+        "Nick": "N",
+        "Type": "Integer",
+        "Desc": "Quantidade alvo de pontos desejada após interpolação (ex: informe 63 para reamostrar uma lista de 29 valores para exatamente 63 valores!), ou lista de contagens para particionamento. Se omitido, preserva o tamanho original preenchendo apenas as lacunas."
+      },
+      {
+        "Name": "Method",
+        "Nick": "M",
+        "Type": "Integer",
+        "Desc": "Método matemático de interpolação: "
+      },
+      {
+        "Name": "Extrapolate",
+        "Nick": "Ext",
+        "Type": "Integer",
+        "Desc": "Tratamento de lacunas nas bordas (início ou fim): "
+      },
+      {
+        "Name": "Key",
+        "Nick": "K",
+        "Type": "Text",
+        "Desc": "Nome opcional do canal Pill para transmissão sem fios automática dos valores interpolados via PillHub (categoria [NUM])."
+      },
+      {
+        "Name": "Active",
+        "Nick": "Active",
+        "Type": "Boolean",
+        "Desc": "Liga ou desliga a interpolação. Se False, opera em pass-through sem preencher lacunas."
+      }
+    ],
+    "Outputs": [
+      {
+        "Name": "Values",
+        "Nick": "V",
+        "Type": "Number",
+        "Desc": "Árvore com os valores numéricos contínuos totalmente interpolados e sem lacunas (tipo double / GH_Number)."
+      },
+      {
+        "Name": "Data",
+        "Nick": "D",
+        "Type": "Generic",
+        "Desc": "Estrutura em árvore de dados (DataTree) particionada em ramos conforme a quantidade de indivíduos de cada parte."
+      },
+      {
+        "Name": "Mask",
+        "Nick": "M",
+        "Type": "Boolean",
+        "Desc": "Máscara booleana paralela: True = dado original válido existente; False = valor interpolado / lacuna preenchida."
+      },
+      {
+        "Name": "Counts",
+        "Nick": "C",
+        "Type": "Integer",
+        "Desc": "Lista com a contagem real de indivíduos resultante em cada ramo/parte."
+      },
+      {
+        "Name": "Gaps Filled",
+        "Nick": "G",
+        "Type": "Integer",
+        "Desc": "Quantidade total de lacunas / valores ausentes preenchidos com sucesso por interpolação."
+      }
+    ]
+  },
+  {
     "File": "DataNormalization_Component.cs",
     "Name": "Data Normalization",
     "NickName": "Norm",
-    "Category": "Buraqueira Tools",
+    "Category": "Glaux Tools",
     "SubCategory": "Transform",
     "Description": "Normaliza e padroniza conjuntos de dados numéricos usando Min-Max customizável, Z-Score ((x - μ) / σ), Sigmóide Logística, Logarítmica ou Softmax.",
     "Inputs": [
@@ -863,7 +1355,7 @@
         "Name": "Method",
         "Nick": "M",
         "Type": "Integer",
-        "Desc": "Método de normalização:\\n0 = Min-Max personalizado [min, max]\\n1 = Z-Score ((x - μ) / σ)\\n2 = Sigmóide Logística (1 / (1 + e^-z))\\n3 = Logarítmica (sign(x) * ln(1 + |x|))\\n4 = Softmax (probabilidades que somam 1.0)"
+        "Desc": "Método de normalização: 0 = Min-Max personalizado [min, max] 1 = Z-Score ((x - μ) / σ) 2 = Sigmóide Logística (1 / (1 + e^-z)) 3 = Logarítmica (sign(x) * ln(1 + |x|)) 4 = Softmax (probabilidades que somam 1.0)"
       },
       {
         "Name": "Target Min",
@@ -909,7 +1401,7 @@
     "File": "DataStack_Component.cs",
     "Name": "Data Stack (VSTACK / HSTACK)",
     "NickName": "DataStack",
-    "Category": "Buraqueira Tools",
+    "Category": "Glaux Tools",
     "SubCategory": "Tree",
     "Description": "Empilha e combina conjuntos de dados em pilha vertical (VSTACK / concatenação de ramos) ou horizontal (HSTACK / alinhamento de colunas/matrizes lado a lado com preenchimento seguro), similar às novas funções de matriz do Excel e NumPy.",
     "Inputs": [
@@ -966,10 +1458,118 @@
     ]
   },
   {
+    "File": "DataTableVisualizer_Component.cs",
+    "Name": "Data Table Visualizer",
+    "NickName": "TableViz",
+    "Category": "Glaux Tools",
+    "SubCategory": "Visual",
+    "Description": "Visualizador interativo de tabelas de dados no Canvas do Grasshopper:   - Renderiza o grid de dados com numeração de linhas, cabeçalho e zebra   - Escolha de intervalo/fatia de linhas visíveis (Interval/Domain ou paginação)   - Busca textual ou seleção por índice com linha destacada em ouro brilhante   - Clique interativo nas linhas do canvas para selecionar e emitir nos outputs   - Botões de navegação e exportação rápida (CSV e PNG).",
+    "Inputs": [
+      {
+        "Name": "Data",
+        "Nick": "D",
+        "Type": "Generic",
+        "Desc": "Árvore ou lista de dados a ser exibida na tabela. "
+      },
+      {
+        "Name": "Headers",
+        "Nick": "H",
+        "Type": "Text",
+        "Desc": "Nomes das colunas da tabela. Se omitido, gera automaticamente 'Col 0, Col 1...' ou usa os caminhos dos ramos."
+      },
+      {
+        "Name": "Row Range",
+        "Nick": "Range",
+        "Type": "Generic",
+        "Desc": "Intervalo de linhas a serem visualizadas. "
+      },
+      {
+        "Name": "Search / Select",
+        "Nick": "Sel",
+        "Type": "Generic",
+        "Desc": "Linha para buscar e destacar na tabela: "
+      },
+      {
+        "Name": "Page Size",
+        "Nick": "N",
+        "Type": "Integer",
+        "Desc": "Quantidade de linhas visíveis por página quando não for fornecido um intervalo explícito (padrão: 20)."
+      },
+      {
+        "Name": "Table Mode",
+        "Nick": "Mode",
+        "Type": "Integer",
+        "Desc": "Interpretação da estrutura da árvore: "
+      },
+      {
+        "Name": "Title",
+        "Nick": "T",
+        "Type": "Text",
+        "Desc": "Título exibido no cabeçalho superior do visualizador no canvas."
+      },
+      {
+        "Name": "Width",
+        "Nick": "W",
+        "Type": "Integer",
+        "Desc": "Largura em pixels da tabela no canvas (mínimo: 320 px, padrão: 520 px)."
+      },
+      {
+        "Name": "Row Height",
+        "Nick": "RowH",
+        "Type": "Integer",
+        "Desc": "Altura em pixels de cada linha da tabela (padrão: 22 px)."
+      }
+    ],
+    "Outputs": [
+      {
+        "Name": "Visible Data",
+        "Nick": "Vis",
+        "Type": "Generic",
+        "Desc": "Fatia de dados que está atualmente visível no intervalo filtrado (DataTree onde cada ramo é uma coluna)."
+      },
+      {
+        "Name": "Selected Row",
+        "Nick": "Row",
+        "Type": "Text",
+        "Desc": "Valores de todas as colunas da linha atualmente destacada/selecionada."
+      },
+      {
+        "Name": "Selected Index",
+        "Nick": "iSel",
+        "Type": "Integer",
+        "Desc": "Índice global (0-indexed) da linha destacada (-1 se nenhuma linha estiver selecionada)."
+      },
+      {
+        "Name": "Match Indices",
+        "Nick": "iMatch",
+        "Type": "Integer",
+        "Desc": "Lista dos índices globais de todas as linhas que atenderam ao critério de busca textual."
+      },
+      {
+        "Name": "Total Rows",
+        "Nick": "Rows",
+        "Type": "Integer",
+        "Desc": "Quantidade total de linhas da tabela completa."
+      },
+      {
+        "Name": "Total Columns",
+        "Nick": "Cols",
+        "Type": "Integer",
+        "Desc": "Quantidade de colunas da tabela."
+      },
+      {
+        "Name": "Summary",
+        "Nick": "Info",
+        "Type": "Text",
+        "Desc": "Relatório resumido estruturado da tabela, intervalo exibido e linha destacada."
+      }
+    ]
+  },
+  {
     "File": "DeepPathReplace_Component.cs",
     "Name": "Deep Path Replace (RegEx)",
     "NickName": "PathRegEx",
-    "Category": "Buraqueira Tools",
+    "Category": "Glaux Tools",
     "SubCategory": "Tree",
     "Description": "Renomeia, reorganiza e modifica os caminhos GH_Path de uma árvore utilizando Expressões Regulares (RegEx), grupos de captura ($1, $2) e aritmética de índices.",
     "Inputs": [
@@ -1017,7 +1617,7 @@
     "File": "DuplicateDataInspector_Component.cs",
     "Name": "Duplicate Data Inspector",
     "NickName": "DupInspector",
-    "Category": "Buraqueira Tools",
+    "Category": "Glaux Tools",
     "SubCategory": "Tree",
     "Description": "Inspeciona, detecta e extrai dados e linhas repetidas em DataTrees e Tabelas. - MODO TABELA: cada ramo é uma coluna e cada índice é uma linha da tabela, comparando linhas completas. - Modos Por Ramo, Global e Ramo contra Ramo. - Retorna valores/linhas repetidos, quantidade de grupos repetidos, frequências, máscara para Cull Pattern e relatório.",
     "Inputs": [
@@ -1037,7 +1637,7 @@
         "Name": "Mode",
         "Nick": "M",
         "Type": "Generic",
-        "Desc": "Modo de comparação alternativo:\\n0 = Por Ramo (Per Branch)\\n1 = Global (Toda a Árvore)\\n2 = Ramo contra Ramo (Branch vs Branch)\\n3 = Tabela (Table Mode: Ramos = Colunas, Índices = Linhas)\\nAceita números (0 a 3) ou texto ('PerBranch', 'Global', 'BranchVsBranch', 'Table', 'Tabela', 'Ultra')."
+        "Desc": "Modo de comparação alternativo: 0 = Por Ramo (Per Branch) 1 = Global (Toda a Árvore) 2 = Ramo contra Ramo (Branch vs Branch) 3 = Tabela (Table Mode: Ramos = Colunas, Índices = Linhas) Aceita números (0 a 3) ou texto ('PerBranch', 'Global', 'BranchVsBranch', 'Table', 'Tabela', 'Ultra')."
       },
       {
         "Name": "Tolerance",
@@ -1107,7 +1707,7 @@
     "File": "DynamicTreeWeaver_Component.cs",
     "Name": "Dynamic Tree Weaver",
     "NickName": "TreeWeave",
-    "Category": "Buraqueira Tools",
+    "Category": "Glaux Tools",
     "SubCategory": "Tree",
     "Description": "Intercala dinamicamente fluxos e ramos de árvores assimétricas respeitando padrões e chaves personalizadas sem a rigidez do Weave nativo.",
     "Inputs": [
@@ -1139,7 +1739,7 @@
         "Name": "Mode",
         "Nick": "M",
         "Type": "Integer",
-        "Desc": "Modo de intercalação:\\n0 = Por item dentro de cada caminho coincidente\\n1 = Por ramo completo\\n2 = Aplanar fluxos e tecer globalmente"
+        "Desc": "Modo de intercalação: 0 = Por item dentro de cada caminho coincidente 1 = Por ramo completo 2 = Aplanar fluxos e tecer globalmente"
       }
     ],
     "Outputs": [
@@ -1161,7 +1761,7 @@
     "File": "MatrixEigen_Component.cs",
     "Name": "Eigenvalues & Eigenvectors",
     "NickName": "MatEig",
-    "Category": "Buraqueira Tools",
+    "Category": "Glaux Tools",
     "SubCategory": "Matrix",
     "Description": "Calcula os Autovalores (λ) e Autovetores (v) de matrizes numéricas quadradas N x N (A · v = λ · v). - Utiliza o algoritmo de Jacobi com rotações cíclicas ortogonais de alta estabilidade numérica. - Ordena automaticamente por magnitude (maior para menor autovalor). - Essencial para análise modal acústica/estrutural, vibrações naturais e PCA (Análise de Componentes Principais).",
     "Inputs": [
@@ -1209,7 +1809,7 @@
     "File": "CSVExport_Component.cs",
     "Name": "Export CSV & Multi-Sheet Workbook",
     "NickName": "CSV_Out",
-    "Category": "Buraqueira Tools",
+    "Category": "Glaux Tools",
     "SubCategory": "I/O",
     "Description": "Exporta listas e árvores de dados (DataTree) para arquivos tabulares (.csv, .tsv, .txt) ou Pastas de Trabalho do Excel (.xls / .xml). - Suporte nativo a Multi-Sheet / Planilhas dentro de Planilhas: em ambientes em loop (timers, acumulação, otimização), grava cada ciclo como uma aba/planilha separada no mesmo arquivo Excel! - Controle de delimitador, cabeçalhos, nomes de planilhas e modo de sobrescrita/anexo.",
     "Inputs": [
@@ -1241,7 +1841,7 @@
         "Name": "Mode",
         "Nick": "M",
         "Type": "Integer",
-        "Desc": "Modo de gravação:\\n"
+        "Desc": "Modo de gravação: "
       },
       {
         "Name": "Write Trigger",
@@ -1281,7 +1881,7 @@
     "File": "FastPareto_Component.cs",
     "Name": "Fast Pareto Frontier (Multi-Objective Ranker)",
     "NickName": "Pareto",
-    "Category": "Buraqueira Tools",
+    "Category": "Glaux Tools",
     "SubCategory": "Tree",
     "Description": "Calcula a Fronteira de Pareto e classificação de Não-Dominância (NSGA-II) para múltiplos objetivos de fitness em alta performance. - Suporta tanto árvores onde cada ramo {i} é um indivíduo quanto tabelas importadas (CSV/Excel) onde os ramos {col} são colunas e os itens são as LINHAS. - Encontra a melhor linha (Top 1) e o ranking completo de todas as linhas da melhor para a pior. - Calcula os Ranks de Pareto (1, 2, 3...) e a Distância de Aglomeração (Crowding Distance para diversidade). - Permite filtrar quais colunas são os objetivos e extrair os Top N indivíduos ou apenas a Fronteira Rank 1 absoluta.",
     "Inputs": [
@@ -1295,7 +1895,7 @@
         "Name": "Directions",
         "Nick": "Dir",
         "Type": "Generic",
-        "Desc": "Direção para cada objetivo:\\n0 ou 'min' = Minimizar (Padrão: menor é melhor)\\n1 ou 'max' = Maximizar (maior é melhor).\\nSe omitido, minimiza todos os objetivos."
+        "Desc": "Direção para cada objetivo: 0 ou 'min' = Minimizar (Padrão: menor é melhor) 1 ou 'max' = Maximizar (maior é melhor). Se omitido, minimiza todos os objetivos."
       },
       {
         "Name": "Top N",
@@ -1319,7 +1919,7 @@
         "Name": "By Rows",
         "Nick": "Row",
         "Type": "Boolean",
-        "Desc": "Modo de avaliação:\\n- True = Linhas são os indivíduos (cada ramo {col} é uma coluna e cada item [i] é uma linha, ex: CSV/Excel com 100 linhas).\\n- False = Ramos são os indivíduos (cada ramo {i} é um indivíduo).\\n- Desconectado = Auto-detecta automaticamente com base na topologia da árvore."
+        "Desc": "Modo de avaliação: - True = Linhas são os indivíduos (cada ramo {col} é uma coluna e cada item [i] é uma linha, ex: CSV/Excel com 100 linhas). - False = Ramos são os indivíduos (cada ramo {i} é um indivíduo). - Desconectado = Auto-detecta automaticamente com base na topologia da árvore."
       }
     ],
     "Outputs": [
@@ -1377,7 +1977,7 @@
     "File": "FrequencyTable_Component.cs",
     "Name": "Frequency Table",
     "NickName": "FreqTab",
-    "Category": "Buraqueira Tools",
+    "Category": "Glaux Tools",
     "SubCategory": "Statistics",
     "Description": "Gera a tabela completa de distribuição de frequências (absoluta, relativa %, acumulada) e identifica modas simples e multimodais.",
     "Inputs": [
@@ -1437,7 +2037,7 @@
     "File": "GeometricClusterFrequency_Component.cs",
     "Name": "Geometric Frequency (1D Clustering)",
     "NickName": "GeoCluster",
-    "Category": "Buraqueira Tools",
+    "Category": "Glaux Tools",
     "SubCategory": "Statistics",
     "Description": "Agrupa valores numéricos/geométricos com tolerância de proximidade configurável (Clustering 1D / Create Set com Tolerância). Retorna valores canônicos médios, quantitativo de repetições, porcentagens e o mapa de índices para rotulagem.",
     "Inputs": [
@@ -1457,7 +2057,7 @@
         "Name": "Canonical Mode",
         "Nick": "M",
         "Type": "Integer",
-        "Desc": "Modo do valor canônico representativo:\\n0 = Média do Grupo (Cluster Mean)\\n1 = Mediana do Grupo\\n2 = Primeiro Valor Encontrado\\n3 = Arredondado para Múltiplo de Tol"
+        "Desc": "Modo do valor canônico representativo: 0 = Média do Grupo (Cluster Mean) 1 = Mediana do Grupo 2 = Primeiro Valor Encontrado 3 = Arredondado para Múltiplo de Tol"
       },
       {
         "Name": "Per Branch",
@@ -1512,10 +2112,106 @@
     ]
   },
   {
+    "File": "HierarchicalClusterGraph_Component.cs",
+    "Name": "Hierarchical Cluster Graph",
+    "NickName": "HCluster",
+    "Category": "Glaux Tools",
+    "SubCategory": "Visual",
+    "Description": "Visualiza agrupamento hierárquico (dendrograma + mapa de calor reordenado + barras de peso). Ideal para agrupar receptores acústicos por similaridade de TR / T60.",
+    "Inputs": [
+      {
+        "Name": "Correlation Matrix",
+        "Nick": "Matrix",
+        "Type": "Number",
+        "Desc": "Matriz de correlação ou similaridade NxN fornecida como lista plana (row-major). "
+      },
+      {
+        "Name": "N (Size)",
+        "Nick": "N",
+        "Type": "Integer",
+        "Desc": "Tamanho N da matriz quadrada NxN. Informe N quando a matriz chegar como lista plana."
+      },
+      {
+        "Name": "Labels",
+        "Nick": "Labels",
+        "Type": "Text",
+        "Desc": "Nomes dos nós/receptores (lista de N strings). Opcional."
+      },
+      {
+        "Name": "Cut Height",
+        "Nick": "Cut",
+        "Type": "Number",
+        "Desc": "Altura de corte no dendrograma para definir os grupos. "
+      },
+      {
+        "Name": "Linkage Method",
+        "Nick": "Method",
+        "Type": "Integer",
+        "Desc": "Método de linkage: 0=Single (default), 1=Average, 2=Complete."
+      },
+      {
+        "Name": "Title",
+        "Nick": "Title",
+        "Type": "Text",
+        "Desc": "Título exibido no topo do gráfico."
+      },
+      {
+        "Name": "Subtitle",
+        "Nick": "Sub",
+        "Type": "Text",
+        "Desc": "Subtítulo (ex.: nome do método, frequência analisada)."
+      },
+      {
+        "Name": "Caption",
+        "Nick": "Caption",
+        "Type": "Text",
+        "Desc": "Texto de legenda exibido na base do gráfico."
+      },
+      {
+        "Name": "Show Weights",
+        "Nick": "Weights",
+        "Type": "Boolean",
+        "Desc": "Se verdadeiro, exibe as barras de peso por receptor à direita."
+      },
+      {
+        "Name": "Export Path",
+        "Nick": "PNG",
+        "Type": "Text",
+        "Desc": "Caminho para exportar o gráfico como PNG. Deixe vazio para não exportar."
+      }
+    ],
+    "Outputs": [
+      {
+        "Name": "Cluster Assignments",
+        "Nick": "Groups",
+        "Type": "Integer",
+        "Desc": "Índice de grupo para cada receptor (na ordem original de entrada)."
+      },
+      {
+        "Name": "Weights",
+        "Nick": "W",
+        "Type": "Number",
+        "Desc": "Peso normalizado por receptor (HRP-style: risco dividido igualmente entre grupos, "
+      },
+      {
+        "Name": "Order",
+        "Nick": "Order",
+        "Type": "Integer",
+        "Desc": "Permutação das folhas após reordenamento hierárquico."
+      },
+      {
+        "Name": "Group Count",
+        "Nick": "nGroups",
+        "Type": "Integer",
+        "Desc": "Número de grupos formados pelo corte."
+      }
+    ]
+  },
+  {
     "File": "CSVImport_Component.cs",
     "Name": "Import CSV / Excel XML",
     "NickName": "CSV_In",
-    "Category": "Buraqueira Tools",
+    "Category": "Glaux Tools",
     "SubCategory": "I/O",
     "Description": "Lê e estrutura arquivos tabulares (.csv, .tsv, .txt) e planilhas multi-aba Excel XML / SpreadsheetML (.xml, .xls) em árvores de dados 2D indexadas por planilha e coluna.",
     "Inputs": [
@@ -1593,7 +2289,7 @@
     "File": "IterativeAccumulator_Component.cs",
     "Name": "Iterative Accumulator (Data Logger)",
     "NickName": "Accumulator",
-    "Category": "Buraqueira Tools",
+    "Category": "Glaux Tools",
     "SubCategory": "Automation",
     "Description": "Buffer circular de histórico para processos iterativos e loops. Grava os últimos K estados de uma árvore sem perda de caminhos e com suporte a Pause, Reset e Exportação JSON/CSV.",
     "Inputs": [
@@ -1665,7 +2361,7 @@
     "File": "KullbackLeiblerDivergence_Component.cs",
     "Name": "KL Divergence (Relative Entropy)",
     "NickName": "KLDivergence",
-    "Category": "Buraqueira Tools",
+    "Category": "Glaux Tools",
     "SubCategory": "Evaluation",
     "Description": "Calcula a Divergência de Kullback-Leibler D_KL(P || Q) = Σ P(x) log(P(x)/Q(x)), a Divergência Simétrica de Jensen-Shannon (JSD), a Distância JS e a Entropia Cruzada entre duas distribuições de probabilidade.",
     "Inputs": [
@@ -1685,7 +2381,7 @@
         "Name": "Log Base",
         "Nick": "Base",
         "Type": "Integer",
-        "Desc": "Base do logaritmo:\\n0 = Base 2 (Bits)\\n1 = Base e (Nats)\\n2 = Base 10 (Hartleys)"
+        "Desc": "Base do logaritmo: 0 = Base 2 (Bits) 1 = Base e (Nats) 2 = Base 10 (Hartleys)"
       },
       {
         "Name": "Epsilon Smoothing",
@@ -1737,7 +2433,7 @@
     "File": "ChartLine_Component.cs",
     "Name": "Line Chart & Statistics",
     "NickName": "ChartLine",
-    "Category": "Buraqueira Tools",
+    "Category": "Glaux Tools",
     "SubCategory": "Visual",
     "Description": "Gera gráficos 2D de linhas ou colunas/histogramas de alta definição com suporte a curva agregada (Média/Moda/KDE), múltiplas curvas (DataTree), valor alvo (Target) com tolerância e sobreposição de indicadores estatísticos completos.",
     "Inputs": [
@@ -1848,10 +2544,88 @@
     ]
   },
   {
+    "File": "LinearRegression_Component.cs",
+    "Name": "Linear Regression (OLS)",
+    "NickName": "LinReg",
+    "Category": "Glaux Tools",
+    "SubCategory": "Evaluation",
+    "Description": "Executa Regressão Linear Simples por Mínimos Quadrados Ordinários (OLS): - Equação: y = β0 + β1 * x - Coeficiente Angular (Slope β1) = Σ(x - x̄)(y - ȳ) / Σ(x - x̄)² - Coeficiente Linear (Intercept β0) = ȳ - β1 * x̄ - Coeficiente de Determinação R² = 1 - SS_res / SS_tot - Predições ŷ, Resíduos pontuais, Erro Padrão do Slope e Teste t de Significância.",
+    "Inputs": [
+      {
+        "Name": "X Values",
+        "Nick": "X",
+        "Type": "Number",
+        "Desc": "Variável independente / preditora (eixo X)."
+      },
+      {
+        "Name": "Y Values",
+        "Nick": "Y",
+        "Type": "Number",
+        "Desc": "Variável dependente / resposta (eixo Y). Deve possuir o mesmo tamanho que X."
+      },
+      {
+        "Name": "Eval X",
+        "Nick": "X_eval",
+        "Type": "Number",
+        "Desc": "Valores opcionais de X para avaliação/predição de novos pontos ŷ. Se omitido, avalia sobre o próprio X de entrada."
+      }
+    ],
+    "Outputs": [
+      {
+        "Name": "Slope (β1)",
+        "Nick": "β1",
+        "Type": "Number",
+        "Desc": "Coeficiente angular / inclinação da reta de regressão (taxa de variação de Y por unidade de X)."
+      },
+      {
+        "Name": "Intercept (β0)",
+        "Nick": "β0",
+        "Type": "Number",
+        "Desc": "Coeficiente linear / intercepto no eixo Y (valor estimado de Y quando X = 0)."
+      },
+      {
+        "Name": "R-Squared (R²)",
+        "Nick": "R²",
+        "Type": "Number",
+        "Desc": "Coeficiente de Determinação R² (proporção da variância de Y explicada por X)."
+      },
+      {
+        "Name": "Predicted (Ŷ)",
+        "Nick": "Ŷ",
+        "Type": "Number",
+        "Desc": "Valores preditos ou ajustados pelo modelo linear ŷ = β0 + β1 * x."
+      },
+      {
+        "Name": "Residuals (e)",
+        "Nick": "e",
+        "Type": "Number",
+        "Desc": "Resíduos do ajuste: e_i = y_i - ŷ_i."
+      },
+      {
+        "Name": "Equation",
+        "Nick": "Eq",
+        "Type": "Text",
+        "Desc": "Equação matemática textual da reta ajustada: 'y = a * x + b'."
+      },
+      {
+        "Name": "p-Value",
+        "Nick": "p",
+        "Type": "Number",
+        "Desc": "P-valor do teste t bicaudal para a inclinação β1 (H0: β1 = 0, sem relação linear)."
+      },
+      {
+        "Name": "Report",
+        "Nick": "Rep",
+        "Type": "Text",
+        "Desc": "Relatório de diagnóstico detalhado da regressão."
+      }
+    ]
+  },
+  {
     "File": "MatrixSolver_Component.cs",
     "Name": "Linear System Solver",
     "NickName": "LinSolve",
-    "Category": "Buraqueira Tools",
+    "Category": "Glaux Tools",
     "SubCategory": "Matrix",
     "Description": "Resolve sistemas de equações lineares exatos ou sobredeterminados da forma A · x = b. - Para matrizes quadradas N x N: resolução direta via Decomposição LU com pivoteamento parcial. - Para sistemas sobredeterminados M x N (M > N): solução de Mínimos Quadrados (Least Squares). - Calcula o resíduo euclidiano ||A·x - b|| para avaliação rigorosa da precisão da solução.",
     "Inputs": [
@@ -1893,7 +2667,7 @@
     "File": "ChartLoss_Component.cs",
     "Name": "Loss Curve Visualizer",
     "NickName": "ChartLoss",
-    "Category": "Buraqueira Tools",
+    "Category": "Glaux Tools",
     "SubCategory": "Visual",
     "Description": "Renderiza no Canvas do Grasshopper o gráfico interativo de Funções de Perda (Loss Functions):   - Curva teórica contínua (Huber, Quantile, MAE, MSE, Hinge, BCE)   - Dispersão das amostras reais (Scatter Dots) plotadas sobre a curva   - Zonas de transição quadrática vs linear e amortecimento de outliers   - Gradiente/derivada e exportação de imagem PNG em alta definição.",
     "Inputs": [
@@ -1913,7 +2687,7 @@
         "Name": "Loss Type",
         "Nick": "Type",
         "Type": "Generic",
-        "Desc": "0: Huber Loss (Smooth MAE)\\n1: Quantile Loss (Pinball)\\n2: MAE (L1)\\n3: MSE (L2)\\n4: Hinge Loss (SVM)\\n5: Binary Cross-Entropy\\nPadrão: 0 (Huber Loss). Alternável também via clique direito."
+        "Desc": "0: Huber Loss (Smooth MAE) 1: Quantile Loss (Pinball) 2: MAE (L1) 3: MSE (L2) 4: Hinge Loss (SVM) 5: Binary Cross-Entropy Padrão: 0 (Huber Loss). Alternável também via clique direito."
       },
       {
         "Name": "Parameter",
@@ -1977,7 +2751,7 @@
     "File": "LossFunctions_Component.cs",
     "Name": "Loss Functions",
     "NickName": "Loss",
-    "Category": "Buraqueira Tools",
+    "Category": "Glaux Tools",
     "SubCategory": "Evaluation",
     "Description": "Calcula funções de perda (Loss Functions) para otimização, calibração e machine learning:   - Huber Loss (Smooth MAE - Robusta a Outliers)   - Quantile Loss (Pinball Loss - Modelagem de Incerteza/Percentis)   - Mean Absolute Error (MAE / L1 Loss)   - Mean Squared Error (MSE / L2 Loss)   - Hinge Loss (Margem Máxima / SVM / Conformidade)   - Binary Cross-Entropy (Log Loss / Classificação Probabilística) Conecte a saída 'Loss' diretamente como Fitness no Galapagos, Wallacei ou Goat.",
     "Inputs": [
@@ -1997,19 +2771,19 @@
         "Name": "Loss Type",
         "Nick": "Type",
         "Type": "Generic",
-        "Desc": "Função de perda a calcular:\\n"
+        "Desc": "Função de perda a calcular: "
       },
       {
         "Name": "Parameter",
         "Nick": "Param",
         "Type": "Number",
-        "Desc": "Parâmetro adicional da função de perda:\\n"
+        "Desc": "Parâmetro adicional da função de perda: "
       },
       {
         "Name": "Weights",
         "Nick": "W",
         "Type": "Number",
-        "Desc": "Pesos opcionais por elemento para perda ponderada (ex: importância relativa por banda de oitava ou assento prioritário).\\n"
+        "Desc": "Pesos opcionais por elemento para perda ponderada (ex: importância relativa por banda de oitava ou assento prioritário). "
       }
     ],
     "Outputs": [
@@ -2049,7 +2823,7 @@
     "File": "MassMath_Component.cs",
     "Name": "Mass Math (Stack Operations)",
     "NickName": "MassMath",
-    "Category": "Buraqueira Tools",
+    "Category": "Glaux Tools",
     "SubCategory": "Statistics",
     "Description": "Executa operações de pilha e acumulação em massa sobre listas/árvores de números (Soma, Subtração, Multiplicação, Divisão progressiva, Média, Mín, Máx). Retorna o total escalar agregado e a lista de evolução acumulada (Running Total/Partial).",
     "Inputs": [
@@ -2097,7 +2871,7 @@
     "File": "MatrixConstruct_Component.cs",
     "Name": "Matrix Construct & Inspect",
     "NickName": "MatBuild",
-    "Category": "Buraqueira Tools",
+    "Category": "Glaux Tools",
     "SubCategory": "Matrix",
     "Description": "Constrói, formata e inspeciona matrizes numéricas M x N. - Converte DataTrees arbitrárias em matrizes bidimensionais (onde cada ramo {i} é uma linha). - Suporta criar matrizes a partir de listas planas definindo M e N. - Gera matriz identidade I_N automaticamente. - Calcula a matriz transposta (A^T), traço tr(A) e contagem de dimensões.",
     "Inputs": [
@@ -2169,7 +2943,7 @@
     "File": "MatrixInvertDet_Component.cs",
     "Name": "Matrix Invert & Determinant",
     "NickName": "MatInv",
-    "Category": "Buraqueira Tools",
+    "Category": "Glaux Tools",
     "SubCategory": "Matrix",
     "Description": "Calcula a Inversa (A^-1), Determinante det(A) e Pseudo-Inversa (Moore-Penrose A^+) de qualquer matriz numérica. - Para matrizes quadradas não-singulares, calcula a inversa exata via Gauss-Jordan. - Para matrizes retangulares ou singulares, calcula a Pseudo-Inversa de Moore-Penrose estável. - Fornece diagnóstico de condição e estabilidade numérica.",
     "Inputs": [
@@ -2217,7 +2991,7 @@
     "File": "MatrixMultiply_Component.cs",
     "Name": "Matrix Multiply",
     "NickName": "MatMul",
-    "Category": "Buraqueira Tools",
+    "Category": "Glaux Tools",
     "SubCategory": "Matrix",
     "Description": "Executa o produto matricial algébrico de alta performance entre duas matrizes A e B. - Modo 0: Produto Matricial Clássico (A x B) onde Linhas x Colunas: (M x K) x (K x N) = (M x N). - Modo 1: Produto Elemento a Elemento / Hadamard (A ⊙ B). - Modo 2: Multiplicação por Escalar (α · A). - Validação automática de compatibilidade dimensional.",
     "Inputs": [
@@ -2237,7 +3011,7 @@
         "Name": "Mode",
         "Nick": "M",
         "Type": "Integer",
-        "Desc": "0 = Produto Matricial Clássico (A x B)\\n1 = Hadamard / Elemento a Elemento (A ⊙ B)\\n2 = Multiplicação Escalar (α · A)"
+        "Desc": "0 = Produto Matricial Clássico (A x B) 1 = Hadamard / Elemento a Elemento (A ⊙ B) 2 = Multiplicação Escalar (α · A)"
       }
     ],
     "Outputs": [
@@ -2265,7 +3039,7 @@
     "File": "ModelEvaluation_Component.cs",
     "Name": "Model Metrics (RMSE, MAE, R²)",
     "NickName": "Metrics",
-    "Category": "Buraqueira Tools",
+    "Category": "Glaux Tools",
     "SubCategory": "Evaluation",
     "Description": "Avalia a precisão e erro entre dados simulados/preditos e dados reais medidos em campo: RMSE, MAE, R² (Coeficiente de Determinação), MAPE %, Viés (Bias) e Erro Máximo.",
     "Inputs": [
@@ -2337,7 +3111,7 @@
     "File": "MultiLogicGate_Component.cs",
     "Name": "Multi Logic Gate",
     "NickName": "LogicGate",
-    "Category": "Buraqueira Tools",
+    "Category": "Glaux Tools",
     "SubCategory": "Automation",
     "Description": "Porta lógica consolidada de múltiplas entradas (AND, OR, XOR, NAND, NOR, XNOR). Avalia N condições simultaneamente sem poluir o canvas com múltiplos operadores encadeados. Retorna o booleano consolidado, contagens e os índices das entradas que falharam.",
     "Inputs": [
@@ -2394,10 +3168,76 @@
     ]
   },
   {
+    "File": "NormalDistribution_Component.cs",
+    "Name": "Normal Distribution (NORM.DIST / NORM.INV)",
+    "NickName": "NormDist",
+    "Category": "Glaux Tools",
+    "SubCategory": "Statistics",
+    "Description": "Calcula a distribuição Normal / Gaussiana cumulativa (NORM.DIST CDF), densidade de probabilidade (PDF), função quantil inversa (NORM.INV) e o escore Z = (x - μ) / σ, compatível com Microsoft Excel 2010+.",
+    "Inputs": [
+      {
+        "Name": "Value / Prob",
+        "Nick": "X",
+        "Type": "Number",
+        "Desc": "Valor numérico x (para calcular PDF/CDF) ou probabilidade acumulada p em [0, 1] (para calcular NORM.INV). Padrão: 0.0."
+      },
+      {
+        "Name": "Mean",
+        "Nick": "μ",
+        "Type": "Number",
+        "Desc": "Média aritmética ou centro da distribuição normal μ. Padrão: 0.0."
+      },
+      {
+        "Name": "StdDev",
+        "Nick": "σ",
+        "Type": "Number",
+        "Desc": "Desvio padrão da distribuição normal σ (deve ser > 0). Padrão: 1.0."
+      },
+      {
+        "Name": "Cumulative",
+        "Nick": "Cum",
+        "Type": "Boolean",
+        "Desc": "Se True, calcula a distribuição cumulativa CDF P(X <= x). Se False, calcula a densidade de probabilidade pontual PDF f(x). Padrão: True."
+      }
+    ],
+    "Outputs": [
+      {
+        "Name": "Distribution",
+        "Nick": "Dist",
+        "Type": "Number",
+        "Desc": "Resultado de NORM.DIST: probabilidade cumulativa P(X <= x) ou densidade f(x)."
+      },
+      {
+        "Name": "Inverse",
+        "Nick": "Inv",
+        "Type": "Number",
+        "Desc": "Resultado de NORM.INV: quantil x correspondente à probabilidade X em [0, 1]."
+      },
+      {
+        "Name": "Z-Score",
+        "Nick": "Z",
+        "Type": "Number",
+        "Desc": "Escore padronizado Z = (x - μ) / σ."
+      },
+      {
+        "Name": "Mean",
+        "Nick": "μ",
+        "Type": "Number",
+        "Desc": "Média teórica da distribuição."
+      },
+      {
+        "Name": "Variance",
+        "Nick": "σ²",
+        "Type": "Number",
+        "Desc": "Variância teórica da distribuição normal: σ²."
+      }
+    ]
+  },
+  {
     "File": "OutlierDetection_Component.cs",
     "Name": "Outlier Filter",
     "NickName": "Outliers",
-    "Category": "Buraqueira Tools",
+    "Category": "Glaux Tools",
     "SubCategory": "Transform",
     "Description": "Detecta, separa e filtra valores aberrantes (outliers) utilizando Intervalo Interquartil (IQR / Tukey), Z-Score (|z| > limite) ou Z-Score Modificado por MAD.",
     "Inputs": [
@@ -2411,7 +3251,7 @@
         "Name": "Method",
         "Nick": "M",
         "Type": "Integer",
-        "Desc": "Método de detecção de Outliers:\\n0 = IQR (Tukey's Fences: [Q1 - k*IQR, Q3 + k*IQR])\\n1 = Z-Score (|z| > Limite)\\n2 = Z-Score Modificado (Baseado na Mediana / MAD)"
+        "Desc": "Método de detecção de Outliers: 0 = IQR (Tukey's Fences: [Q1 - k*IQR, Q3 + k*IQR]) 1 = Z-Score (|z| > Limite) 2 = Z-Score Modificado (Baseado na Mediana / MAD)"
       },
       {
         "Name": "Threshold",
@@ -2481,7 +3321,7 @@
     "File": "PathDictionary_Component.cs",
     "Name": "Path Dictionary (Remap & Lookup)",
     "NickName": "PathDict",
-    "Category": "Buraqueira Tools",
+    "Category": "Glaux Tools",
     "SubCategory": "Tree",
     "Description": "Remapeia, consulta e indexa caminhos de DataTrees utilizando dicionários chave-valor O(1). - Permite traduzir caminhos arbitrários (ex: {5;4} -> {0}). - Aceita listas de chaves/valores ou pares em texto ('{5;4} -> {0}'). - Modo Auto-Index: se K e V forem vazios, renumera automaticamente todos os caminhos existentes para {0}, {1}, ... {N-1}. - Suporta filtrar ramos não encontrados no dicionário ou mantê-los inalterados.",
     "Inputs": [
@@ -2507,7 +3347,7 @@
         "Name": "Unmatched Action",
         "Nick": "U",
         "Type": "Integer",
-        "Desc": "Ação para caminhos não cadastrados no dicionário:\\n0 = Manter Original\\n1 = Descartar / Filtrar (Drop)\\n2 = Enviar para Caminho Padrão"
+        "Desc": "Ação para caminhos não cadastrados no dicionário: 0 = Manter Original 1 = Descartar / Filtrar (Drop) 2 = Enviar para Caminho Padrão"
       },
       {
         "Name": "Default Path",
@@ -2553,7 +3393,7 @@
     "File": "PathMath_Component.cs",
     "Name": "Path Math (Index Arithmetic)",
     "NickName": "PathMath",
-    "Category": "Buraqueira Tools",
+    "Category": "Glaux Tools",
     "SubCategory": "Tree",
     "Description": "Modifica diretamente a estrutura numérica dos caminhos GH_Path: soma offsets a níveis específicos ({0; i+1}), inverte hierarquias, rotaciona níveis ou colapsa profundidades intermediárias.",
     "Inputs": [
@@ -2567,7 +3407,7 @@
         "Name": "Operation",
         "Nick": "Op",
         "Type": "Integer",
-        "Desc": "Operação aritmética no Path:\\n0 = Somar Offset no nível L ({..., i + V, ...})\\n1 = Inverter Hierarquia ({A; B; C} -> {C; B; A})\\n2 = Rotacionar Níveis / Shift ({A; B; C} -> {B; C; A})\\n3 = Colapsar / Remover Nível L (remove o índice do nível)\\n4 = Inserir Nível (insere novo índice de valor V na posição L)\\n5 = Truncar Profundidade (manter apenas os primeiros V níveis)"
+        "Desc": "Operação aritmética no Path: 0 = Somar Offset no nível L ({..., i + V, ...}) 1 = Inverter Hierarquia ({A; B; C} -> {C; B; A}) 2 = Rotacionar Níveis / Shift ({A; B; C} -> {B; C; A}) 3 = Colapsar / Remover Nível L (remove o índice do nível) 4 = Inserir Nível (insere novo índice de valor V na posição L) 5 = Truncar Profundidade (manter apenas os primeiros V níveis)"
       },
       {
         "Name": "Target Level",
@@ -2613,7 +3453,7 @@
     "File": "PillBundlePack_Component.cs",
     "Name": "Pill Bundle Pack (Parameter Hub)",
     "NickName": "PillPack",
-    "Category": "Buraqueira Tools",
+    "Category": "Glaux Tools",
     "SubCategory": "Pills",
     "Description": "Empacota múltiplos parâmetros, listas ou árvores nomeadas em um único pacote estruturado (PillBundle / Hub Central). Permite puxar automaticamente canais por nome de grupo/categoria (ex: 'ACU', 'GEO', 'ALL') ou empacotar valores manuais. Reduz a fiação complexa a uma única linha de transmissão e suporta exportação JSON.",
     "Inputs": [
@@ -2667,7 +3507,7 @@
     "File": "PillBundleUnpack_Component.cs",
     "Name": "Pill Bundle Unpack",
     "NickName": "PillUnpack",
-    "Category": "Buraqueira Tools",
+    "Category": "Glaux Tools",
     "SubCategory": "Pills",
     "Description": "Desempacota parâmetros de um PillBundle ou de uma string JSON externa, restaurando as chaves, valores e estruturas de árvore originais com total imutabilidade.",
     "Inputs": [
@@ -2709,7 +3549,7 @@
     "File": "PillCatalog_Component.cs",
     "Name": "Pill Catalog & Inspector",
     "NickName": "PillCatalog",
-    "Category": "Buraqueira Tools",
+    "Category": "Glaux Tools",
     "SubCategory": "Pills",
     "Description": "Varre o documento ativo e o barramento global, catalogando todos os transmitters e receivers. Detecta canais órfãos, transmissões duplicadas, tipos de dados e mapa de dependências.",
     "Inputs": [
@@ -2757,7 +3597,7 @@
     "File": "PillChangeDetector_Component.cs",
     "Name": "Pill Change Detector & Trigger",
     "NickName": "PillChange",
-    "Category": "Buraqueira Tools",
+    "Category": "Glaux Tools",
     "SubCategory": "Pills",
     "Description": "Monitora dados, listas, arvores ou pacotes (PillBundle). Quando detecta qualquer modificacao nos valores, dispara um sinal booleano True (Data Gate / Pulse Trigger) para acionar salvamento de presets, simulacoes ou automacoes.",
     "Inputs": [
@@ -2777,7 +3617,7 @@
         "Name": "Mode",
         "Nick": "M",
         "Type": "Integer",
-        "Desc": "Modo de disparo:\\n0 = Pulso (True apenas no ciclo de alteracao, False quando estavel)\\n1 = Latch (True enquanto for diferente da referencia inicial)\\n2 = Toggle (Inverte o booleano a cada mudanca detectada)"
+        "Desc": "Modo de disparo: 0 = Pulso (True apenas no ciclo de alteracao, False quando estavel) 1 = Latch (True enquanto for diferente da referencia inicial) 2 = Toggle (Inverte o booleano a cada mudanca detectada)"
       },
       {
         "Name": "Reset",
@@ -2814,10 +3654,100 @@
     ]
   },
   {
+    "File": "PillCompare_Component.cs",
+    "Name": "Pill Compare",
+    "NickName": "PillCompare",
+    "Category": "Glaux Tools",
+    "SubCategory": "Vault",
+    "Description": "Compara duas revisões gravadas (snapshots, experimentos ou datasets): - quais árvores/parâmetros mudaram, surgiram ou sumiram (identidade por hash, sem carregar o que é igual); - para parâmetros, 'valor antigo → novo'; para árvores, itens diferentes, ramos novos/removidos e maior variação numérica; - mudanças de ambiente (versões do Glaux/Rhino/Grasshopper, documento) e se entradas/saídas são idênticas. Referências: 'Nome' (última), 'Nome@3' (revisão 3), 'Nome@-1' (penúltima). Sem B, compara A com a revisão anterior.",
+    "Inputs": [
+      {
+        "Name": "Store",
+        "Nick": "S",
+        "Type": "Generic",
+        "Desc": "Conexão do Pill DB Connect, ou caminho de um arquivo .glauxdb. Vazio = store padrão do projeto (pasta PillVault do .gh)."
+      },
+      {
+        "Name": "A",
+        "Nick": "A",
+        "Type": "Text",
+        "Desc": "Referência do primeiro estado ('Nome', 'Nome@3', 'Nome@-1')."
+      },
+      {
+        "Name": "B",
+        "Nick": "B",
+        "Type": "Text",
+        "Desc": "Referência do segundo estado. Vazio = revisão anterior à de A."
+      },
+      {
+        "Name": "Kind",
+        "Nick": "T",
+        "Type": "Text",
+        "Desc": "Tipo das entradas (padrão 'snapshot')."
+      }
+    ],
+    "Outputs": [
+      {
+        "Name": "Same Data",
+        "Nick": "=",
+        "Type": "Boolean",
+        "Desc": "True se todas as árvores são idênticas."
+      },
+      {
+        "Name": "Same Inputs",
+        "Nick": "=In",
+        "Type": "Boolean",
+        "Desc": "True se as entradas (parâmetros, entradas, controles, canais) são idênticas."
+      },
+      {
+        "Name": "Same Outputs",
+        "Nick": "=Out",
+        "Type": "Boolean",
+        "Desc": "True se as saídas são idênticas."
+      },
+      {
+        "Name": "Changed",
+        "Nick": "Ch",
+        "Type": "Text",
+        "Desc": "Árvores alteradas."
+      },
+      {
+        "Name": "Added",
+        "Nick": "Ad",
+        "Type": "Text",
+        "Desc": "Árvores só em B."
+      },
+      {
+        "Name": "Removed",
+        "Nick": "Rm",
+        "Type": "Text",
+        "Desc": "Árvores só em A."
+      },
+      {
+        "Name": "Report",
+        "Nick": "Rp",
+        "Type": "Text",
+        "Desc": "Uma linha por árvore alterada, com o detalhe da diferença."
+      },
+      {
+        "Name": "Metadata Changes",
+        "Nick": "MC",
+        "Type": "Text",
+        "Desc": "Mudanças de ambiente/metadados."
+      },
+      {
+        "Name": "Pair",
+        "Nick": "AB",
+        "Type": "Text",
+        "Desc": "Referências efetivamente comparadas."
+      }
+    ]
+  },
+  {
     "File": "PillCache_Component.cs",
     "Name": "Pill Compute Cache",
     "NickName": "PillCache",
-    "Category": "Buraqueira Tools",
+    "Category": "Glaux Tools",
     "SubCategory": "Pills",
     "Description": "Bypass de recomputacao pesada. Armazena o resultado de operacoes caras (acustica, raytracing, malhas) em memoria associado ao hash dos parametros de entrada. Se as entradas nao mudarem, devolve o cache instantaneamente sem recomputar.",
     "Inputs": [
@@ -2883,7 +3813,7 @@
     "File": "PillConstraintChecker_Component.cs",
     "Name": "Pill Constraint Checker",
     "NickName": "PillCheck",
-    "Category": "Buraqueira Tools",
+    "Category": "Glaux Tools",
     "SubCategory": "Pills",
     "Description": "Validador e guardião de restrições de projeto. Compara parâmetros acústicos e geométricos contra faixas-alvo (ex: RT60 dentro da ISO 3382). Emite status visual no canvas e relatórios de conformidade.",
     "Inputs": [
@@ -2952,10 +3882,682 @@
     ]
   },
   {
+    "File": "PillDbConnect_Component.cs",
+    "Name": "Pill DB Connect",
+    "NickName": "PillDB",
+    "Category": "Glaux Tools",
+    "SubCategory": "Data",
+    "Description": "Abre ou cria um store local de dados paramétricos (.glauxdb): um arquivo único, sem dependências externas, com revisões, consultas e histórico. - Vazio = store padrão do projeto na pasta PillVault ao lado do .gh. - A mesma conexão é compartilhada por todos os componentes e documentos (sem arquivos presos abertos). - 'Compact' reescreve o arquivo mantendo só as últimas N revisões de cada chave. - Keys/Entries mostram o estado na última execução; para acompanhar gravações ao vivo use o Pill Schema Inspector.",
+    "Inputs": [
+      {
+        "Name": "Path",
+        "Nick": "Path",
+        "Type": "Text",
+        "Desc": "Arquivo .glauxdb (relativo = pasta do .gh). Vazio = PillVault/"
+      },
+      {
+        "Name": "Read Only",
+        "Nick": "RO",
+        "Type": "Boolean",
+        "Desc": "Somente leitura: componentes de escrita recusam gravar neste store."
+      },
+      {
+        "Name": "Compact",
+        "Nick": "C",
+        "Type": "Boolean",
+        "Desc": "Reescreve o arquivo mantendo só as últimas 'Keep' revisões de cada chave (conecte um botão)."
+      },
+      {
+        "Name": "Keep",
+        "Nick": "K",
+        "Type": "Integer",
+        "Desc": "Revisões mantidas por chave na compactação (0 = todas; só limpa gravações interrompidas)."
+      }
+    ],
+    "Outputs": [
+      {
+        "Name": "Store",
+        "Nick": "S",
+        "Type": "Generic",
+        "Desc": "Conexão com o store para os componentes Pill DB / Vault."
+      },
+      {
+        "Name": "Keys",
+        "Nick": "K",
+        "Type": "Text",
+        "Desc": "Chaves existentes (formato 'tipo:chave')."
+      },
+      {
+        "Name": "Entries",
+        "Nick": "N",
+        "Type": "Integer",
+        "Desc": "Total de entradas (revisões) no arquivo."
+      },
+      {
+        "Name": "Info",
+        "Nick": "I",
+        "Type": "Text",
+        "Desc": "Arquivo, tamanho, versão do formato e integridade."
+      }
+    ]
+  },
+  {
+    "File": "PillDbQuery_Component.cs",
+    "Name": "Pill DB Query",
+    "NickName": "PillQuery",
+    "Category": "Glaux Tools",
+    "SubCategory": "Data",
+    "Description": "Consulta o store (.glauxdb) com filtros tipados, sem montar consultas a partir de texto: - Entradas: tipo, padrão de chave (* e ?), revisões (última ou todas), metadados 'chave=valor'. - Itens: máscara de caminho ('{0;*}', '{*;2}', '{1;**}', '{0..3;*}'), tipo, faixa numérica e texto. Responde perguntas como 'quais revisões têm T60 acima de 2 s?' ou 'em que ramos aparece este valor?'.",
+    "Inputs": [
+      {
+        "Name": "Store",
+        "Nick": "S",
+        "Type": "Generic",
+        "Desc": "Conexão do Pill DB Connect, ou caminho de um arquivo .glauxdb. Vazio = store padrão do projeto (pasta PillVault do .gh)."
+      },
+      {
+        "Name": "Kind",
+        "Nick": "T",
+        "Type": "Text",
+        "Desc": "Tipo das entradas (dataset, snapshot, experiment, metrics). Vazio = todos."
+      },
+      {
+        "Name": "Key Pattern",
+        "Nick": "K",
+        "Type": "Text",
+        "Desc": "Padrão da chave com * e ? (ex: 'ACU_*'). Vazio = todas."
+      },
+      {
+        "Name": "All Revisions",
+        "Nick": "All",
+        "Type": "Boolean",
+        "Desc": "False = só a última revisão de cada chave; True = todas."
+      },
+      {
+        "Name": "Metadata",
+        "Nick": "M",
+        "Type": "Text",
+        "Desc": "Filtros de metadados 'chave=valor' (todos precisam bater)."
+      },
+      {
+        "Name": "Path Mask",
+        "Nick": "P",
+        "Type": "Text",
+        "Desc": "Máscara de caminho dos itens (ex: '{0;*}'). Vazio = qualquer."
+      },
+      {
+        "Name": "Type",
+        "Nick": "Ty",
+        "Type": "Text",
+        "Desc": "Tipo dos itens (Number, Integer, Text, Point, Curve...). Vazio = qualquer."
+      },
+      {
+        "Name": "Range",
+        "Nick": "Rg",
+        "Type": "Interval",
+        "Desc": "Faixa numérica dos itens (Number, Integer, Boolean)."
+      },
+      {
+        "Name": "Contains",
+        "Nick": "C",
+        "Type": "Text",
+        "Desc": "Texto contido no valor (sem diferenciar maiúsculas)."
+      },
+      {
+        "Name": "Tree",
+        "Nick": "Tr",
+        "Type": "Text",
+        "Desc": "Árvore consultada dentro de cada entrada (padrão 'data')."
+      },
+      {
+        "Name": "Limit",
+        "Nick": "L",
+        "Type": "Integer",
+        "Desc": "Máximo de entradas retornadas."
+      }
+    ],
+    "Outputs": [
+      {
+        "Name": "Keys",
+        "Nick": "K",
+        "Type": "Text",
+        "Desc": "Chave de cada entrada encontrada."
+      },
+      {
+        "Name": "Revisions",
+        "Nick": "R",
+        "Type": "Integer",
+        "Desc": "Revisão de cada entrada encontrada."
+      },
+      {
+        "Name": "Timestamps",
+        "Nick": "TS",
+        "Type": "Text",
+        "Desc": "Data/hora local de cada entrada."
+      },
+      {
+        "Name": "Values",
+        "Nick": "V",
+        "Type": "Generic",
+        "Desc": "Itens que passaram nos filtros (um ramo por entrada; vazio se não houver filtro de item)."
+      },
+      {
+        "Name": "Paths",
+        "Nick": "P",
+        "Type": "Text",
+        "Desc": "Caminho original de cada item encontrado."
+      },
+      {
+        "Name": "Indices",
+        "Nick": "i",
+        "Type": "Integer",
+        "Desc": "Índice original de cada item encontrado."
+      },
+      {
+        "Name": "Count",
+        "Nick": "N",
+        "Type": "Integer",
+        "Desc": "Quantidade de itens encontrados."
+      },
+      {
+        "Name": "Info",
+        "Nick": "I",
+        "Type": "Text",
+        "Desc": "Entradas e itens examinados."
+      }
+    ]
+  },
+  {
+    "File": "PillDbRead_Component.cs",
+    "Name": "Pill DB Read",
+    "NickName": "PillDBRead",
+    "Category": "Glaux Tools",
+    "SubCategory": "Data",
+    "Description": "Lê uma revisão de uma chave do store (.glauxdb) e reconstrói a DataTree original (caminhos, ramos vazios, nulos e tipos). - Revision 0 = última; N = revisão N; -1 = penúltima, -2 = antepenúltima... - Atualiza sozinho quando outro componente grava no mesmo store.",
+    "Inputs": [
+      {
+        "Name": "Store",
+        "Nick": "S",
+        "Type": "Generic",
+        "Desc": "Conexão do Pill DB Connect, ou caminho de um arquivo .glauxdb. Vazio = store padrão do projeto (pasta PillVault do .gh)."
+      },
+      {
+        "Name": "Key",
+        "Nick": "K",
+        "Type": "Text",
+        "Desc": "Chave a ler."
+      },
+      {
+        "Name": "Revision",
+        "Nick": "R",
+        "Type": "Integer",
+        "Desc": "0 = última; N > 0 = revisão N; N < 0 = N revisões antes da última."
+      },
+      {
+        "Name": "Kind",
+        "Nick": "T",
+        "Type": "Text",
+        "Desc": "Tipo da entrada (padrão 'dataset')."
+      },
+      {
+        "Name": "Tree",
+        "Nick": "Tr",
+        "Type": "Text",
+        "Desc": "Nome da árvore dentro da entrada (padrão 'data'; snapshots têm várias)."
+      }
+    ],
+    "Outputs": [
+      {
+        "Name": "Data",
+        "Nick": "D",
+        "Type": "Generic",
+        "Desc": "Árvore reconstruída."
+      },
+      {
+        "Name": "Revision",
+        "Nick": "R",
+        "Type": "Integer",
+        "Desc": "Revisão lida."
+      },
+      {
+        "Name": "Timestamp",
+        "Nick": "TS",
+        "Type": "Text",
+        "Desc": "Data/hora local da gravação."
+      },
+      {
+        "Name": "Metadata",
+        "Nick": "M",
+        "Type": "Text",
+        "Desc": "Metadados 'chave=valor'."
+      },
+      {
+        "Name": "Hash",
+        "Nick": "H",
+        "Type": "Text",
+        "Desc": "SHA-256 de identidade dos dados."
+      },
+      {
+        "Name": "Revisions",
+        "Nick": "Rs",
+        "Type": "Integer",
+        "Desc": "Todas as revisões disponíveis da chave."
+      },
+      {
+        "Name": "Trees",
+        "Nick": "Tn",
+        "Type": "Text",
+        "Desc": "Nomes das árvores da entrada."
+      }
+    ]
+  },
+  {
+    "File": "PillDbSync_Component.cs",
+    "Name": "Pill DB Sync",
+    "NickName": "PillSync",
+    "Category": "Glaux Tools",
+    "SubCategory": "Data",
+    "Description": "Sincroniza uma DataTree com uma chave do store (.glauxdb) de forma controlada: - Direction: 0 = Push (Grasshopper → store), 1 = Pull (store → Grasshopper), 2 = Two-Way. - Estado: Clean, LocalDirty (o dado do GH mudou), StoreAhead (o store tem revisão nova), Conflict (os dois mudaram). - Conflito (só em Two-Way): 0 = parar e avisar, 1 = prevalece o Grasshopper, 2 = prevalece o store. - Auto = sincroniza sozinho; senão espera o gatilho 'Sync'. Sem laços: depois de um Pull o dado local antigo não é reenviado, e dados iguais aos do store não geram revisão.",
+    "Inputs": [
+      {
+        "Name": "Store",
+        "Nick": "S",
+        "Type": "Generic",
+        "Desc": "Conexão do Pill DB Connect, ou caminho de um arquivo .glauxdb. Vazio = store padrão do projeto (pasta PillVault do .gh)."
+      },
+      {
+        "Name": "Key",
+        "Nick": "K",
+        "Type": "Text",
+        "Desc": "Chave sincronizada."
+      },
+      {
+        "Name": "Local Data",
+        "Nick": "D",
+        "Type": "Generic",
+        "Desc": "Dado do Grasshopper (vazio = só receber do store)."
+      },
+      {
+        "Name": "Direction",
+        "Nick": "Dir",
+        "Type": "Integer",
+        "Desc": "0 = Push, 1 = Pull, 2 = Two-Way."
+      },
+      {
+        "Name": "Auto",
+        "Nick": "A",
+        "Type": "Boolean",
+        "Desc": "Sincroniza automaticamente a cada mudança (sem gatilho)."
+      },
+      {
+        "Name": "Conflict",
+        "Nick": "C",
+        "Type": "Integer",
+        "Desc": "Conflito em Two-Way: 0 = parar, 1 = Grasshopper prevalece, 2 = store prevalece."
+      },
+      {
+        "Name": "Sync",
+        "Nick": "Go",
+        "Type": "Boolean",
+        "Desc": "Executa a ação pendente (modo manual)."
+      },
+      {
+        "Name": "Kind",
+        "Nick": "T",
+        "Type": "Text",
+        "Desc": "Tipo da entrada (padrão 'dataset')."
+      }
+    ],
+    "Outputs": [
+      {
+        "Name": "Data",
+        "Nick": "D",
+        "Type": "Generic",
+        "Desc": "Dado efetivo: o local, ou o do store quando ele é a referência (após Pull)."
+      },
+      {
+        "Name": "State",
+        "Nick": "St",
+        "Type": "Text",
+        "Desc": "Clean, LocalDirty, StoreAhead, Conflict ou Empty."
+      },
+      {
+        "Name": "Action",
+        "Nick": "Ac",
+        "Type": "Text",
+        "Desc": "Ação executada nesta solução (Push, Pull, None) ou pendente."
+      },
+      {
+        "Name": "Store Revision",
+        "Nick": "R",
+        "Type": "Integer",
+        "Desc": "Revisão do store após a sincronização."
+      },
+      {
+        "Name": "Local Hash",
+        "Nick": "H",
+        "Type": "Text",
+        "Desc": "SHA-256 do dado local."
+      },
+      {
+        "Name": "Log",
+        "Nick": "L",
+        "Type": "Text",
+        "Desc": "Motivo da decisão."
+      }
+    ]
+  },
+  {
+    "File": "PillDbWrite_Component.cs",
+    "Name": "Pill DB Write",
+    "NickName": "PillDBWrite",
+    "Category": "Glaux Tools",
+    "SubCategory": "Data",
+    "Description": "Grava a DataTree como nova revisão da chave no store (.glauxdb), sem perda de estrutura ou tipos. - Cada gravação cria a revisão N+1; revisões anteriores continuam consultáveis. - 'Skip Unchanged' (padrão) não cria revisão quando dados e metadados são idênticos à última (identidade por SHA-256). - Conecte um botão em 'Write' para gravar sob demanda, ou um toggle para gravar a cada mudança.",
+    "Inputs": [
+      {
+        "Name": "Store",
+        "Nick": "S",
+        "Type": "Generic",
+        "Desc": "Conexão do Pill DB Connect, ou caminho de um arquivo .glauxdb. Vazio = store padrão do projeto (pasta PillVault do .gh)."
+      },
+      {
+        "Name": "Key",
+        "Nick": "K",
+        "Type": "Text",
+        "Desc": "Chave do conjunto de dados (ex: 'ACU_T60', 'Resultados/Sala01')."
+      },
+      {
+        "Name": "Data",
+        "Nick": "D",
+        "Type": "Generic",
+        "Desc": "Árvore a gravar."
+      },
+      {
+        "Name": "Metadata",
+        "Nick": "M",
+        "Type": "Text",
+        "Desc": "Metadados 'chave=valor' (ex: 'autor=Ana', 'fonte=Pachyderm')."
+      },
+      {
+        "Name": "Kind",
+        "Nick": "T",
+        "Type": "Text",
+        "Desc": "Tipo da entrada (padrão 'dataset')."
+      },
+      {
+        "Name": "Write",
+        "Nick": "W",
+        "Type": "Boolean",
+        "Desc": "Grava quando True."
+      },
+      {
+        "Name": "Skip Unchanged",
+        "Nick": "SU",
+        "Type": "Boolean",
+        "Desc": "Não cria revisão se os dados e metadados forem idênticos à última."
+      }
+    ],
+    "Outputs": [
+      {
+        "Name": "Revision",
+        "Nick": "R",
+        "Type": "Integer",
+        "Desc": "Revisão gravada (ou a última existente)."
+      },
+      {
+        "Name": "Hash",
+        "Nick": "H",
+        "Type": "Text",
+        "Desc": "SHA-256 de identidade dos dados."
+      },
+      {
+        "Name": "Written",
+        "Nick": "OK",
+        "Type": "Boolean",
+        "Desc": "True se uma nova revisão foi criada nesta solução."
+      },
+      {
+        "Name": "Info",
+        "Nick": "I",
+        "Type": "Text",
+        "Desc": "Resumo da gravação."
+      }
+    ]
+  },
+  {
+    "File": "PillDashboard_Component.cs",
+    "Name": "Pill Dashboard",
+    "NickName": "PillDash",
+    "Category": "Glaux Tools",
+    "SubCategory": "Dashboard",
+    "Description": "Painel interativo no canvas: reúne controles e indicadores num só componente, sem espalhar sliders, toggles e panels. - W: uma linha por widget, ex: 'slider Largura | min=0 | max=10 | step=0.5 | key=[GEO] Largura', ou widgets do Pill Dashboard Builder.   Tipos: label, number, slider, toggle, button, dropdown, progress, chart. Painel: 'title=', 'layout=stack|row|grid', 'columns=', 'width='. - Controles saem em V (um ramo por controle) e, com 'key=', no PillHub (leia com Pill Receiver em qualquer lugar). - Indicadores com 'key=' mostram canais do PillHub sem fios e sem recalcular nada; ou use D (PillBundle / 'nome=valor'). - Arrasto: commit=auto (padrão) entrega durante o arrasto enquanto a solução é leve e só ao soltar quando é pesada; commit=live|release força o modo. - S/LS: estado dos controles em linhas 'id=valor' para presets, Pill DB Write, Pill Snapshot e Pill Restore.",
+    "Inputs": [
+      {
+        "Name": "Widgets",
+        "Nick": "W",
+        "Type": "Generic",
+        "Desc": "Definições: linhas de texto ('slider Largura | min=0 | max=10') e/ou widgets do Pill Dashboard Builder."
+      },
+      {
+        "Name": "Data",
+        "Nick": "D",
+        "Type": "Generic",
+        "Desc": "Dados dos indicadores: PillBundle(s) ou textos 'nome=valor' (casados por 'source=', id ou rótulo). Resultados que dependem dos controles deste painel devem vir por 'key=' (PillHub), não por fio: fio criaria um ciclo."
+      },
+      {
+        "Name": "Load State",
+        "Nick": "LS",
+        "Type": "Text",
+        "Desc": "Estado a aplicar ('id=valor' por linha), ex: saída S de outro painel, Pill Restore ou Pill DB Read. Aplicado só quando muda."
+      }
+    ],
+    "Outputs": [
+      {
+        "Name": "Values",
+        "Nick": "V",
+        "Type": "Generic",
+        "Desc": "Valores dos controles: um ramo por controle, na ordem da definição (slider = número, toggle/botão = booleano, dropdown = texto ou índice com output=index)."
+      },
+      {
+        "Name": "Names",
+        "Nick": "N",
+        "Type": "Text",
+        "Desc": "Rótulo de cada controle (mesma ordem dos ramos de V)."
+      },
+      {
+        "Name": "State",
+        "Nick": "S",
+        "Type": "Text",
+        "Desc": "Estado dos controles persistentes em linhas 'id=valor' (para presets e snapshots)."
+      },
+      {
+        "Name": "Changed",
+        "Nick": "C",
+        "Type": "Text",
+        "Desc": "Id do controle que o usuário mudou e disparou esta solução (vazio se a solução veio de outro lugar)."
+      },
+      {
+        "Name": "Info",
+        "Nick": "I",
+        "Type": "Text",
+        "Desc": "Resumo: widgets, ligações com o PillHub, política de commit, última solução e avisos."
+      }
+    ]
+  },
+  {
+    "File": "PillDashboardBuilder_Component.cs",
+    "Name": "Pill Dashboard Builder",
+    "NickName": "DashBuild",
+    "Category": "Glaux Tools",
+    "SubCategory": "Dashboard",
+    "Description": "Gera widgets para o Pill Dashboard a partir de listas paralelas (lista mais longa, como no Grasshopper): - Kind: label, number, slider, toggle, button, dropdown, progress, chart. - Settings: 'min=0 | max=10 | step=0.5 | key=[GEO] Raio' (mesmas chaves das linhas de texto). - Values: ramo i → widget i. Indicadores mostram o valor; controles o usam como valor padrão. - Hub Group: cria um indicador por canal do PillHub do grupo (ex: 'ACU'), lido ao vivo pelo painel. A lista de canais é lida quando o Builder calcula; recalcule-o se surgirem canais novos.",
+    "Inputs": [
+      {
+        "Name": "Kind",
+        "Nick": "K",
+        "Type": "Text",
+        "Desc": "Tipo de cada widget (label, number, slider, toggle, button, dropdown, progress, chart)."
+      },
+      {
+        "Name": "Label",
+        "Nick": "L",
+        "Type": "Text",
+        "Desc": "Rótulo de cada widget."
+      },
+      {
+        "Name": "Settings",
+        "Nick": "S",
+        "Type": "Text",
+        "Desc": "Configurações de cada widget: 'chave=valor | chave=valor'."
+      },
+      {
+        "Name": "Values",
+        "Nick": "V",
+        "Type": "Generic",
+        "Desc": "Valores: ramo i para o widget i (ou uma lista simples com um valor por widget)."
+      },
+      {
+        "Name": "Hub Group",
+        "Nick": "H",
+        "Type": "Text",
+        "Desc": "Grupo ou chave do PillHub (ex: 'ACU', 'SALA_'): um indicador por canal."
+      }
+    ],
+    "Outputs": [
+      {
+        "Name": "Widgets",
+        "Nick": "W",
+        "Type": "Generic",
+        "Desc": "Widgets para a entrada W do Pill Dashboard."
+      },
+      {
+        "Name": "Definition",
+        "Nick": "Def",
+        "Type": "Text",
+        "Desc": "Definição textual equivalente (uma linha por widget), para salvar ou editar num Panel."
+      },
+      {
+        "Name": "Info",
+        "Nick": "I",
+        "Type": "Text",
+        "Desc": "Resumo e avisos."
+      }
+    ]
+  },
+  {
+    "File": "PillDataValidation_Component.cs",
+    "Name": "Pill Data Validation",
+    "NickName": "PillValidate",
+    "Category": "Glaux Tools",
+    "SubCategory": "Data",
+    "Description": "Valida uma DataTree antes de gravar ou exportar, reunindo num só lugar regras de tipo, nulos, duplicatas (por ramo ou globais), faixa numérica e estrutura (profundidade, número de ramos, comprimento uniforme, ramos obrigatórios). Emite a lista de problemas com caminho/índice, uma máscara paralela à árvore e a árvore só com os itens aprovados. Conecte 'Valid' ao 'Write' do Pill DB Write para só gravar dados válidos.",
+    "Inputs": [
+      {
+        "Name": "Data",
+        "Nick": "D",
+        "Type": "Generic",
+        "Desc": "Árvore a validar."
+      },
+      {
+        "Name": "Types",
+        "Nick": "Ty",
+        "Type": "Text",
+        "Desc": "Tipos aceitos (Number, Integer, Text, Point, Curve...). Vazio = qualquer."
+      },
+      {
+        "Name": "Allow Nulls",
+        "Nick": "N",
+        "Type": "Boolean",
+        "Desc": "Aceita itens nulos."
+      },
+      {
+        "Name": "Unique",
+        "Nick": "U",
+        "Type": "Integer",
+        "Desc": "Duplicatas: 0 = permitidas, 1 = proibidas no mesmo ramo, 2 = proibidas na árvore toda."
+      },
+      {
+        "Name": "Range",
+        "Nick": "Rg",
+        "Type": "Interval",
+        "Desc": "Faixa numérica aceita (itens não numéricos falham quando há faixa)."
+      },
+      {
+        "Name": "Depth",
+        "Nick": "Dp",
+        "Type": "Integer",
+        "Desc": "Profundidade exata exigida dos caminhos (ex: 2 para {a;b})."
+      },
+      {
+        "Name": "Branch Count",
+        "Nick": "BC",
+        "Type": "Integer",
+        "Desc": "Número exato de ramos exigido."
+      },
+      {
+        "Name": "Uniform Length",
+        "Nick": "UL",
+        "Type": "Boolean",
+        "Desc": "Todos os ramos com a mesma quantidade de itens."
+      },
+      {
+        "Name": "Required Paths",
+        "Nick": "RP",
+        "Type": "Text",
+        "Desc": "Ramos que precisam existir (ex: '{0;0}')."
+      },
+      {
+        "Name": "Require Items",
+        "Nick": "RI",
+        "Type": "Boolean",
+        "Desc": "A árvore não pode estar vazia."
+      }
+    ],
+    "Outputs": [
+      {
+        "Name": "Valid",
+        "Nick": "OK",
+        "Type": "Boolean",
+        "Desc": "True se nenhuma regra falhou."
+      },
+      {
+        "Name": "Issues",
+        "Nick": "Is",
+        "Type": "Text",
+        "Desc": "Problemas encontrados (regra, caminho, índice e motivo)."
+      },
+      {
+        "Name": "Issue Paths",
+        "Nick": "IP",
+        "Type": "Text",
+        "Desc": "Caminho de cada problema."
+      },
+      {
+        "Name": "Mask",
+        "Nick": "M",
+        "Type": "Boolean",
+        "Desc": "Máscara paralela à árvore: True = item aprovado."
+      },
+      {
+        "Name": "Valid Data",
+        "Nick": "VD",
+        "Type": "Generic",
+        "Desc": "A árvore só com os itens aprovados (caminhos preservados)."
+      },
+      {
+        "Name": "Summary",
+        "Nick": "S",
+        "Type": "Text",
+        "Desc": "Resumo por regra."
+      }
+    ]
+  },
+  {
     "File": "PillDisabler_Component.cs",
     "Name": "Pill Disabler / Kill Switch",
     "NickName": "PillDisabler",
-    "Category": "Buraqueira Tools",
+    "Category": "Glaux Tools",
     "SubCategory": "Pills",
     "Description": "Desativa de verdade (Ctrl+E / Locked) componentes, pilhas ou Pilulas no canvas do Grasshopper. - Zera 100% o consumo de CPU e GPU dos componentes desligados. - Suporta corte direto (Mute) ou alternancia mutua entre Pilha A e Pilha B. - Conexao estilo Galapagos: arraste dos grips ou clique com botao direito para conectar pilhas inteiras. - Cabos com setas e molduras visuais no canvas indicando os componentes controlados.",
     "Inputs": [
@@ -2963,7 +4565,7 @@
         "Name": "Mute / Disable",
         "Nick": "Mute",
         "Type": "Boolean",
-        "Desc": "Se True (padrao), desativa a pilha de verdade (Locked = true). Se False, mantem ativada.\\n"
+        "Desc": "Se True (padrao), desativa a pilha de verdade (Locked = true). Se False, mantem ativada. "
       },
       {
         "Name": "Target Stack (A)",
@@ -3003,21 +4605,21 @@
     "File": "PillDiskLoad_Component.cs",
     "Name": "Pill Disk Load",
     "NickName": "PillLoad",
-    "Category": "Buraqueira Tools",
+    "Category": "Glaux Tools",
     "SubCategory": "Pills",
-    "Description": "Carrega e restaura com fidelidade total qualquer árvore de dados ou geometria gravada em disco pelo Pill Disk Save (.pilldata). Suporta recarregamento sob demanda por botão ou timer.",
+    "Description": "Carrega e restaura com fidelidade total qualquer árvore de dados ou geometria gravada em disco pelo Pill Disk Save (.pilldata ou .ghdata). - Possui busca inteligente de arquivos portátil entre diferentes computadores (resolve automaticamente caminhos de outro PC); - Procura na mesma pasta do arquivo .gh, na subpasta 'PillVault' ou diretório especificado; - Dê duplo-clique no componente para selecionar o arquivo diretamente no disco.",
     "Inputs": [
       {
         "Name": "Key",
         "Nick": "K",
         "Type": "Text",
-        "Desc": "Nome da chave a carregar ou caminho completo para o arquivo .pilldata."
+        "Desc": "Nome da chave a carregar, nome do arquivo ou caminho completo. "
       },
       {
         "Name": "Directory",
         "Nick": "DIR",
         "Type": "Text",
-        "Desc": "Diretório onde procurar o arquivo. Se omitido, procura na subpasta 'PillVault' adjacente ao documento."
+        "Desc": "Diretório onde procurar o arquivo. Se omitido, procura automaticamente na mesma pasta do arquivo .gh e na subpasta 'PillVault'."
       },
       {
         "Name": "Reload",
@@ -3043,7 +4645,7 @@
         "Name": "Summary",
         "Nick": "SUM",
         "Type": "Text",
-        "Desc": "Informações de diagnóstico do arquivo (itens, galhos, tamanho em disco)."
+        "Desc": "Informações de diagnóstico do arquivo (itens, galhos, tamanho e caminho em disco)."
       }
     ]
   },
@@ -3051,7 +4653,7 @@
     "File": "PillDiskSave_Component.cs",
     "Name": "Pill Disk Save",
     "NickName": "PillSave",
-    "Category": "Buraqueira Tools",
+    "Category": "Glaux Tools",
     "SubCategory": "Pills",
     "Description": "Salva qualquer dado ou árvore de dados do Grasshopper em disco (.pilldata) com preservação total de tipos e topologia (geometrias, listas, números, matrizes, simulações). Suporta acionamento por botão/gatilho.",
     "Inputs": [
@@ -3102,10 +4704,202 @@
     ]
   },
   {
+    "File": "PillDomainFilter_Component.cs",
+    "Name": "Pill Domain Filter",
+    "NickName": "PillClip",
+    "Category": "Glaux Tools",
+    "SubCategory": "Pills",
+    "Description": "Filtra e recorta cirurgicamente valores numéricos, listas ou árvores completas (DataTree) com base em um domínio ou intervalo [Min To Max]. - Retorna diretamente os valores numéricos reais aprovados dentro do intervalo (não apenas o ID); - Retorna também os valores descartados (fora do domínio), máscara booleana e índices; - Aceita Interval nativo (ex: '100 To 250') ou limites numéricos individuais (Min / Max); - Modos: 0 = Compactar (remove fora), 1 = Preservar Ramos, 2 = Alinhar com Null (listas paralelas), 3 = Clamp (grampear); - Cápsula Pill integrada com badge [NUM], contadores dinâmicos e transmissão sem fio opcional no PillHub.",
+    "Inputs": [
+      {
+        "Name": "Values",
+        "Nick": "V",
+        "Type": "Generic",
+        "Desc": "Valores numéricos, listas ou árvore completa (DataTree) a inspecionar e filtrar."
+      },
+      {
+        "Name": "Domain",
+        "Nick": "D",
+        "Type": "Generic",
+        "Desc": "Domínio ou intervalo numérico [Min To Max] (ex: 100 To 250). Opcional se Min e Max forem fornecidos."
+      },
+      {
+        "Name": "Min",
+        "Nick": "Min",
+        "Type": "Number",
+        "Desc": "Limite inferior aceitável (opcional, sobrescreve ou define o início do domínio)."
+      },
+      {
+        "Name": "Max",
+        "Nick": "Max",
+        "Type": "Number",
+        "Desc": "Limite superior aceitável (opcional, sobrescreve ou define o fim do domínio)."
+      },
+      {
+        "Name": "Inclusive",
+        "Nick": "Inc",
+        "Type": "Boolean",
+        "Desc": "Se True (padrão), inclui os limites borda: Min <= V <= Max. Se False, estritamente aberto: Min < V < Max."
+      },
+      {
+        "Name": "Mode",
+        "Nick": "M",
+        "Type": "Integer",
+        "Desc": "Modo de saída: 0 = Compactar (remove valores fora e descarta ramos vazios) 1 = Preservar Ramos (mantém ramos vazios estruturais) 2 = Alinhar com Null (substitui descartados por <null> para sincronizar listas paralelas) 3 = Clamp / Grampear (em vez de descartar, ajusta números fora para Min ou Max)"
+      },
+      {
+        "Name": "Key",
+        "Nick": "K",
+        "Type": "Text",
+        "Desc": "Nome opcional do canal Pill para transmissão sem fios automática dos valores filtrados pelo PillHub (categoria [NUM])."
+      },
+      {
+        "Name": "Active",
+        "Nick": "Active",
+        "Type": "Boolean",
+        "Desc": "Gatilho de ativação do filtro. Se False, opera em pass-through (todos os valores passam em Inside sem cortes)."
+      }
+    ],
+    "Outputs": [
+      {
+        "Name": "Inside",
+        "Nick": "In",
+        "Type": "Number",
+        "Desc": "Árvore ou lista contendo os valores numéricos reais que estão DENTRO do domínio escolhido [Min..Max]."
+      },
+      {
+        "Name": "Outside",
+        "Nick": "Out",
+        "Type": "Number",
+        "Desc": "Árvore ou lista contendo os valores numéricos descartados (que ficaram FORA do domínio)."
+      },
+      {
+        "Name": "Mask",
+        "Nick": "M",
+        "Type": "Boolean",
+        "Desc": "Máscara booleana correspondente aos dados originais (True = Dentro, False = Fora)."
+      },
+      {
+        "Name": "Indices",
+        "Nick": "I",
+        "Type": "Integer",
+        "Desc": "Índices originais dos itens que foram aprovados dentro do domínio."
+      },
+      {
+        "Name": "Count",
+        "Nick": "C",
+        "Type": "Integer",
+        "Desc": "Quantidade total de valores aprovados dentro do domínio."
+      }
+    ]
+  },
+  {
+    "File": "PillExperimentLogger_Component.cs",
+    "Name": "Pill Experiment Logger",
+    "NickName": "PillExpLog",
+    "Category": "Glaux Tools",
+    "SubCategory": "Vault",
+    "Description": "Registra cada execução de uma simulação ou otimização (Wallacei, Galapagos, estudos paramétricos) como uma revisão do experimento no store: entrada (parâmetros/árvore) → configuração → versões → resultado → tempo de execução. - Com 'Log' ligado, cada solução com entradas/resultados novos vira uma execução (duplicatas consecutivas são ignoradas). - 'Buffer' agrupa N execuções numa gravação só (lote) para loops rápidos; o buffer é gravado também ao fechar o documento. Depois, use Pill DB Query (Tree 'result') para achar as execuções com um resultado e Pill Restore/History para ver com quais parâmetros ele foi produzido.",
+    "Inputs": [
+      {
+        "Name": "Store",
+        "Nick": "S",
+        "Type": "Generic",
+        "Desc": "Conexão do Pill DB Connect, ou caminho de um arquivo .glauxdb. Vazio = store padrão do projeto (pasta PillVault do .gh)."
+      },
+      {
+        "Name": "Experiment",
+        "Nick": "E",
+        "Type": "Text",
+        "Desc": "Nome do experimento (cada execução vira uma revisão desta chave)."
+      },
+      {
+        "Name": "Parameters",
+        "Nick": "P",
+        "Type": "Generic",
+        "Desc": "PillBundle(s) com os parâmetros da execução."
+      },
+      {
+        "Name": "Inputs",
+        "Nick": "In",
+        "Type": "Generic",
+        "Desc": "Árvore de entradas da execução (alternativa ou complemento aos parâmetros)."
+      },
+      {
+        "Name": "Results",
+        "Nick": "Res",
+        "Type": "Generic",
+        "Desc": "Árvore de resultados/objetivos da execução."
+      },
+      {
+        "Name": "Config",
+        "Nick": "Cfg",
+        "Type": "Text",
+        "Desc": "Configuração 'chave=valor' (ex: 'solver=raytracing', 'raios=10000')."
+      },
+      {
+        "Name": "Runtime",
+        "Nick": "ms",
+        "Type": "Number",
+        "Desc": "Tempo da execução em ms."
+      },
+      {
+        "Name": "Log",
+        "Nick": "L",
+        "Type": "Boolean",
+        "Desc": "Registra quando True (toggle ligado durante a otimização)."
+      },
+      {
+        "Name": "Buffer",
+        "Nick": "B",
+        "Type": "Integer",
+        "Desc": "Execuções acumuladas antes de gravar em lote (1 = grava cada uma)."
+      },
+      {
+        "Name": "Skip Duplicates",
+        "Nick": "SD",
+        "Type": "Boolean",
+        "Desc": "Ignora uma execução idêntica (entradas e resultados) à anterior."
+      },
+      {
+        "Name": "Flush",
+        "Nick": "F",
+        "Type": "Boolean",
+        "Desc": "Grava imediatamente o que estiver no buffer."
+      }
+    ],
+    "Outputs": [
+      {
+        "Name": "Run",
+        "Nick": "Run",
+        "Type": "Integer",
+        "Desc": "Número (revisão) da última execução gravada."
+      },
+      {
+        "Name": "Logged",
+        "Nick": "N",
+        "Type": "Integer",
+        "Desc": "Execuções registradas nesta sessão."
+      },
+      {
+        "Name": "Pending",
+        "Nick": "Pd",
+        "Type": "Integer",
+        "Desc": "Execuções no buffer aguardando gravação."
+      },
+      {
+        "Name": "Info",
+        "Nick": "I",
+        "Type": "Text",
+        "Desc": "Resumo."
+      }
+    ]
+  },
+  {
     "File": "PillGeometryFilter_Component.cs",
     "Name": "Pill Geometry Filter",
     "NickName": "PillGeomFilter",
-    "Category": "Buraqueira Tools",
+    "Category": "Glaux Tools",
     "SubCategory": "Pills",
     "Description": "Filtro e higienizador de geometrias para simulação acústica e modelagem paramétrica. - Elimina elementos degenerados, micro-faces colapsadas com área próxima de zero, áreas negativas, NaN ou tendendo a -infinity. - Suporta expurgo de micro-triângulos internos em Breps e Malhas compostas. - Preserva a integridade de caminhos GH_Path para árvores de dados a jusante. - Publicação opcional no barramento sem fio PillHub (categoria [GEO]).",
     "Inputs": [
@@ -3137,7 +4931,7 @@
         "Name": "PreservePaths",
         "Nick": "P",
         "Type": "Integer",
-        "Desc": "Modo de preservação de caminhos da árvore de dados:\\n0 = Podar ramos que ficarem vazios\\n1 = Manter ramos vazios estruturais\\n2 = Preencher posições eliminadas com <null> (mantém índices de sincronização idênticos)"
+        "Desc": "Modo de preservação de caminhos da árvore de dados: 0 = Podar ramos que ficarem vazios 1 = Manter ramos vazios estruturais 2 = Preencher posições eliminadas com <null> (mantém índices de sincronização idênticos)"
       },
       {
         "Name": "Key",
@@ -3186,10 +4980,118 @@
     ]
   },
   {
+    "File": "PillHistory_Component.cs",
+    "Name": "Pill History",
+    "NickName": "PillHistory",
+    "Category": "Glaux Tools",
+    "SubCategory": "Vault",
+    "Description": "Lista o histórico de estados gravados no store: snapshots, experimentos, métricas ou datasets. - Uma linha por revisão: referência, data, notas, hashes de entradas e saídas. - 'Tree' extrai uma árvore de cada revisão (ex: 'out', 'result', 'param:Largura') numa só árvore {revisão; caminho original}, pronta para gráficos (Chart Line) e tabelas.",
+    "Inputs": [
+      {
+        "Name": "Store",
+        "Nick": "S",
+        "Type": "Generic",
+        "Desc": "Conexão do Pill DB Connect, ou caminho de um arquivo .glauxdb. Vazio = store padrão do projeto (pasta PillVault do .gh)."
+      },
+      {
+        "Name": "Kind",
+        "Nick": "T",
+        "Type": "Text",
+        "Desc": "Tipo das entradas: snapshot (padrão), experiment, metrics, dataset."
+      },
+      {
+        "Name": "Key Pattern",
+        "Nick": "K",
+        "Type": "Text",
+        "Desc": "Padrão de chave com * e ?."
+      },
+      {
+        "Name": "Tree",
+        "Nick": "Tr",
+        "Type": "Text",
+        "Desc": "Árvore a extrair de cada revisão (opcional)."
+      },
+      {
+        "Name": "Limit",
+        "Nick": "L",
+        "Type": "Integer",
+        "Desc": "Máximo de revisões listadas."
+      },
+      {
+        "Name": "Newest First",
+        "Nick": "NF",
+        "Type": "Boolean",
+        "Desc": "Mais recentes primeiro."
+      }
+    ],
+    "Outputs": [
+      {
+        "Name": "Refs",
+        "Nick": "R",
+        "Type": "Text",
+        "Desc": "Referências 'chave@revisão' (entrada do Compare/Restore)."
+      },
+      {
+        "Name": "Keys",
+        "Nick": "K",
+        "Type": "Text",
+        "Desc": "Chave de cada revisão."
+      },
+      {
+        "Name": "Revisions",
+        "Nick": "Rev",
+        "Type": "Integer",
+        "Desc": "Número de cada revisão."
+      },
+      {
+        "Name": "Timestamps",
+        "Nick": "TS",
+        "Type": "Text",
+        "Desc": "Data/hora local."
+      },
+      {
+        "Name": "Notes",
+        "Nick": "Nt",
+        "Type": "Text",
+        "Desc": "Notas e tags."
+      },
+      {
+        "Name": "Inputs Hash",
+        "Nick": "IH",
+        "Type": "Text",
+        "Desc": "Hash (curto) das entradas de cada revisão."
+      },
+      {
+        "Name": "Outputs Hash",
+        "Nick": "OH",
+        "Type": "Text",
+        "Desc": "Hash (curto) das saídas de cada revisão."
+      },
+      {
+        "Name": "Metadata",
+        "Nick": "M",
+        "Type": "Text",
+        "Desc": "Metadados 'chave=valor' (um ramo por revisão)."
+      },
+      {
+        "Name": "Tree Data",
+        "Nick": "D",
+        "Type": "Generic",
+        "Desc": "Árvore extraída de cada revisão, com caminho {i; caminho original}."
+      },
+      {
+        "Name": "Info",
+        "Nick": "I",
+        "Type": "Text",
+        "Desc": "Resumo."
+      }
+    ]
+  },
+  {
     "File": "PillLayerPipeline_Component.cs",
     "Name": "Pill Invariant Geometry Pipeline",
     "NickName": "PillLayers",
-    "Category": "Buraqueira Tools",
+    "Category": "Glaux Tools",
     "SubCategory": "Pills",
     "Description": "Pipeline deterministico de geometrias do Rhino imutavel a alteracoes de camadas e indices. - Selecao estavel de camadas pelo FullPath hierarquico (ex: '01_ARQ::PAREDES::CONCRETO'), imune a criacao/exclusao de camadas intermediarias. - Ordenacao canonica estrita (Espacial X->Y->Z, Nome Natural ou GUID) garantindo estabilidade absoluta para Wallacei e Galapagos. - Publicacao automatica no barramento sem fio PillHub e sincronizacao por cabos ocultos.",
     "Inputs": [
@@ -3203,13 +5105,13 @@
         "Name": "TypeFilter",
         "Nick": "TF",
         "Type": "Integer",
-        "Desc": "Filtro de tipo geometrico:\\n0 = Qualquer\\n1 = Brep / Superficie\\n2 = Malha (Mesh)\\n3 = Curva\\n4 = Ponto\\n5 = SubD\\n6 = Texto / Anotacao\\n7 = Extrusao"
+        "Desc": "Filtro de tipo geometrico: 0 = Qualquer 1 = Brep / Superficie 2 = Malha (Mesh) 3 = Curva 4 = Ponto 5 = SubD 6 = Texto / Anotacao 7 = Extrusao"
       },
       {
         "Name": "SortMode",
         "Nick": "SM",
         "Type": "Integer",
-        "Desc": "Criterio de ordenacao canonica:\\n0 = Espacial 3D (X -> Y -> Z do Bounding Box) [Padrao Wallacei]\\n1 = Espacial 2D (X -> Y no plano XY)\\n2 = Nome Natural do Objeto (ex: P1, P2, P10)\\n3 = Nome do Objeto -> GUID\\n4 = GUID Estavel"
+        "Desc": "Criterio de ordenacao canonica: 0 = Espacial 3D (X -> Y -> Z do Bounding Box) [Padrao Wallacei] 1 = Espacial 2D (X -> Y no plano XY) 2 = Nome Natural do Objeto (ex: P1, P2, P10) 3 = Nome do Objeto -> GUID 4 = GUID Estavel"
       },
       {
         "Name": "PillKey",
@@ -3264,10 +5166,262 @@
     ]
   },
   {
+    "File": "PillIsometricSurfaceGraph_Component.cs",
+    "Name": "Pill Isometric Surface Graph",
+    "NickName": "IsoSurface",
+    "Category": "Glaux Tools",
+    "SubCategory": "Visual",
+    "Description": "Renderiza um gráfico de superfície 3D em projeção isométrica diretamente no Canvas do Grasshopper. - Permite escolher qualquer um dos 4 quadrantes isométricos (SW, SE, NE, NW); - Recebe coordenadas X, Y e grade/valores Z com colormap gradiente suave e linhas de malha (wireframe); - Exibe caixa delimitadora 3D com eixos (x1, x2, D1), ticks numéricos e legenda lateral de cores (Colorbar); - Gera malha nativa Rhino.Geometry.Mesh com vertex colors e suporta exportação PNG em alta resolução (300 DPI).",
+    "Inputs": [
+      {
+        "Name": "X Values",
+        "Nick": "X",
+        "Type": "Number",
+        "Desc": "Lista de coordenadas no eixo X (ex: x1). Se omitido, adota índices 0, 1, 2..."
+      },
+      {
+        "Name": "Y Values",
+        "Nick": "Y",
+        "Type": "Number",
+        "Desc": "Lista de coordenadas no eixo Y (ex: x2). Se omitido, adota índices 0, 1, 2..."
+      },
+      {
+        "Name": "Values (Z)",
+        "Nick": "V",
+        "Type": "Generic",
+        "Desc": "Valores numéricos de altura/elevação Z (ex: D1, EDT, T30, SPL, deformações). "
+      },
+      {
+        "Name": "Quadrant / View",
+        "Nick": "View",
+        "Type": "Generic",
+        "Desc": "Ponto de vista isométrico (escolha entre os 4 quadrantes): "
+      },
+      {
+        "Name": "Elevation",
+        "Nick": "Elev",
+        "Type": "Number",
+        "Desc": "Ângulo de elevação vertical da perspectiva isométrica em graus (10° a 80°). Padrão: 30°."
+      },
+      {
+        "Name": "Colormap",
+        "Nick": "Col",
+        "Type": "Generic",
+        "Desc": "Gradiente de cores para a superfície: "
+      },
+      {
+        "Name": "Title",
+        "Nick": "T",
+        "Type": "Text",
+        "Desc": "Título principal no cabeçalho do gráfico. Padrão: 'Shoebox EDT'."
+      },
+      {
+        "Name": "X Label",
+        "Nick": "XLab",
+        "Type": "Text",
+        "Desc": "Rótulo do eixo X. Padrão: 'x1'."
+      },
+      {
+        "Name": "Y Label",
+        "Nick": "YLab",
+        "Type": "Text",
+        "Desc": "Rótulo do eixo Y. Padrão: 'x2'."
+      },
+      {
+        "Name": "Z Label",
+        "Nick": "ZLab",
+        "Type": "Text",
+        "Desc": "Rótulo do eixo vertical Z. Padrão: 'D1'."
+      },
+      {
+        "Name": "Wireframe",
+        "Nick": "Wire",
+        "Type": "Boolean",
+        "Desc": "Exibir linhas pretas de malha (wireframe) sobre os quadriláteros da superfície. Padrão: true."
+      },
+      {
+        "Name": "Domain (Z Limits)",
+        "Nick": "D",
+        "Type": "Generic",
+        "Desc": "Limites manuais de Mínimo e Máximo de Z como Intervalo/Domínio (ex: Interval(-0.05, 0.0) ou '-0.05 To 0'). "
+      },
+      {
+        "Name": "Export Folder",
+        "Nick": "Folder",
+        "Type": "Text",
+        "Desc": "Pasta de destino para gravação da imagem PNG. Se vazio, adota a Área de Trabalho (Desktop)."
+      },
+      {
+        "Name": "Save Image",
+        "Nick": "Save",
+        "Type": "Boolean",
+        "Desc": "Gatilho booleano para exportar imagem PNG em altíssima resolução (300 DPI) com fundo branco para publicações."
+      }
+    ],
+    "Outputs": [
+      {
+        "Name": "Chart Image",
+        "Nick": "Img",
+        "Type": "Generic",
+        "Desc": "Imagem renderizada da superfície 3D em projeção isométrica (System.Drawing.Bitmap)."
+      },
+      {
+        "Name": "Mesh 3D",
+        "Nick": "M",
+        "Type": "Mesh",
+        "Desc": "Malha tridimensional nativa do Rhino (Rhino.Geometry.Mesh) com cores aplicadas por vértice correspondentes ao gradiente."
+      },
+      {
+        "Name": "Domain",
+        "Nick": "D",
+        "Type": "Interval",
+        "Desc": "Intervalo adotado de variação do eixo Z [MinZ, MaxZ]."
+      },
+      {
+        "Name": "Summary",
+        "Nick": "T",
+        "Type": "Text",
+        "Desc": "Relatório textual com resumo das dimensões da grade e estatísticas de Z (Min, Max, Média, Desvio Padrão)."
+      },
+      {
+        "Name": "Saved Path",
+        "Nick": "Path",
+        "Type": "Text",
+        "Desc": "Caminho absoluto do arquivo PNG gravado em disco."
+      }
+    ]
+  },
+  {
+    "File": "PillNumberRounder_Component.cs",
+    "Name": "Pill Number Rounder",
+    "NickName": "PillRound",
+    "Category": "Glaux Tools",
+    "SubCategory": "Pills",
+    "Description": "Arredonda valores numéricos individuais, listas ou árvores completas (DataTree) com precisão configurável de casas decimais e modos flexíveis (Nearest, Floor, Ceiling, Truncate). Retorna números nativos e textos formatados.",
+    "Inputs": [
+      {
+        "Name": "Numbers",
+        "Nick": "N",
+        "Type": "Generic",
+        "Desc": "Valores numéricos, listas ou árvores completas (DataTree) a serem arredondados."
+      },
+      {
+        "Name": "Decimals",
+        "Nick": "D",
+        "Type": "Integer",
+        "Desc": "Quantidade de casas decimais desejada (padrão: 2). Se 0, arredonda para número inteiro."
+      },
+      {
+        "Name": "Mode",
+        "Nick": "M",
+        "Type": "Integer",
+        "Desc": "Modo de arredondamento: 0 = Mais próximo (Midpoint Away From Zero: 1.25 -> 1.3) 1 = Floor / Para baixo (1.29 -> 1.2) 2 = Ceiling / Para cima (1.21 -> 1.3) 3 = Truncate / Cortar casas (1.29 -> 1.2)"
+      },
+      {
+        "Name": "Format",
+        "Nick": "F",
+        "Type": "Integer",
+        "Desc": "Formato do texto de saída: 0 = Ponto decimal internacional (ex: 1.23) 1 = Vírgula decimal padrão Brasil/Excel (ex: 1,23)"
+      }
+    ],
+    "Outputs": [
+      {
+        "Name": "Numbers",
+        "Nick": "N",
+        "Type": "Number",
+        "Desc": "Árvore com os valores numéricos arredondados (tipo double / GH_Number nativo)."
+      },
+      {
+        "Name": "Integers",
+        "Nick": "I",
+        "Type": "Integer",
+        "Desc": "Árvore com os valores arredondados para números inteiros (int / GH_Integer)."
+      },
+      {
+        "Name": "Text",
+        "Nick": "T",
+        "Type": "Text",
+        "Desc": "Árvore com os valores formatados como texto, mantendo os zeros à direita e o separador configurado."
+      }
+    ]
+  },
+  {
+    "File": "PillPenStyle_Component.cs",
+    "Name": "Pill Pen Style",
+    "NickName": "PillPen",
+    "Category": "Glaux Tools",
+    "SubCategory": "Visual",
+    "Description": "Configura penas e simbologia gráfica inspirada no QGIS e ABNT (espessura de linha em mm, traço sólido/tracejado/traço-ponto, cor, preenchimento, opacidade e marcadores de ponto). Etiqueta geometrias para renderização vetorial no Pill Vector Sheet Layout.",
+    "Inputs": [
+      {
+        "Name": "Geometry",
+        "Nick": "G",
+        "Type": "Geometry",
+        "Desc": "Geometrias a estilizar (Curvas, Breps, Meshes, Superfícies, Pontos, Hachuras). Mantém rigorosamente a estrutura de árvore de dados (DataTree)."
+      },
+      {
+        "Name": "Weight / Thickness (mm)",
+        "Nick": "W",
+        "Type": "Number",
+        "Desc": "Espessura do traço em milímetros no papel (padrões ABNT: 0.13, 0.18, 0.25, 0.35, 0.50, 0.70, 1.00). Padrão: 0.25 mm."
+      },
+      {
+        "Name": "Color",
+        "Nick": "C",
+        "Type": "Colour",
+        "Desc": "Cor do contorno/traço (Colour Swatch, RGB ou Hex). Padrão: Preto técnico (#0F172A)."
+      },
+      {
+        "Name": "Pattern",
+        "Nick": "Pat",
+        "Type": "Text",
+        "Desc": "Padrão do traçado: 'Solid' (contínua), 'Dashed' (tracejada), 'Dotted' (pontilhada), 'DashDot' (traço-ponto), 'DashDotDot' (traço-dois-pontos), ou string SVG dasharray customizada (ex.: '5,2,1,2'). Padrão: 'Solid'."
+      },
+      {
+        "Name": "Fill",
+        "Nick": "F",
+        "Type": "Generic",
+        "Desc": "Preenchimento para curvas fechadas, superfícies ou polígonos (Colour Swatch, Hex ou 'none' para transparente). Padrão: 'none'."
+      },
+      {
+        "Name": "Opacity",
+        "Nick": "A",
+        "Type": "Number",
+        "Desc": "Fator de opacidade geral (0.0 = transparente, 1.0 = opaco). Padrão: 1.0."
+      },
+      {
+        "Name": "Marker",
+        "Nick": "M",
+        "Type": "Text",
+        "Desc": "Símbolo para pontos, vértices ou receptores: 'Circle', 'Cross', 'X', 'Square', 'Target', 'Triangle'. Padrão: 'Circle'."
+      },
+      {
+        "Name": "Marker Size (mm)",
+        "Nick": "S",
+        "Type": "Number",
+        "Desc": "Tamanho do marcador de ponto em milímetros na prancha. Padrão: 2.5 mm."
+      }
+    ],
+    "Outputs": [
+      {
+        "Name": "Styled Geometry",
+        "Nick": "G",
+        "Type": "Geometry",
+        "Desc": "Geometrias com metadados de estilo anexados, prontas para o Pill Vector Sheet Layout."
+      },
+      {
+        "Name": "Style String",
+        "Nick": "Sty",
+        "Type": "Text",
+        "Desc": "String canônica de estilo CSS/SVG gerada (compatível com a entrada Styles do PillSheet)."
+      }
+    ]
+  },
+  {
     "File": "PillPresetManager_Component.cs",
     "Name": "Pill Preset & State Manager",
     "NickName": "PillPresets",
-    "Category": "Buraqueira Tools",
+    "Category": "Glaux Tools",
     "SubCategory": "Pills",
     "Description": "Gerencia cenários e alternativas de projeto (ex: 'sala vazia' vs 'com plateia'). Salva e restaura snapshots de parâmetros em memória ou arquivo JSON externo com histórico (logger). Suporta salvamento automático por detecção de modificações.",
     "Inputs": [
@@ -3345,7 +5499,7 @@
     "File": "PillPresetVault_Component.cs",
     "Name": "Pill Preset Vault",
     "NickName": "PillVault",
-    "Category": "Buraqueira Tools",
+    "Category": "Glaux Tools",
     "SubCategory": "Pills",
     "Description": "Cofre de Variantes (Preset Vault) para o ecossistema de Pilulas e Parametros do BURAQUEIRA Tools. - Grava o estado atual de multiplas variaveis, materiais e do Hub em slots de memoria. - Botoes: [ + Gravar Variante ] (com campo de nome) e seletor [<] [Opcao] [>] para carregar e sobrescrever o barramento. - So grava quando clica para adicionar um estado novo (sem gravacao automatica indevida). - Duplo clique: abre o gerenciador de log com os salvamentos; permite excluir linhas selecionadas e impede escrita manual. - Cabos estilo Galapagos conectando o cofre a todos os controles monitorados com moldura [VAULT]. - Salva e persiste todas as variantes no proprio arquivo .gh.",
     "Inputs": [
@@ -3411,7 +5565,7 @@
     "File": "PillReceiver_Component.cs",
     "Name": "Pill Receiver",
     "NickName": "PillRx",
-    "Category": "Buraqueira Tools",
+    "Category": "Glaux Tools",
     "SubCategory": "Pills",
     "Description": "Recebe dados ou árvores (DataTree) de um canal sem fios Pill. Detecta incompatibilidade de tipo, calcula tempo decorrido e preserva a estrutura original de dados com imutabilidade absoluta.",
     "Inputs": [
@@ -3456,10 +5610,328 @@
     ]
   },
   {
+    "File": "PillRestore_Component.cs",
+    "Name": "Pill Restore",
+    "NickName": "PillRestore",
+    "Category": "Glaux Tools",
+    "SubCategory": "Vault",
+    "Description": "Recupera um estado gravado pelo Pill Snapshot (ou uma execução do Experiment Logger): - saídas: parâmetros (PillBundle, use Pill Bundle Unpack), árvores de entrada e saída, canais do PillHub registrados; - 'Apply Controls' reaplica sliders, toggles, value lists, panels e Pill Slider Pools numa única solução, só nos controles compatíveis (existem, mesmo tipo, valor dentro da faixa atual, opção ainda existe); os demais aparecem em 'Compatibility'. Referências: 'Nome' (última), 'Nome@3', 'Nome@-1'.",
+    "Inputs": [
+      {
+        "Name": "Store",
+        "Nick": "S",
+        "Type": "Generic",
+        "Desc": "Conexão do Pill DB Connect, ou caminho de um arquivo .glauxdb. Vazio = store padrão do projeto (pasta PillVault do .gh)."
+      },
+      {
+        "Name": "Ref",
+        "Nick": "R",
+        "Type": "Text",
+        "Desc": "Estado a recuperar ('Nome', 'Nome@3', 'Nome@-1')."
+      },
+      {
+        "Name": "Kind",
+        "Nick": "T",
+        "Type": "Text",
+        "Desc": "Tipo da entrada: snapshot (padrão) ou experiment."
+      },
+      {
+        "Name": "Apply Controls",
+        "Nick": "Go",
+        "Type": "Boolean",
+        "Desc": "Reaplica os controles compatíveis no canvas (na borda False → True; use um botão)."
+      }
+    ],
+    "Outputs": [
+      {
+        "Name": "Parameters",
+        "Nick": "P",
+        "Type": "Generic",
+        "Desc": "Parâmetros gravados como PillBundle."
+      },
+      {
+        "Name": "Inputs",
+        "Nick": "In",
+        "Type": "Generic",
+        "Desc": "Árvore de entradas gravada."
+      },
+      {
+        "Name": "Outputs",
+        "Nick": "Out",
+        "Type": "Generic",
+        "Desc": "Árvore de saídas/resultados gravada."
+      },
+      {
+        "Name": "Hub Keys",
+        "Nick": "HK",
+        "Type": "Text",
+        "Desc": "Canais do PillHub registrados."
+      },
+      {
+        "Name": "Hub Data",
+        "Nick": "HD",
+        "Type": "Generic",
+        "Desc": "Dados dos canais (ramo {i; caminho original} por canal)."
+      },
+      {
+        "Name": "Controls",
+        "Nick": "Ctl",
+        "Type": "Text",
+        "Desc": "Controles registrados e seus valores."
+      },
+      {
+        "Name": "Compatibility",
+        "Nick": "Cmp",
+        "Type": "Text",
+        "Desc": "Para cada controle: OK ou o motivo de não poder ser restaurado."
+      },
+      {
+        "Name": "Compatible",
+        "Nick": "N",
+        "Type": "Integer",
+        "Desc": "Quantidade de controles restauráveis no documento atual."
+      },
+      {
+        "Name": "Info",
+        "Nick": "I",
+        "Type": "Text",
+        "Desc": "Referência, data, notas e ambiente do estado."
+      }
+    ]
+  },
+  {
+    "File": "PillRuntimeProfiler_Component.cs",
+    "Name": "Pill Runtime Profiler",
+    "NickName": "PillProfiler",
+    "Category": "Glaux Tools",
+    "SubCategory": "Diagnostics",
+    "Description": "Identifica gargalos da definição inteira sem instrumentar componentes: lê, no fim de cada solução, o tempo que o próprio Grasshopper mediu para cada componente. - Ranking com último, média, mediana, p95, execuções e participação no tempo. - Separa tempo dos componentes do tempo total da solução (a diferença é custo interno do Grasshopper: coleta de dados, conversões, preview). - Soluções/minuto, memória (GC e processo), acertos/falhas do Pill Compute Cache e o custo medido do próprio profiler. - 'Live' atualiza após cada solução (sem laço); 'Store' + 'Log' gravam a série no store (tipo 'metrics'). Mostra a solução anterior: o profiler calcula dentro da solução que está medindo.",
+    "Inputs": [
+      {
+        "Name": "Enabled",
+        "Nick": "On",
+        "Type": "Boolean",
+        "Desc": "Liga o profiler (desligado = nenhum evento inscrito, custo zero)."
+      },
+      {
+        "Name": "Live",
+        "Nick": "Lv",
+        "Type": "Boolean",
+        "Desc": "Atualiza este componente após cada solução."
+      },
+      {
+        "Name": "Window",
+        "Nick": "W",
+        "Type": "Integer",
+        "Desc": "Quantidade de soluções na janela das estatísticas."
+      },
+      {
+        "Name": "Top",
+        "Nick": "N",
+        "Type": "Integer",
+        "Desc": "Quantos componentes listar."
+      },
+      {
+        "Name": "Sort",
+        "Nick": "So",
+        "Type": "Integer",
+        "Desc": "Ordenação: 0 = tempo total na janela, 1 = média, 2 = último, 3 = p95, 4 = execuções."
+      },
+      {
+        "Name": "Filter",
+        "Nick": "F",
+        "Type": "Text",
+        "Desc": "Só componentes cujo nome/categoria contém este texto."
+      },
+      {
+        "Name": "Reset",
+        "Nick": "R",
+        "Type": "Boolean",
+        "Desc": "Zera as estatísticas (borda False → True)."
+      },
+      {
+        "Name": "Store",
+        "Nick": "S",
+        "Type": "Generic",
+        "Desc": "Store para gravar a série de métricas (opcional; ver Log)."
+      },
+      {
+        "Name": "Log",
+        "Nick": "L",
+        "Type": "Boolean",
+        "Desc": "Grava as métricas no store a cada 'Log Every' soluções registradas."
+      },
+      {
+        "Name": "Log Every",
+        "Nick": "LE",
+        "Type": "Integer",
+        "Desc": "Intervalo de soluções entre gravações."
+      }
+    ],
+    "Outputs": [
+      {
+        "Name": "Components",
+        "Nick": "C",
+        "Type": "Text",
+        "Desc": "Componentes no ranking ('Apelido (Nome)')."
+      },
+      {
+        "Name": "Last ms",
+        "Nick": "Last",
+        "Type": "Number",
+        "Desc": "Tempo do último cálculo de cada componente (ms)."
+      },
+      {
+        "Name": "Mean ms",
+        "Nick": "Mean",
+        "Type": "Number",
+        "Desc": "Média na janela (ms)."
+      },
+      {
+        "Name": "Median ms",
+        "Nick": "Med",
+        "Type": "Number",
+        "Desc": "Mediana na janela (ms)."
+      },
+      {
+        "Name": "P95 ms",
+        "Nick": "P95",
+        "Type": "Number",
+        "Desc": "Percentil 95 na janela (ms)."
+      },
+      {
+        "Name": "Runs",
+        "Nick": "Runs",
+        "Type": "Integer",
+        "Desc": "Execuções registradas desde o início/reset."
+      },
+      {
+        "Name": "Share %",
+        "Nick": "%",
+        "Type": "Number",
+        "Desc": "Participação no tempo total dos componentes na janela."
+      },
+      {
+        "Name": "Ids",
+        "Nick": "Id",
+        "Type": "Text",
+        "Desc": "InstanceGuid de cada componente (para localizar no canvas)."
+      },
+      {
+        "Name": "Solution ms",
+        "Nick": "Sol",
+        "Type": "Number",
+        "Desc": "Tempo total da última solução registrada (ms)."
+      },
+      {
+        "Name": "Overhead ms",
+        "Nick": "Ovh",
+        "Type": "Number",
+        "Desc": "Custo do profiler na última solução (ms)."
+      },
+      {
+        "Name": "Memory MB",
+        "Nick": "Mem",
+        "Type": "Number",
+        "Desc": "Memória gerenciada (GC) após a última solução (MB)."
+      },
+      {
+        "Name": "Report",
+        "Nick": "Rp",
+        "Type": "Text",
+        "Desc": "Resumo legível: solução, componentes, GH, frequência, memória, cache e custo do profiler."
+      }
+    ]
+  },
+  {
+    "File": "PillSchemaInspector_Component.cs",
+    "Name": "Pill Schema Inspector",
+    "NickName": "PillSchema",
+    "Category": "Glaux Tools",
+    "SubCategory": "Data",
+    "Description": "Mostra o que há dentro de um store (.glauxdb): chaves por tipo, número de revisões, última gravação, árvores de cada entrada, tipos de dados, profundidade, campos de metadados e revisões que compartilham exatamente os mesmos dados (mesmo hash). Não há tabelas SQL: cada chave guarda árvores tipadas; o 'schema' é inferido do conteúdo.",
+    "Inputs": [
+      {
+        "Name": "Store",
+        "Nick": "S",
+        "Type": "Generic",
+        "Desc": "Conexão do Pill DB Connect, ou caminho de um arquivo .glauxdb. Vazio = store padrão do projeto (pasta PillVault do .gh)."
+      },
+      {
+        "Name": "Key Pattern",
+        "Nick": "K",
+        "Type": "Text",
+        "Desc": "Padrão de chave com * e ? (vazio = todas)."
+      },
+      {
+        "Name": "Scan Types",
+        "Nick": "ST",
+        "Type": "Boolean",
+        "Desc": "Lê a última revisão de cada chave para listar tipos e profundidade (mais lento em stores grandes)."
+      }
+    ],
+    "Outputs": [
+      {
+        "Name": "Keys",
+        "Nick": "K",
+        "Type": "Text",
+        "Desc": "Chaves (uma por tipo+chave)."
+      },
+      {
+        "Name": "Kinds",
+        "Nick": "T",
+        "Type": "Text",
+        "Desc": "Tipo de cada chave."
+      },
+      {
+        "Name": "Revisions",
+        "Nick": "R",
+        "Type": "Integer",
+        "Desc": "Quantidade de revisões de cada chave."
+      },
+      {
+        "Name": "Latest",
+        "Nick": "L",
+        "Type": "Text",
+        "Desc": "Última revisão e data de cada chave."
+      },
+      {
+        "Name": "Trees",
+        "Nick": "Tr",
+        "Type": "Text",
+        "Desc": "Árvores da última revisão (ramo por chave): nome, ramos, itens."
+      },
+      {
+        "Name": "Types",
+        "Nick": "Ty",
+        "Type": "Text",
+        "Desc": "Tipos da última revisão (ramo por chave), com contagem e profundidade."
+      },
+      {
+        "Name": "Metadata Fields",
+        "Nick": "MF",
+        "Type": "Text",
+        "Desc": "Nomes de metadados usados no store e em quantas entradas."
+      },
+      {
+        "Name": "Shared Data",
+        "Nick": "SD",
+        "Type": "Text",
+        "Desc": "Revisões com dados idênticos (mesmo hash): relação implícita entre entradas."
+      },
+      {
+        "Name": "Info",
+        "Nick": "I",
+        "Type": "Text",
+        "Desc": "Arquivo, tamanho, versão e integridade."
+      }
+    ]
+  },
+  {
     "File": "PillSliderPool_Component.cs",
     "Name": "Pill Slider Pool",
     "NickName": "Pill Slider Pool",
-    "Category": "Buraqueira Tools",
+    "Category": "Glaux Tools",
     "SubCategory": "Pills",
     "Description": "Banco concentrador de sliders com publicação sem fios para o ecossistema Pill. - Reúne múltiplos parâmetros interativos com tipos (float, int, bool, string), nomes e grupos coloridos. - Arraste os sliders ou alterne os toggles diretamente no Canvas para atualizar qualquer Pill Receiver em tempo real. - Configure via painel (Panel), duplo-clique no cabeçalho ou menu de clique direito.",
     "Inputs": [
@@ -3492,10 +5964,178 @@
     ]
   },
   {
+    "File": "PillSnapshot_Component.cs",
+    "Name": "Pill Snapshot",
+    "NickName": "PillSnap",
+    "Category": "Glaux Tools",
+    "SubCategory": "Vault",
+    "Description": "Grava um estado reproduzível do projeto como nova revisão no store (.glauxdb): - parâmetros nomeados (PillBundle), árvores de entrada e de saída; - opcionalmente os controles do canvas (sliders, toggles, value lists, panels de entrada, Pill Slider Pool) e canais do PillHub; - versões do Glaux, Rhino e Grasshopper, sistema, documento, data, notas, tags e tempo de execução; - hashes de identidade das entradas e das saídas (mesmo hash de entradas = mesmos parâmetros). Evolui o Pill Preset Vault: o histórico fica fora do .gh, consultável, comparável e restaurável.",
+    "Inputs": [
+      {
+        "Name": "Store",
+        "Nick": "S",
+        "Type": "Generic",
+        "Desc": "Conexão do Pill DB Connect, ou caminho de um arquivo .glauxdb. Vazio = store padrão do projeto (pasta PillVault do .gh)."
+      },
+      {
+        "Name": "Name",
+        "Nick": "N",
+        "Type": "Text",
+        "Desc": "Nome do estado (chave do snapshot; cada captura cria uma revisão)."
+      },
+      {
+        "Name": "Parameters",
+        "Nick": "P",
+        "Type": "Generic",
+        "Desc": "PillBundle(s) com os parâmetros nomeados (Pill Bundle Pack)."
+      },
+      {
+        "Name": "Inputs",
+        "Nick": "In",
+        "Type": "Generic",
+        "Desc": "Árvore de entradas relevantes."
+      },
+      {
+        "Name": "Outputs",
+        "Nick": "Out",
+        "Type": "Generic",
+        "Desc": "Árvore de saídas/resultados relevantes."
+      },
+      {
+        "Name": "Controls",
+        "Nick": "Ctl",
+        "Type": "Boolean",
+        "Desc": "Registra sliders, toggles, value lists, panels de entrada e Pill Slider Pools do documento."
+      },
+      {
+        "Name": "Hub",
+        "Nick": "Hub",
+        "Type": "Text",
+        "Desc": "Canais do PillHub a registrar: chave, grupo (ex: 'GEO') ou 'ALL'."
+      },
+      {
+        "Name": "Notes",
+        "Nick": "Nt",
+        "Type": "Text",
+        "Desc": "Anotações livres."
+      },
+      {
+        "Name": "Tags",
+        "Nick": "Tg",
+        "Type": "Text",
+        "Desc": "Etiquetas (ex: 'aprovado', 'cliente')."
+      },
+      {
+        "Name": "Runtime",
+        "Nick": "ms",
+        "Type": "Number",
+        "Desc": "Tempo de execução em ms (ex: do Pill Runtime Profiler ou Data Timer)."
+      },
+      {
+        "Name": "Capture",
+        "Nick": "C",
+        "Type": "Boolean",
+        "Desc": "Grava o snapshot quando True (conecte um botão)."
+      },
+      {
+        "Name": "Skip Unchanged",
+        "Nick": "SU",
+        "Type": "Boolean",
+        "Desc": "Não cria revisão se tudo for idêntico à última."
+      }
+    ],
+    "Outputs": [
+      {
+        "Name": "Ref",
+        "Nick": "R",
+        "Type": "Text",
+        "Desc": "Referência do snapshot gravado ('Nome@revisão')."
+      },
+      {
+        "Name": "Revision",
+        "Nick": "Rev",
+        "Type": "Integer",
+        "Desc": "Revisão gravada (ou a última existente)."
+      },
+      {
+        "Name": "Inputs Hash",
+        "Nick": "IH",
+        "Type": "Text",
+        "Desc": "Identidade combinada das entradas (parâmetros, entradas, controles, canais)."
+      },
+      {
+        "Name": "Outputs Hash",
+        "Nick": "OH",
+        "Type": "Text",
+        "Desc": "Identidade das saídas."
+      },
+      {
+        "Name": "Info",
+        "Nick": "I",
+        "Type": "Text",
+        "Desc": "Resumo do que foi registrado."
+      }
+    ]
+  },
+  {
+    "File": "PillTableToTree_Component.cs",
+    "Name": "Pill Table To Tree",
+    "NickName": "PillToTree",
+    "Category": "Glaux Tools",
+    "SubCategory": "I/O",
+    "Description": "Monta uma DataTree a partir de uma tabela longa: Paths (um por valor ou um único para todos), Indices opcionais (posicionam os itens; lacunas viram nulos), Values e Types opcionais. - Com Types, valores em texto são convertidos ao tipo informado (Number, Integer, Boolean, Point 'x;y;z', Interval 't0;t1', Colour '#AARRGGBB', Time ISO 8601, Guid). - Branch Paths recria ramos vazios. Inverso exato do Pill Tree Table.",
+    "Inputs": [
+      {
+        "Name": "Paths",
+        "Nick": "P",
+        "Type": "Text",
+        "Desc": "Caminho de cada valor ('{0;1}' ou '0;1'). Um único caminho vale para todos."
+      },
+      {
+        "Name": "Indices",
+        "Nick": "i",
+        "Type": "Integer",
+        "Desc": "Índice de cada valor no ramo (opcional). Negativo = linha que só declara o ramo."
+      },
+      {
+        "Name": "Values",
+        "Nick": "V",
+        "Type": "Generic",
+        "Desc": "Valores (nulos permitidos)."
+      },
+      {
+        "Name": "Types",
+        "Nick": "T",
+        "Type": "Text",
+        "Desc": "Tipo de cada valor (opcional). Converte valores em texto para o tipo informado."
+      },
+      {
+        "Name": "Branch Paths",
+        "Nick": "BP",
+        "Type": "Text",
+        "Desc": "Ramos que devem existir mesmo sem itens (opcional)."
+      }
+    ],
+    "Outputs": [
+      {
+        "Name": "Data",
+        "Nick": "D",
+        "Type": "Generic",
+        "Desc": "Árvore reconstruída."
+      },
+      {
+        "Name": "Info",
+        "Nick": "I",
+        "Type": "Text",
+        "Desc": "Resumo e avisos da reconstrução."
+      }
+    ]
+  },
+  {
     "File": "PillHook_Component.cs",
     "Name": "Pill Tag Receiver",
     "NickName": "PillHook",
-    "Category": "Buraqueira Tools",
+    "Category": "Glaux Tools",
     "SubCategory": "Pills",
     "Description": "Receptor sem fios ultracompacto em formato de etiqueta com seta (estilo Cluster Input Tag). - Conecta-se diretamente ao pino de entrada de qualquer componente sem cabos longos. - Clique na etiqueta para escolher o canal a partir dos grupos e categorias do PillHub. - Exibe badge colorido do grupo, nome do parâmetro e LED luminoso de status em tempo real.",
     "Inputs": [
@@ -3522,10 +6162,88 @@
     ]
   },
   {
+    "File": "PillPulseTimer_Component.cs",
+    "Name": "Pill Time Impulse / Clock Pulse",
+    "NickName": "PillPulse",
+    "Category": "Glaux Tools",
+    "SubCategory": "Automation",
+    "Description": "Pilha geradora de impulsos temporizados estilo metrônomo / clock pulse para o ecossistema Buraqueira Tools. - Emite um sinal booleano True a cada intervalo determinado de tempo (comportamento de Botão instantâneo). - Retorna automaticamente a False logo após o disparo (sem travar em True). - Controle de ativação (Play/Pause), contagem de ciclos, contagem regressiva e limite de disparos. - Botões interativos no canvas para forçar pulso manual ou pausar/iniciar diretamente no componente.",
+    "Inputs": [
+      {
+        "Name": "Interval",
+        "Nick": "Intv",
+        "Type": "Number",
+        "Desc": "Intervalo de tempo entre cada impulso em segundos (ex.: 1.0, 0.5, 5.0, 60.0). Padrão: 1.0s."
+      },
+      {
+        "Name": "Active",
+        "Nick": "On",
+        "Type": "Boolean",
+        "Desc": "Ativa ou pausa a geração periódica de impulsos (True = Ativo/Rodando, False = Pausado). Padrão: True."
+      },
+      {
+        "Name": "Trigger Now",
+        "Nick": "Trig",
+        "Type": "Boolean",
+        "Desc": "Disparo manual avulso: envie True (ou conecte um Botão GH) para forçar um impulso imediatamente."
+      },
+      {
+        "Name": "Reset",
+        "Nick": "Rst",
+        "Type": "Boolean",
+        "Desc": "Reseta a contagem de ciclos (N=0) e reinicia a contagem de tempo."
+      },
+      {
+        "Name": "Limit",
+        "Nick": "Lim",
+        "Type": "Integer",
+        "Desc": "Limite máximo de disparos (0 = Contínuo sem limite; N = Para automaticamente após N impulsos). Padrão: 0."
+      },
+      {
+        "Name": "Pulse Duration",
+        "Nick": "Dur",
+        "Type": "Integer",
+        "Desc": "Duração do sinal True em milissegundos antes de retornar automaticamente a False (comportamento de botão). Padrão: 60 ms."
+      }
+    ],
+    "Outputs": [
+      {
+        "Name": "Impulse",
+        "Nick": "Imp",
+        "Type": "Boolean",
+        "Desc": "Sinal booleano em pulso: True momentâneo a cada intervalo (comportamento de botão), False em repouso."
+      },
+      {
+        "Name": "Count",
+        "Nick": "N",
+        "Type": "Integer",
+        "Desc": "Número total de impulsos gerados desde o início ou último reset."
+      },
+      {
+        "Name": "Elapsed Time",
+        "Nick": "Time",
+        "Type": "Number",
+        "Desc": "Tempo total de atividade acumulado em segundos."
+      },
+      {
+        "Name": "Countdown",
+        "Nick": "Next",
+        "Type": "Number",
+        "Desc": "Tempo restante em segundos até o próximo impulso programado."
+      },
+      {
+        "Name": "Running",
+        "Nick": "Run",
+        "Type": "Boolean",
+        "Desc": "True se o temporizador estiver ativamente contando e gerando impulsos; False se pausado ou finalizado."
+      }
+    ]
+  },
+  {
     "File": "PillTransmitter_Component.cs",
     "Name": "Pill Transmitter",
     "NickName": "PillTx",
-    "Category": "Buraqueira Tools",
+    "Category": "Glaux Tools",
     "SubCategory": "Pills",
     "Description": "Transmite dados ou árvores (DataTree) sem fiação pelo canvas, com categoria cromática automática por prefixo (ACU_, GEO_, MAT_), unidade embutida, timestamp e validação de integridade.",
     "Inputs": [
@@ -3564,10 +6282,154 @@
     ]
   },
   {
+    "File": "PillTreeExport_Component.cs",
+    "Name": "Pill Tree Export",
+    "NickName": "PillExport",
+    "Category": "Glaux Tools",
+    "SubCategory": "I/O",
+    "Description": "Serializa qualquer DataTree sem perda estrutural (caminhos de qualquer profundidade, ramos vazios, nulos e tipos mistos) em JSON tipado, CSV longo (path,index,type,value), binário Glaux (.glxt) ou .pilldata (compatível com Pill Disk Save/Load). - Sem 'File Path': devolve o texto (formatos binários em Base64). - Com 'File Path': grava o arquivo de forma atômica quando 'Write' = True. - Emite o hash SHA-256 de identidade exata dos dados (diferente do fingerprint tolerante do Pill Cache).",
+    "Inputs": [
+      {
+        "Name": "Data",
+        "Nick": "D",
+        "Type": "Generic",
+        "Desc": "Árvore de dados (DataTree) a exportar."
+      },
+      {
+        "Name": "Format",
+        "Nick": "F",
+        "Type": "Text",
+        "Desc": "Formato: 'json' (padrão), 'csv' (longo: path,index,type,value,data), 'binary' (.glxt compacto) ou 'pilldata' (Pill Disk Save). Com File Path, a extensão do arquivo é usada se este campo estiver vazio."
+      },
+      {
+        "Name": "File Path",
+        "Nick": "Path",
+        "Type": "Text",
+        "Desc": "Arquivo de destino opcional. Relativo = pasta do .gh. Sem arquivo, o resultado sai como texto."
+      },
+      {
+        "Name": "Write",
+        "Nick": "W",
+        "Type": "Boolean",
+        "Desc": "Grava o arquivo quando True (conecte um botão). Ignorado sem File Path."
+      },
+      {
+        "Name": "Metadata",
+        "Nick": "M",
+        "Type": "Text",
+        "Desc": "Metadados opcionais no formato 'chave=valor' (gravados no JSON/CSV/binário; não alteram o hash dos dados)."
+      },
+      {
+        "Name": "Pretty",
+        "Nick": "P",
+        "Type": "Boolean",
+        "Desc": "JSON indentado (legível). Não afeta os dados."
+      },
+      {
+        "Name": "Delimiter",
+        "Nick": "Del",
+        "Type": "Text",
+        "Desc": "Separador do CSV: ',' (padrão), ';' (Excel pt-BR) ou 'tab'."
+      }
+    ],
+    "Outputs": [
+      {
+        "Name": "Text",
+        "Nick": "T",
+        "Type": "Text",
+        "Desc": "Árvore serializada (somente quando não há File Path). Formatos binários em Base64."
+      },
+      {
+        "Name": "Hash",
+        "Nick": "H",
+        "Type": "Text",
+        "Desc": "SHA-256 de identidade exata dos dados (ignora metadados)."
+      },
+      {
+        "Name": "File Path",
+        "Nick": "Path",
+        "Type": "Text",
+        "Desc": "Arquivo gravado nesta solução (vazio se nada foi gravado)."
+      },
+      {
+        "Name": "Info",
+        "Nick": "I",
+        "Type": "Text",
+        "Desc": "Resumo: ramos, itens, tipos, profundidade, tamanho e tempo."
+      }
+    ]
+  },
+  {
+    "File": "PillTreeImport_Component.cs",
+    "Name": "Pill Tree Import",
+    "NickName": "PillImport",
+    "Category": "Glaux Tools",
+    "SubCategory": "I/O",
+    "Description": "Reconstrói uma DataTree exportada pelo Pill Tree Export (JSON, CSV longo, binário .glxt) ou gravada pelo Pill Disk Save (.pilldata), preservando caminhos, ramos vazios, nulos e tipos. - Aceita texto (T) ou arquivo (Path); o formato é detectado pelo conteúdo quando 'Format' fica vazio. - Arquivos só são relidos quando mudam (tamanho/data), evitando reprocessar a cada solução. - Tipos de plugins não carregados são mantidos como valores opacos, sem perda ao reexportar.",
+    "Inputs": [
+      {
+        "Name": "Text",
+        "Nick": "T",
+        "Type": "Text",
+        "Desc": "Texto serializado (JSON, CSV longo ou Base64 de binário). Ignorado se File Path for informado."
+      },
+      {
+        "Name": "File Path",
+        "Nick": "Path",
+        "Type": "Text",
+        "Desc": "Arquivo a importar (.json, .csv, .glxt, .pilldata). Relativo = pasta do .gh."
+      },
+      {
+        "Name": "Format",
+        "Nick": "F",
+        "Type": "Text",
+        "Desc": "Vazio = detectar automaticamente. Ou: json, csv, binary, pilldata."
+      },
+      {
+        "Name": "Delimiter",
+        "Nick": "Del",
+        "Type": "Text",
+        "Desc": "Separador do CSV: ',' (padrão), ';' ou 'tab'."
+      },
+      {
+        "Name": "Reload",
+        "Nick": "R",
+        "Type": "Boolean",
+        "Desc": "Força a releitura do arquivo mesmo sem mudança detectada."
+      }
+    ],
+    "Outputs": [
+      {
+        "Name": "Data",
+        "Nick": "D",
+        "Type": "Generic",
+        "Desc": "Árvore reconstruída."
+      },
+      {
+        "Name": "Hash",
+        "Nick": "H",
+        "Type": "Text",
+        "Desc": "SHA-256 de identidade dos dados importados (igual ao do Export quando nada mudou)."
+      },
+      {
+        "Name": "Metadata",
+        "Nick": "M",
+        "Type": "Text",
+        "Desc": "Metadados 'chave=valor' gravados no arquivo."
+      },
+      {
+        "Name": "Info",
+        "Nick": "I",
+        "Type": "Text",
+        "Desc": "Resumo: formato, ramos, itens, tipos e tempo de leitura."
+      }
+    ]
+  },
+  {
     "File": "PillTreePivot_Component.cs",
     "Name": "Pill Tree Pivot & Join",
     "NickName": "Pill_Pivot",
-    "Category": "Buraqueira Tools",
+    "Category": "Glaux Tools",
     "SubCategory": "Tree",
     "Description": "Transforma DataTrees N-dimensionais arbitrárias {a; b; c; ...; n} no formato tabular Wide / Pivot (Folha como Colunas). - Cruza automaticamente árvores auxiliares (ex: Fitness) com prefixos de caminho comuns. - Permite ordenar e filtrar os Top N melhores indivíduos por score de minimização. - Saída em DataTree tabular {Linha}, lista de cabeçalhos e pré-visualização no Canvas.",
     "Inputs": [
@@ -3636,86 +6498,164 @@
     ]
   },
   {
-    "File": "PillTreeTableExport_Component.cs",
-    "Name": "Pill Tree Table Exporter",
-    "NickName": "Pill_TableOut",
-    "Category": "Buraqueira Tools",
+    "File": "PillTreeTable_Component.cs",
+    "Name": "Pill Tree Table",
+    "NickName": "PillTable",
+    "Category": "Glaux Tools",
     "SubCategory": "I/O",
-    "Description": "Exportador de alta performance para DataTrees N-dimensionais arbitrárias em formato Wide / Pivot. - Streaming direto linha a linha em disco (RAM < 5 MB, sem risco de travar o Rhino). - Suporte nativo a Excel Multi-Sheet (.xls / .xml SpreadsheetML) e CSV (.csv / .tsv). - Quebra automática de abas por dimensão do caminho (ex: Geração). - Criação de aba de Ranking colorida em destaque (Laranja/Verde) com ordenação de minimização.",
+    "Description": "Explode uma DataTree numa tabela longa (uma linha por item): Paths, Indices, Types e Values, sem assumir 'ramo = linha'. - Branch Paths/Counts listam todos os ramos, inclusive os vazios, para reconstrução exata no Pill Table To Tree. - Útil para filtrar, ordenar e visualizar árvores irregulares no Data Table Visualizer ou exportar para CSV.",
     "Inputs": [
       {
-        "Name": "Tree",
-        "Nick": "T",
+        "Name": "Data",
+        "Nick": "D",
         "Type": "Generic",
-        "Desc": "Árvore principal de dados N-dimensional (ex: TRs {Gen; Ind; Ponto})."
-      },
-      {
-        "Name": "Fitness",
-        "Nick": "Fit",
-        "Type": "Generic",
-        "Desc": "Árvore de fitness/objetivos (ex: {Gen; Ind}). Acoplada e usada para ranking de minimização."
-      },
-      {
-        "Name": "DimNames",
-        "Nick": "Dim",
-        "Type": "Text",
-        "Desc": "Nomes das dimensões do caminho (ex: ['Gen', 'Ind', 'Ponto'])."
-      },
-      {
-        "Name": "ColHeaders",
-        "Nick": "Col",
-        "Type": "Text",
-        "Desc": "Nomes dos itens da folha / frequências (ex: ['125', '250', '500', '1000', '2000', '4000'])."
-      },
-      {
-        "Name": "SheetDim",
-        "Nick": "SheetDim",
-        "Type": "Integer",
-        "Desc": "Índice da dimensão do caminho que define a quebra de abas no Excel (Padrão: 0 = uma aba por Geração. -1 = aba única)."
-      },
-      {
-        "Name": "TopCount",
-        "Nick": "Top",
-        "Type": "Integer",
-        "Desc": "Filtro dos N melhores indivíduos classificados (0 = todos)."
-      },
-      {
-        "Name": "FilePath",
-        "Nick": "P",
-        "Type": "Text",
-        "Desc": "Caminho de destino (.xls ou .xml para Excel com abas; .csv para delimitado)."
-      },
-      {
-        "Name": "Write",
-        "Nick": "W",
-        "Type": "Boolean",
-        "Desc": "Gatilho booleano para executar a gravação."
+        "Desc": "Árvore de dados a explodir."
       }
     ],
     "Outputs": [
       {
-        "Name": "FilePath",
+        "Name": "Paths",
         "Nick": "P",
         "Type": "Text",
-        "Desc": "Caminho gravado no disco."
+        "Desc": "Caminho de cada item (ex: '{0;2}')."
       },
       {
-        "Name": "Success",
-        "Nick": "OK",
+        "Name": "Indices",
+        "Nick": "i",
+        "Type": "Integer",
+        "Desc": "Índice de cada item dentro do seu ramo."
+      },
+      {
+        "Name": "Types",
+        "Nick": "T",
+        "Type": "Text",
+        "Desc": "Tipo de cada item (Number, Integer, Text, Point... ou o tipo Goo completo)."
+      },
+      {
+        "Name": "Values",
+        "Nick": "V",
+        "Type": "Generic",
+        "Desc": "Valor original de cada item (nulos preservados)."
+      },
+      {
+        "Name": "Text Values",
+        "Nick": "TV",
+        "Type": "Text",
+        "Desc": "Valor de cada item como texto invariante (ponto decimal, datas ISO 8601)."
+      },
+      {
+        "Name": "Branch Paths",
+        "Nick": "BP",
+        "Type": "Text",
+        "Desc": "Todos os ramos, inclusive vazios."
+      },
+      {
+        "Name": "Branch Counts",
+        "Nick": "BC",
+        "Type": "Integer",
+        "Desc": "Quantidade de itens de cada ramo."
+      }
+    ]
+  },
+  {
+    "File": "PillVectorSheetLayout_Component.cs",
+    "Name": "Pill Vector Sheet Layout",
+    "NickName": "PillSheet",
+    "Category": "Glaux Tools",
+    "SubCategory": "Visual",
+    "Description": "Diagrama e exporta pranchas técnicas vetoriais (SVG e PDF) a partir de curvas e geometrias universais do Grasshopper (Curvas, Breps, Meshes, Superfícies, Pontos e Hachuras). Suporta templates SVG com carimbo customizado, detecção de área de desenho (drawing_area), presets de auto-distribuição (Hero, Split, Quad, Grid 3x2), escalas gráficas paramétricas, norte dinâmico, estilos de pena inspirados no QGIS/ABNT e botão interativo para pré-visualização instantânea no navegador.",
+    "Inputs": [
+      {
+        "Name": "Geometry",
+        "Nick": "G",
+        "Type": "Geometry",
+        "Desc": "Geometrias 2D/3D a diagramar na prancha (Curvas, Breps, Meshes, Superfícies, Pontos, Hachuras). Use uma DataTree onde cada ramo {0}, {1}, etc., corresponde a uma vista ou camada diferente."
+      },
+      {
+        "Name": "Template / Preset",
+        "Nick": "T",
+        "Type": "Text",
+        "Desc": "Modelo de prancha SVG. Aceita o nome de um preset nativo ('A3_Hero', 'A3_Split_H', 'A3_Split_V', 'A3_Master2', 'A3_Quad', 'A3_Grid3x2', 'A4_Portrait', 'A4_Landscape') ou o caminho de um arquivo .svg customizado com carimbo próprio."
+      },
+      {
+        "Name": "Distribution",
+        "Nick": "Dist",
+        "Type": "Text",
+        "Desc": "Modo de distribuição das vistas na área útil de desenho: 'Auto' (escolhe pelo número de vistas), 'Fit' (1 vista 100%), 'Split_H' (2 lado a lado), 'Split_V' (2 sobrepostas), 'Master_2' (1 mestre 65% + 2 detalhes), 'Quad' (4 em 2x2), 'Grid_3x2' (6 em 3x2), ou 'Explicit' (respeita os IDs view_0, view_1... do SVG)."
+      },
+      {
+        "Name": "Names / Titles",
+        "Nick": "Names",
+        "Type": "Text",
+        "Desc": "Títulos editoriais para cada vista (ex.: ['01 | PLANTA BAIXA', '02 | CORTE AA', '03 | ISOMÉTRICA 3D', '04 | VISTA FRONTAL'])."
+      },
+      {
+        "Name": "Scales",
+        "Nick": "S",
+        "Type": "Text",
+        "Desc": "Escala técnica de cada vista (ex.: ['1:50', '1:100', 'Fit']). 'Fit' ajusta ao quadro com margem de respiro; valores numéricos como '1:50' desenham em escala física real com base nas unidades do modelo."
+      },
+      {
+        "Name": "North Direction",
+        "Nick": "N",
+        "Type": "Generic",
+        "Desc": "Direção ou ângulo do Norte para desenhar a Rosa dos Ventos / Seta de Norte nas vistas. Aceita Vector3d (ex.: (0,1,0)) ou valor numérico em graus (0° = X, 90° = Y)."
+      },
+      {
+        "Name": "Styles / Pens",
+        "Nick": "Sty",
+        "Type": "Generic",
+        "Desc": "Estilos de linha/pena para os conjuntos/ramos de objetos. Aceita a saída do Pill Pen Style, strings shorthand por ramo ('0.50, solid, #000' ou '0: 0.5, dashed, #0284c7'), regras de camada ('Corte: 0.6mm') ou strings CSS/SVG. Se omitido, adota a hierarquia canônica ABNT."
+      },
+      {
+        "Name": "Data / Tags",
+        "Nick": "D",
+        "Type": "Text",
+        "Desc": "Metadados do carimbo no formato chave-valor (ex.: 'PROJETO: Teatro Escola', 'AUTOR: Jefferson', 'DATA: 26/09/2026', 'FOLHA: 01/01', 'CLIENTE: PMB'). Substitui automaticamente as tags {{CHAVE}} no SVG."
+      },
+      {
+        "Name": "Export",
+        "Nick": "On",
         "Type": "Boolean",
-        "Desc": "True se os dados foram exportados com sucesso."
+        "Desc": "Quando True, grava os arquivos SVG e PDF vetoriais no disco no caminho especificado."
       },
       {
-        "Name": "Info",
-        "Nick": "Info",
+        "Name": "File Path",
+        "Nick": "Path",
         "Type": "Text",
-        "Desc": "Relatório completo de linhas, abas, tamanho de arquivo e memória."
+        "Desc": "Caminho do arquivo ou diretório de destino para gravação do SVG e PDF. Se omitido, salva na pasta temporária ou ao lado do arquivo do Rhino."
+      }
+    ],
+    "Outputs": [
+      {
+        "Name": "PDF File",
+        "Nick": "PDF",
+        "Type": "Text",
+        "Desc": "Caminho do arquivo PDF vetorial gerado."
       },
       {
-        "Name": "BestRank",
-        "Nick": "Rank",
+        "Name": "SVG File",
+        "Nick": "SVG",
         "Type": "Text",
-        "Desc": "Lista de pré-visualização dos Top 20 indivíduos classificados no Canvas."
+        "Desc": "Caminho do arquivo SVG vetorial gerado."
+      },
+      {
+        "Name": "SVG Code",
+        "Nick": "Code",
+        "Type": "Text",
+        "Desc": "Código-fonte XML do SVG completo da prancha gerada."
+      },
+      {
+        "Name": "Viewports",
+        "Nick": "V",
+        "Type": "Rectangle",
+        "Desc": "Retângulos dos enquadramentos calculados na prancha em milímetros."
+      },
+      {
+        "Name": "Status / Log",
+        "Nick": "L",
+        "Type": "Text",
+        "Desc": "Resumo das vistas diagramadas, escalas aplicadas e status de exportação."
       }
     ]
   },
@@ -3723,7 +6663,7 @@
     "File": "PillRelay_Component.cs",
     "Name": "Pill Vertical Relay",
     "NickName": "V-Relay",
-    "Category": "Buraqueira Tools",
+    "Category": "Glaux Tools",
     "SubCategory": "Pills",
     "Description": "Organizador e roteador de cabos vertical (Vertical Wire Relay). - Permite conduzir fios de cima para baixo no Canvas sem curvas horizontais desnecessárias. - Pass-through instantâneo de dados (0ms de processamento). - Suporta múltiplos cabos de entrada e saída (itens, listas e DataTrees). - Customização de rótulo de texto, orientação de fluxo e cores de destaque.",
     "Inputs": [
@@ -3744,11 +6684,143 @@
     ]
   },
   {
+    "File": "PillViewGenerator_Component.cs",
+    "Name": "Pill View Generator",
+    "NickName": "PillViewGen",
+    "Category": "Glaux Tools",
+    "SubCategory": "Visual",
+    "Description": "Configura câmeras e gera vistas no Rhino a partir de um Bounding Box e vetor de orientação do modelo. Suporta vistas isométricas (NE, NW, SE, SW), ortogonais (Front, Back, Left, Right, Top, Bottom) e perspectiva, com enquadramento automático, criação de Named Views e exportação de metadados prontos para o Pill Viewport 3D Capture.",
+    "Inputs": [
+      {
+        "Name": "Bounding Box / Geometry",
+        "Nick": "BBox",
+        "Type": "Generic",
+        "Desc": "Bounding Box ou geometria(s) do modelo a enquadrar (Brep, Mesh, Curve, SubD, etc.). Se múltiplas geometrias forem fornecidas, calcula a união das caixas delimitadoras automaticamente."
+      },
+      {
+        "Name": "Direction",
+        "Nick": "Dir",
+        "Type": "Vector",
+        "Desc": "Vetor de orientação do modelo que define a 'Frente' ou eixo principal (ex.: Y=(0,1,0) para Norte/Frontal arquitetônico padrão). Se omitido, adota Y=(0,1,0)."
+      },
+      {
+        "Name": "Views",
+        "Nick": "Views",
+        "Type": "Text",
+        "Desc": "Vistas a gerar. Aceita nomes individuais ('Isometric NE', 'Front', 'Top', etc.), grupos ('All', 'All Isometric', 'All Orthogonal') ou lista de vistas. Se omitido, gera 'All' (11 vistas)."
+      },
+      {
+        "Name": "Active Index",
+        "Nick": "Idx",
+        "Type": "Integer",
+        "Desc": "Índice da vista ativa a aplicar ao Viewport e emitir em ActiveName/ActiveTitle (0 = primeira vista). Conecte um Slider ou Pill Pulse Timer para alternar entre vistas automaticamente."
+      },
+      {
+        "Name": "Prefix",
+        "Nick": "Name",
+        "Type": "Text",
+        "Desc": "Prefixo ou nome base para nomenclatura de arquivos e títulos editoriais (ex.: 'Auditorio', 'Edificio_A'). Padrão: 'Model'."
+      },
+      {
+        "Name": "Padding",
+        "Nick": "Pad",
+        "Type": "Number",
+        "Desc": "Fator de margem/espaçamento ao redor do Bounding Box para enquadramento perfeito sem cortes (ex.: 1.15 = 15% de margem extra). Padrão: 1.15."
+      },
+      {
+        "Name": "Apply to Viewport",
+        "Nick": "Apply",
+        "Type": "Boolean",
+        "Desc": "Gatilho para aplicar a câmera da vista ativa diretamente ao Viewport do Rhino (True = reorienta o viewport em tempo real). Padrão: True."
+      },
+      {
+        "Name": "Save Named Views",
+        "Nick": "Save",
+        "Type": "Boolean",
+        "Desc": "Salvar/atualizar todas as vistas geradas na tabela de Named Views do documento ativo do Rhino (True = grava vistas nomeadas). Padrão: False."
+      },
+      {
+        "Name": "Target Viewport",
+        "Nick": "Vp",
+        "Type": "Text",
+        "Desc": "Nome do Viewport do Rhino a ser modificado (ex.: 'Perspective', 'Top', 'Front'). Se vazio ou omitido, adota 'Perspective' ou o Viewport ativo."
+      },
+      {
+        "Name": "Projection",
+        "Nick": "Proj",
+        "Type": "Text",
+        "Desc": "Modo de projeção da câmera: - 'Auto' (Paralela para Ortogonais e Isométricas, Perspectiva para Perspectiva) - 'Parallel' (Axonométrica pura) - 'Perspective' (Perspectiva com ponto de fuga)"
+      }
+    ],
+    "Outputs": [
+      {
+        "Name": "View",
+        "Nick": "V",
+        "Type": "Text",
+        "Desc": "Nome do Viewport do Rhino configurado (ex.: 'Perspective'). Conecte diretamente à entrada 'View (V)' do Pill Viewport 3D Capture."
+      },
+      {
+        "Name": "Active Name",
+        "Nick": "AName",
+        "Type": "Text",
+        "Desc": "Nome de arquivo padronizado da vista ativa selecionada (ex.: 'Model_Isometric_NE'). Conecte diretamente à entrada 'FileName (Name)' do Pill Viewport 3D Capture."
+      },
+      {
+        "Name": "Active Title",
+        "Nick": "ATtl",
+        "Type": "Text",
+        "Desc": "Título editorial formatado da vista ativa selecionada (ex.: 'Vista Isométrica NE — Model'). Conecte diretamente à entrada 'Title (Ttl)' do Pill Viewport 3D Capture."
+      },
+      {
+        "Name": "File Names",
+        "Nick": "Names",
+        "Type": "Text",
+        "Desc": "Lista completa de nomes de arquivos padronizados para todas as vistas geradas."
+      },
+      {
+        "Name": "Titles",
+        "Nick": "Titles",
+        "Type": "Text",
+        "Desc": "Lista completa de títulos editoriais padronizados para todas as vistas geradas."
+      },
+      {
+        "Name": "View Names",
+        "Nick": "Views",
+        "Type": "Text",
+        "Desc": "Lista de identificadores/rótulos das vistas geradas (ex.: 'Isometric_NE', 'Front', 'Top')."
+      },
+      {
+        "Name": "Cameras",
+        "Nick": "Cam",
+        "Type": "Point",
+        "Desc": "Pontos de posição 3D da câmera no espaço para cada vista."
+      },
+      {
+        "Name": "Target",
+        "Nick": "Tgt",
+        "Type": "Point",
+        "Desc": "Ponto de mira/alvo central da câmera no espaço (centro geométrico do Bounding Box)."
+      },
+      {
+        "Name": "Planes",
+        "Nick": "Pl",
+        "Type": "Plane",
+        "Desc": "Planos de visualização para cada vista (Origem no Target, Z apontando para a Câmera, Y no vetor Up da Câmera)."
+      },
+      {
+        "Name": "Data",
+        "Nick": "D",
+        "Type": "Text",
+        "Desc": "Relatório analítico em texto com a tabela de todas as vistas geradas, coordenadas de câmera, vetores de mira e ângulos."
+      }
+    ]
+  },
+  {
     "File": "PillViewportCapture_Component.cs",
     "Name": "Pill Viewport 3D Capture",
     "NickName": "PillCapture",
-    "Category": "Buraqueira Tools",
-    "SubCategory": "Pills",
+    "Category": "Glaux Tools",
+    "SubCategory": "Visual",
     "Description": "Captura o Viewport 3D do Rhino em alta resolução com preview visual no Canvas do Grasshopper, suporte a modos de exibição (Rendered, Shaded, Raytraced, Ghosted), fundo transparente e salvamento automático ou sob demanda no disco (PNG, JPG, BMP).",
     "Inputs": [
       {
@@ -3785,7 +6857,7 @@
         "Name": "Display Mode",
         "Nick": "Mode",
         "Type": "Generic",
-        "Desc": "Modo de exibição do Rhino a ser renderizado na captura:\\n- 'Keep' / 'Active' (mantém o atual)\\n- 'Rendered' (Renderizado)\\n- 'Shaded' (Sombreado)\\n- 'Ghosted' (Fantasma)\\n- 'Raytraced' (Traçado de Raios)\\n- 'Technical' (Técnico)\\n- 'Artistic' (Artístico)\\n- 'Pen' (Caneta)\\n- 'Wireframe' (Aramado)"
+        "Desc": "Modo de exibição do Rhino a ser renderizado na captura: - 'Keep' / 'Active' (mantém o atual) - 'Rendered' (Renderizado) - 'Shaded' (Sombreado) - 'Ghosted' (Fantasma) - 'Raytraced' (Traçado de Raios) - 'Technical' (Técnico) - 'Artistic' (Artístico) - 'Pen' (Caneta) - 'Wireframe' (Aramado)"
       },
       {
         "Name": "Transparent",
@@ -3804,6 +6876,42 @@
         "Nick": "Save",
         "Type": "Boolean",
         "Desc": "Gatilho para salvar a imagem no disco (True = salva arquivo). Conecte um Botão ou Toggle."
+      },
+      {
+        "Name": "Title",
+        "Nick": "Ttl",
+        "Type": "Text",
+        "Desc": "Título editorial a sobrepor sobre a imagem capturada (ex.: 'Vista Principal — Fachada Norte'). Desenhado com sombra protetora no canto superior esquerdo."
+      },
+      {
+        "Name": "Font Name",
+        "Nick": "Font",
+        "Type": "Text",
+        "Desc": "Família tipográfica do título (ex.: 'Segoe UI', 'Arial', 'Helvetica'). Padrão: 'Segoe UI'."
+      },
+      {
+        "Name": "Font Size",
+        "Nick": "Sz",
+        "Type": "Integer",
+        "Desc": "Tamanho da fonte do título em pixels. Padrão: 36."
+      },
+      {
+        "Name": "Title Color",
+        "Nick": "TCol",
+        "Type": "Colour",
+        "Desc": "Cor do texto do título. Padrão: Branco."
+      },
+      {
+        "Name": "Legend",
+        "Nick": "Leg",
+        "Type": "Generic",
+        "Desc": "Legenda de heatmap a sobrepor sobre a imagem. Aceita: • Saída 'Heatmap Report' (Rep) do Spatial Grid & Viewport Heatmap — parseia min/max/unidade/gradiente automaticamente. • Lista de cores (Palette Stops) — usa como barra de gradiente sem escala numérica. Exibe barra de gradiente vertical colorida com ticks de escala no canto inferior esquerdo da imagem."
+      },
+      {
+        "Name": "Unit",
+        "Nick": "U",
+        "Type": "Text",
+        "Desc": "Unidade de medida a exibir junto ao título, na barra de escala e no rodapé (ex.: 'dB', 's', 'm', '°C'). Se omitido, extrai automaticamente do Heatmap Report conectado em 'Legend'."
       }
     ],
     "Outputs": [
@@ -3834,10 +6942,160 @@
     ]
   },
   {
+    "File": "PoissonDistribution_Component.cs",
+    "Name": "Poisson Distribution (POISSON.DIST)",
+    "NickName": "PoissonDist",
+    "Category": "Glaux Tools",
+    "SubCategory": "Statistics",
+    "Description": "Calcula a distribuição discreta de Poisson pontual (PMF) P(X = k) = (λ^k * e^-λ) / k! ou cumulativa (CDF) P(X <= k), além do quantil inverso, compatível com Microsoft Excel 2010+.",
+    "Inputs": [
+      {
+        "Name": "Events",
+        "Nick": "K",
+        "Type": "Integer",
+        "Desc": "Número de ocorrências ou eventos independentes k (inteiro >= 0). Padrão: 2."
+      },
+      {
+        "Name": "Lambda (Rate)",
+        "Nick": "λ",
+        "Type": "Number",
+        "Desc": "Taxa média esperada de ocorrência por intervalo λ (deve ser > 0). Padrão: 3.0."
+      },
+      {
+        "Name": "Cumulative",
+        "Nick": "Cum",
+        "Type": "Boolean",
+        "Desc": "Se True, calcula a probabilidade cumulativa P(X <= k). Se False, calcula a probabilidade pontual exata P(X = k). Padrão: False."
+      },
+      {
+        "Name": "Criterion",
+        "Nick": "Crit",
+        "Type": "Number",
+        "Desc": "Critério de probabilidade para quantil inverso (padrão: 0.5)."
+      }
+    ],
+    "Outputs": [
+      {
+        "Name": "Probability",
+        "Nick": "Prob",
+        "Type": "Number",
+        "Desc": "Resultado de POISSON.DIST: probabilidade pontual P(X = k) ou cumulativa P(X <= k)."
+      },
+      {
+        "Name": "Inverse",
+        "Nick": "Inv",
+        "Type": "Integer",
+        "Desc": "Resultado inverso: menor k inteiro para o qual a distribuição cumulativa é >= Critério."
+      },
+      {
+        "Name": "Mean",
+        "Nick": "μ",
+        "Type": "Number",
+        "Desc": "Média teórica da distribuição de Poisson (λ)."
+      },
+      {
+        "Name": "Variance",
+        "Nick": "σ²",
+        "Type": "Number",
+        "Desc": "Variância teórica da distribuição de Poisson (λ)."
+      }
+    ]
+  },
+  {
+    "File": "ProbabilityBayes_Component.cs",
+    "Name": "Probability & Bayes' Theorem",
+    "NickName": "Bayes",
+    "Category": "Glaux Tools",
+    "SubCategory": "Statistics",
+    "Description": "Calcula regras fundamentais de probabilidade e inferência Bayesiana: - Probabilidade Clássica P(A) = favoráveis / total - Regra do Complementar P(A') = 1 - P(A) - Regra da Adição P(A∪B) = P(A) + P(B) - P(A∩B) - Regra da Multiplicação P(A∩B) = P(A) * P(B|A) - Probabilidade Condicional P(A|B) = P(A∩B) / P(B) - Teorema de Bayes P(A|B) = [P(B|A) * P(A)] / P(B) - Valor Esperado E[X] = Σ x_i * P(x_i) e Razão de Chances (Odds).",
+    "Inputs": [
+      {
+        "Name": "Prob A / Favorable",
+        "Nick": "A",
+        "Type": "Number",
+        "Desc": "Probabilidade prévia P(A) em [0, 1] ou contagem de casos favoráveis. Padrão: 0.4."
+      },
+      {
+        "Name": "Prob B / Total",
+        "Nick": "B",
+        "Type": "Number",
+        "Desc": "Probabilidade marginal P(B) em [0, 1] ou total de casos possíveis (se A for contagem). Padrão: 0.5."
+      },
+      {
+        "Name": "Likelihood P(B|A)",
+        "Nick": "B|A",
+        "Type": "Number",
+        "Desc": "Verossimilhança / Probabilidade condicional de observar B dado A. Padrão: 0.8."
+      },
+      {
+        "Name": "Joint P(A∩B)",
+        "Nick": "A∩B",
+        "Type": "Number",
+        "Desc": "Probabilidade conjunta opcional P(A∩B). Se omitida, calculada via P(A) * P(B|A)."
+      },
+      {
+        "Name": "Values X",
+        "Nick": "X",
+        "Type": "Number",
+        "Desc": "Lista opcional de valores discretos x_i para cálculo do Valor Esperado E[X]."
+      },
+      {
+        "Name": "Probabilities P",
+        "Nick": "P",
+        "Type": "Number",
+        "Desc": "Lista opcional de probabilidades P(x_i) correspondentes aos valores X."
+      }
+    ],
+    "Outputs": [
+      {
+        "Name": "Bayes Posterior P(A|B)",
+        "Nick": "A|B",
+        "Type": "Number",
+        "Desc": "Probabilidade a posteriori calculada pelo Teorema de Bayes: P(A|B) = [P(B|A) * P(A)] / P(B)."
+      },
+      {
+        "Name": "Complement P(A')",
+        "Nick": "A'",
+        "Type": "Number",
+        "Desc": "Regra do complementar: P(A') = 1 - P(A)."
+      },
+      {
+        "Name": "Union P(A∪B)",
+        "Nick": "A∪B",
+        "Type": "Number",
+        "Desc": "Regra da adição de probabilidades: P(A∪B) = P(A) + P(B) - P(A∩B)."
+      },
+      {
+        "Name": "Joint P(A∩B)",
+        "Nick": "A∩B",
+        "Type": "Number",
+        "Desc": "Probabilidade conjunta da interseção: P(A∩B) = P(A) * P(B|A)."
+      },
+      {
+        "Name": "Expected Value E[X]",
+        "Nick": "E[X]",
+        "Type": "Number",
+        "Desc": "Valor esperado matemático: E[X] = Σ x_i * P(x_i)."
+      },
+      {
+        "Name": "Odds Ratio",
+        "Nick": "Odds",
+        "Type": "Number",
+        "Desc": "Razão de chances para o evento A: Odds = P(A) / (1 - P(A))."
+      },
+      {
+        "Name": "Report",
+        "Nick": "Rep",
+        "Type": "Text",
+        "Desc": "Relatório de probabilidades e fórmulas detalhado."
+      }
+    ]
+  },
+  {
     "File": "ChartScatter_Component.cs",
     "Name": "Scatter & Bubble Plot",
     "NickName": "ChartScatter",
-    "Category": "Buraqueira Tools",
+    "Category": "Glaux Tools",
     "SubCategory": "Visual",
     "Description": "Gera gráficos de dispersão 2D com marcadores de bolinhas (Scatter/Bubble Plot), centróide médio, regressão linear (R²) e elipse de dispersão, RENDERIZADO DIRETAMENTE NO PAINEL DO CANVAS DO GRASSHOPPER.",
     "Inputs": [
@@ -3945,7 +7203,7 @@
     "File": "ShannonEntropy_Component.cs",
     "Name": "Shannon Entropy",
     "NickName": "Entropy",
-    "Category": "Buraqueira Tools",
+    "Category": "Glaux Tools",
     "SubCategory": "Statistics",
     "Description": "Calcula a Entropia de Shannon H(X) = -Σ p(x) log p(x), a incerteza máxima H_max, a entropia normalizada (eficiência de informação) e a perplexidade para conjuntos de dados ou vetores de probabilidade.",
     "Inputs": [
@@ -3965,7 +7223,7 @@
         "Name": "Log Base",
         "Nick": "Base",
         "Type": "Integer",
-        "Desc": "Base do logaritmo:\\n0 = Base 2 (Bits / Shannons)\\n1 = Base e (Nats / Log natural)\\n2 = Base 10 (Hartleys / Dits)"
+        "Desc": "Base do logaritmo: 0 = Base 2 (Bits / Shannons) 1 = Base e (Nats / Log natural) 2 = Base 10 (Hartleys / Dits)"
       },
       {
         "Name": "Bin Count",
@@ -4017,7 +7275,7 @@
     "File": "SkewnessKurtosis_Component.cs",
     "Name": "Skewness & Kurtosis",
     "NickName": "SkewKurt",
-    "Category": "Buraqueira Tools",
+    "Category": "Glaux Tools",
     "SubCategory": "Statistics",
     "Description": "Calcula a Assimetria (Skewness g₁) e Curtose (Kurtosis g₂) para avaliar a forma da distribuição e proximidade de uma curva Normal.",
     "Inputs": [
@@ -4065,7 +7323,7 @@
     "File": "SpatialHeatmap_Component.cs",
     "Name": "Spatial Grid & Viewport Heatmap",
     "NickName": "SpatialHeatmap",
-    "Category": "Buraqueira Tools",
+    "Category": "Glaux Tools",
     "SubCategory": "Visual",
     "Description": "Espalha e interpola dados escalares em uma grade espacial com gradiente customizável, exibindo o MAPA DE CALOR DIRETAMENTE NO PAINEL DO CANVAS DO GRASSHOPPER e NO VIEWPORT 3D DO RHINO. Inclui limites manuais Min/Max, título, unidade de medida, fonte dos dados e exportação editorial.",
     "Inputs": [
@@ -4084,14 +7342,14 @@
       {
         "Name": "Ideal Target",
         "Nick": "Target",
-        "Type": "Number",
-        "Desc": "Valor alvo ideal opcional. Quando fornecido, o gradiente avalia o desvio (|v - Target|), destacando áreas ideais."
+        "Type": "Generic",
+        "Desc": "Valor alvo ideal opcional. Aceita: 1. Número direto (ex: 1.12) 2. Intervalo/Domínio normativo (ex: 0.95 To 1.29) com tolerância automática 3. Lista de metas por oitava (seleção inteligente pela frequência no título do gráfico)"
       },
       {
         "Name": "Gradient / Palette",
         "Nick": "Grad",
         "Type": "Generic",
-        "Desc": "Seletor de Gradiente ou Cores customizadas. Aceita:\\n1. Lista de Cores personalizadas (do componente Gradient ou Swatch do GH)\\n2. Número Inteiro de Preset (0 a 14)\\n3. Nome do Preset ('Turbo', 'Viridis', 'Thermal', 'Plasma', 'Magma', 'Inferno', 'Target', 'TargetDiverging', 'CoolWarm', 'Cividis', 'Spectral', 'Sunset', 'Ocean', 'Forest', 'Greyscale')"
+        "Desc": "Seletor de Gradiente ou Cores customizadas. Aceita: 1. Lista de Cores personalizadas (do componente Gradient ou Swatch do GH) 2. Número Inteiro de Preset (0 a 14) 3. Nome do Preset ('Turbo', 'Viridis', 'Thermal', 'Plasma', 'Magma', 'Inferno', 'Target', 'TargetDiverging', 'CoolWarm', 'Cividis', 'Spectral', 'Sunset', 'Ocean', 'Forest', 'Greyscale')"
       },
       {
         "Name": "Invert Gradient",
@@ -4120,8 +7378,8 @@
       {
         "Name": "Z Elevation Scale",
         "Nick": "ZScale",
-        "Type": "Number",
-        "Desc": "Fator de escala para elevar os vértices da malha em Z proporcionalmente ao valor (Heatmap 3D / Landscape). Padrão: 0.0 (plano)."
+        "Type": "Generic",
+        "Desc": "Fator de elevação Z dos vértices da malha (Heatmap 3D / Landscape). Aceita: 1. Fator multiplicador direto (ex: 1.0, 5.0, amplificando até 10x ou mais) 2. Domínio/Intervalo de normalização (ex: '0.2 To 2.5' ou Interval(0.2, 2.5)), onde o primeiro valor é a distância vertical inicial acima do ponto (ZBase) e o segundo é a cota máxima (ZMax), distribuindo os dados normalizados nessa altura 3. Texto (ex: 'norm 2.5', '0.5, 3.0', '10x'). Padrão: 0.0 (plano)."
       },
       {
         "Name": "Chart Title",
@@ -4157,13 +7415,13 @@
         "Name": "Target Tolerance & Mask",
         "Nick": "TolMask",
         "Type": "Generic",
-        "Desc": "Tolerância do Alvo e Máscara de Conformidade (Modo Diagnóstico do Professor).\\nPermite diagnosticar visualmente o que está ABAIXO (aquém) e ACIMA (além) do alvo em gradiente tricolor (Azul = Abaixo, Vermelho = Acima) com sobreposição de MÁSCARA contrastante (Magenta, Ciano, Verde, etc.) exatamente nas áreas em conformidade com o TR ideal.\\nAceita:\\n- Valor de tolerância numérico ou texto (ex: 0.15 ou '10%')\\n- Cor da máscara (ex: Magenta, Ciano, Swatch do GH)\\n- Texto combinado (ex: '0.15 Magenta', '±10% Ciano', '0.2 Verde')."
+        "Desc": "Tolerância do Alvo e Máscara de Conformidade (Modo Diagnóstico do Professor). Permite diagnosticar visualmente o que está ABAIXO (aquém) e ACIMA (além) do alvo em gradiente tricolor (Azul = Abaixo, Vermelho = Acima) com sobreposição de MÁSCARA contrastante (Magenta, Ciano, Verde, etc.) exatamente nas áreas em conformidade com o TR ideal. Aceita: - Valor de tolerância numérico ou texto (ex: 0.15 ou '10%') - Cor da máscara (ex: Magenta, Ciano, Swatch do GH) - Texto combinado (ex: '0.15 Magenta', '±10% Ciano', '0.2 Verde')."
       },
       {
         "Name": "Display Mode",
         "Nick": "Mode",
         "Type": "Generic",
-        "Desc": "Modo de Visualização do Heatmap (Escolha entre as 3 Opções):\\n0 = Gradiente Contínuo Padrão (Valores Absolutos de Mínimo a Máximo)\\n1 = Desvio do Alvo (|v - Target|, de 0 a Desvio Máximo)\\n2 = Diagnóstico de Alvo (Sugestão do Professor: Tricolor [Azul/Vermelho] + Máscara de Tolerância [Magenta/Ciano]).\\nAceita: 0, 1, 2 ou textos ('Padrão', 'Desvio', 'Diagnóstico', 'Tricolor').\\nSe não conectado: adota Modo 2 se houver Alvo e TolMask; Modo 1 se houver Alvo; ou Modo 0."
+        "Desc": "Modo de Visualização do Heatmap (Escolha entre as 3 Opções): 0 = Gradiente Contínuo Padrão (Valores Absolutos de Mínimo a Máximo) 1 = Desvio do Alvo (|v - Target|, de 0 a Desvio Máximo) 2 = Diagnóstico de Alvo (Sugestão do Professor: Tricolor [Azul/Vermelho] + Máscara de Tolerância [Magenta/Ciano]). Aceita: 0, 1, 2 ou textos ('Padrão', 'Desvio', 'Diagnóstico', 'Tricolor'). Se não conectado: adota Modo 2 se houver Alvo e TolMask; Modo 1 se houver Alvo; ou Modo 0."
       }
     ],
     "Outputs": [
@@ -4215,7 +7473,7 @@
     "File": "StandardDeviation_Component.cs",
     "Name": "Standard Deviation",
     "NickName": "StdDev",
-    "Category": "Buraqueira Tools",
+    "Category": "Glaux Tools",
     "SubCategory": "Statistics",
     "Description": "Calcula o Desvio Padrão Amostral (s), Desvio Padrão Populacional (σ), Erro Padrão da Média (SE) e Coeficiente de Variação (CV%).",
     "Inputs": [
@@ -4269,7 +7527,7 @@
     "File": "StateLatch_Component.cs",
     "Name": "State Latch / Flip-Flop (Gating)",
     "NickName": "StateLatch",
-    "Category": "Buraqueira Tools",
+    "Category": "Glaux Tools",
     "SubCategory": "Automation",
     "Description": "Portão de retenção de dados que 'trava' o último estado válido. Quando o portão fecha ou erros/geometrias nulas chegam, a saída congela no valor anterior, impedindo que falhas propaguem.",
     "Inputs": [
@@ -4329,7 +7587,7 @@
     "File": "TargetDeviation_Component.cs",
     "Name": "Target Deviation",
     "NickName": "TgtDiff",
-    "Category": "Buraqueira Tools",
+    "Category": "Glaux Tools",
     "SubCategory": "Statistics",
     "Description": "Compara um conjunto de valores com um valor alvo (Target), calculando o desvio em módulo (|x - T|), com sinal, erro percentual e localizando o valor mais próximo.",
     "Inputs": [
@@ -4389,7 +7647,7 @@
     "File": "ThresholdVotingGate_Component.cs",
     "Name": "Threshold Voting Gate",
     "NickName": "VoteGate",
-    "Category": "Buraqueira Tools",
+    "Category": "Glaux Tools",
     "SubCategory": "Automation",
     "Description": "Avalia se um percentual ou quórum numérico mínimo de condições booleanas foi satisfeito, com suporte a pesos ponderados por critério. Ideal para metas de conformidade parcial ou aprovação multicritério.",
     "Inputs": [
@@ -4461,7 +7719,7 @@
     "File": "TreeAlignTopology_Component.cs",
     "Name": "Tree Align (Match Topology)",
     "NickName": "TreeAlign",
-    "Category": "Buraqueira Tools",
+    "Category": "Glaux Tools",
     "SubCategory": "Tree",
     "Description": "Emparelha e alinha duas Árvores de Dados com topologias assimétricas, preenchendo ramos faltantes com <null> ou valor padrão para evitar quebras em operações 1:1.",
     "Inputs": [
@@ -4481,7 +7739,7 @@
         "Name": "Mode",
         "Nick": "M",
         "Type": "Integer",
-        "Desc": "Modo de emparelhamento:\\n0 = União (ambas recebem todos os ramos de A e B)\\n1 = Alinhar B para A (seguir caminhos de A)\\n2 = Alinhar A para B (seguir caminhos de B)\\n3 = Interseção (manter apenas caminhos existentes em ambas)"
+        "Desc": "Modo de emparelhamento: 0 = União (ambas recebem todos os ramos de A e B) 1 = Alinhar B para A (seguir caminhos de A) 2 = Alinhar A para B (seguir caminhos de B) 3 = Interseção (manter apenas caminhos existentes em ambas)"
       },
       {
         "Name": "Default Fill A",
@@ -4527,7 +7785,7 @@
     "File": "TreeConditionalPrunerDispatch_Component.cs",
     "Name": "Tree Dispatch (Preserve Paths)",
     "NickName": "TreeDispatch",
-    "Category": "Buraqueira Tools",
+    "Category": "Glaux Tools",
     "SubCategory": "Tree",
     "Description": "Divide uma Árvore de Dados em duas saídas (True / False) preservando a matriz original de caminhos GH_Path (com ramos vazios ou preenchimento com null) para não quebrar árvores a jusante.",
     "Inputs": [
@@ -4547,7 +7805,7 @@
         "Name": "Preserve Mode",
         "Nick": "M",
         "Type": "Integer",
-        "Desc": "Modo de preservação de caminhos:\\n0 = Manter ramos vazios (caminho existe, sem itens)\\n1 = Preencher slots excluídos com <null> (mantém índices e comprimentos idênticos)\\n2 = Podar ramos vazios (comportamento nativo)"
+        "Desc": "Modo de preservação de caminhos: 0 = Manter ramos vazios (caminho existe, sem itens) 1 = Preencher slots excluídos com <null> (mantém índices e comprimentos idênticos) 2 = Podar ramos vazios (comportamento nativo)"
       }
     ],
     "Outputs": [
@@ -4587,7 +7845,7 @@
     "File": "TreeFilter_Component.cs",
     "Name": "Tree Filter (Preserve Paths)",
     "NickName": "TreeFilter",
-    "Category": "Buraqueira Tools",
+    "Category": "Glaux Tools",
     "SubCategory": "Tree",
     "Description": "Filtra itens em uma Árvore de Dados (DataTree) com base em uma máscara booleana ou condição, sem perder, colapsar ou alterar os caminhos (GH_Path) originais.",
     "Inputs": [
@@ -4641,7 +7899,7 @@
     "File": "TreeGroupBy_Component.cs",
     "Name": "Tree GroupBy (Bucket by Key)",
     "NickName": "GroupBy",
-    "Category": "Buraqueira Tools",
+    "Category": "Glaux Tools",
     "SubCategory": "Tree",
     "Description": "Agrupa itens de uma lista ou árvore em novos ramos com base em uma chave (ex.: orientação solar, tipo construtivo, área, camada). Substitui todo o processo manual de sets, map e split.",
     "Inputs": [
@@ -4701,7 +7959,7 @@
     "File": "TreePartitionVariable_Component.cs",
     "Name": "Tree Partition (Variable Lengths)",
     "NickName": "PartVar",
-    "Category": "Buraqueira Tools",
+    "Category": "Glaux Tools",
     "SubCategory": "Tree",
     "Description": "Divide listas ou ramos de uma árvore em novos ramos com comprimentos variados e personalizados por ramo (ex.: tamanhos [2, 5, 3, 1]).",
     "Inputs": [
@@ -4755,7 +8013,7 @@
     "File": "TreePathItem_Component.cs",
     "Name": "Tree Path Item",
     "NickName": "PathItem",
-    "Category": "Buraqueira Tools",
+    "Category": "Glaux Tools",
     "SubCategory": "Tree",
     "Description": "Fatia e seleciona ramos de uma Árvore de Dados (DataTree) por dimensões de caminho {a;b;c...}, similar a um List Item multidimensional. Gera dinamicamente entradas para cada nível de ramificação ({0}, {1}, {2}...). Se uma dimensão for omitida, seleciona todos os ramos (*) filtrando pelas demais.",
     "Inputs": [
@@ -4815,7 +8073,7 @@
     "File": "TreeSearch_Component.cs",
     "Name": "Tree Search",
     "NickName": "TreeSearch",
-    "Category": "Buraqueira Tools",
+    "Category": "Glaux Tools",
     "SubCategory": "Tree",
     "Description": "Busca termos específicos, palavras-chave ou padrões regex em listas ou árvores de dados. Retorna os itens correspondentes, seus índices (IDs locais), caminhos, itens descartados e máscara booleana.",
     "Inputs": [
@@ -4893,7 +8151,7 @@
     "File": "TreeStructuralDiff_Component.cs",
     "Name": "Tree Structural Diff",
     "NickName": "TreeDiff",
-    "Category": "Buraqueira Tools",
+    "Category": "Glaux Tools",
     "SubCategory": "Tree",
     "Description": "Compara duas árvores de dados (A e B) e diagnostica discrepâncias: ramos exclusivos de A, ramos exclusivos de B, contagens divergentes e equivalência topológica.",
     "Inputs": [
@@ -4959,7 +8217,7 @@
     "File": "TrimmedWinsorizedMean_Component.cs",
     "Name": "Trimmed & Winsorized Mean",
     "NickName": "TrimWin",
-    "Category": "Buraqueira Tools",
+    "Category": "Glaux Tools",
     "SubCategory": "Statistics",
     "Description": "Calcula medidas robustas de tendência central (Média Truncada / Trimmed Mean e Winsorização) para mitigar o impacto de valores extremos e caudas pesadas.",
     "Inputs": [
@@ -5025,7 +8283,7 @@
     "File": "Variance_Component.cs",
     "Name": "Variance",
     "NickName": "Var",
-    "Category": "Buraqueira Tools",
+    "Category": "Glaux Tools",
     "SubCategory": "Statistics",
     "Description": "Calcula a Variância Amostral (s² com divisor N-1), Variância Populacional (σ² com divisor N) e Soma dos Quadrados dos Desvios (SS).",
     "Inputs": [
@@ -5067,7 +8325,7 @@
     "File": "VectorSimilarity_Component.cs",
     "Name": "Vector Similarity Search (K-NN & Embeddings)",
     "NickName": "VecSearch",
-    "Category": "Buraqueira Tools",
+    "Category": "Glaux Tools",
     "SubCategory": "Tree",
     "Description": "Busca vetorial ultra-rápida (estilo FAISS) para encontrar as configurações, curvas acústicas ou geometrias mais semelhantes a um alvo. - Execução multithread paralela em CPU sobre milhares de vetores em milissegundos. - Métricas: Similaridade de Cosseno (Cosine), Distância Euclidiana (L2), Manhattan (L1) e Correlação de Pearson. - Retorna os Top-K vizinhos mais próximos, caminhos originais e índices de similaridade.",
     "Inputs": [
@@ -5093,7 +8351,7 @@
         "Name": "Metric",
         "Nick": "M",
         "Type": "Integer",
-        "Desc": "Métrica de comparação:\\n0 = Similaridade de Cosseno (Cosine: 1.0 = idêntico em tendência/formato)\\n1 = Distância Euclidiana (L2: 0 = idêntico em escala absoluta)\\n2 = Distância Manhattan (L1)\\n3 = Correlação de Pearson (formato da curva sem viés de média)"
+        "Desc": "Métrica de comparação: 0 = Similaridade de Cosseno (Cosine: 1.0 = idêntico em tendência/formato) 1 = Distância Euclidiana (L2: 0 = idêntico em escala absoluta) 2 = Distância Manhattan (L1) 3 = Correlação de Pearson (formato da curva sem viés de média)"
       }
     ],
     "Outputs": [
@@ -5127,7 +8385,7 @@
     "File": "WeightedMean_Component.cs",
     "Name": "Weighted Mean",
     "NickName": "WAvg",
-    "Category": "Buraqueira Tools",
+    "Category": "Glaux Tools",
     "SubCategory": "Statistics",
     "Description": "Calcula a Média Ponderada (Weighted Mean), Soma Total de Pesos e Pesos Normalizados a partir de listas de valores e pesos correspondentes.",
     "Inputs": [

@@ -614,6 +614,14 @@ namespace Buraqueira_Tools
                 {
                     timer.StopTimer();
                 }
+                else if (obj is PillExperimentLogger_Component logger)
+                {
+                    logger.FlushPending();
+                }
+                else if (obj is PillRuntimeProfiler_Component profiler)
+                {
+                    profiler.Detach();
+                }
             }
             if (docGuids.Count == 0) return;
 
@@ -900,6 +908,11 @@ namespace Buraqueira_Tools
                         activeTxKeys.Add(PillHub.CleanUpKey(s.FullKey));
                         activeTxKeys.Add(PillHub.CleanUpKey($"{s.Category}_{s.Name}"));
                     }
+                }
+                else if (obj is IPillHubPublisher publisher)
+                {
+                    // Publicadores novos (ex: Pill Dashboard) declaram as próprias chaves em vez de ganhar um caso aqui
+                    foreach (var key in publisher.PublishedCleanKeys) activeTxKeys.Add(key);
                 }
             }
 

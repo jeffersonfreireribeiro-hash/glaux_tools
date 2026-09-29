@@ -29,6 +29,12 @@ namespace Buraqueira_Tools
             public int HitCount { get; set; }
         }
 
+        // Contadores globais de acertos/falhas (lidos pelo Pill Runtime Profiler)
+        private static long s_hits;
+        private static long s_misses;
+        internal static long GlobalHits => System.Threading.Interlocked.Read(ref s_hits);
+        internal static long GlobalMisses => System.Threading.Interlocked.Read(ref s_misses);
+
         private static readonly ConcurrentDictionary<string, CachePayload> _globalCache =
             new ConcurrentDictionary<string, CachePayload>(StringComparer.OrdinalIgnoreCase);
 
@@ -158,6 +164,7 @@ namespace Buraqueira_Tools
             if (!forceRecalc && _globalCache.TryGetValue(key, out var payload) && payload.InputHash == currentHash)
             {
                 payload.HitCount++;
+                System.Threading.Interlocked.Increment(ref s_hits);
                 IsCached = true;
                 CacheStatusShort = $"HIT ({payload.HitCount}x)";
 
@@ -180,6 +187,7 @@ namespace Buraqueira_Tools
                     HitCount = 0
                 };
                 _globalCache[key] = newPayload;
+                System.Threading.Interlocked.Increment(ref s_misses);
 
                 IsCached = false;
                 CacheStatusShort = "Recalculado";

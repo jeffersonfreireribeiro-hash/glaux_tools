@@ -3,10 +3,10 @@
     <TargetFramework>net48</TargetFramework>
     <AssemblyName>Glaux_Tools</AssemblyName>
     <OutputType>Library</OutputType>
-    <Version>1.0.6</Version>
-    <AssemblyVersion>1.0.6.0</AssemblyVersion>
-    <FileVersion>1.0.6.0</FileVersion>
-    <InformationalVersion>1.0.6</InformationalVersion>
+    <Version>1.1.0</Version>
+    <AssemblyVersion>1.1.0.0</AssemblyVersion>
+    <FileVersion>1.1.0.0</FileVersion>
+    <InformationalVersion>1.1.0</InformationalVersion>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
     <UseWindowsForms>true</UseWindowsForms>
     <ImportWindowsDesktopTargets>true</ImportWindowsDesktopTargets>
@@ -15,8 +15,17 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
+  <!-- Usa a instalação local do Rhino quando existir; senão (CI, Linux, máquinas sem Rhino) usa os pacotes NuGet oficiais da McNeel -->
+  <PropertyGroup>
+    <GlauxUseRhinoInstall Condition="'$(GlauxUseRhinoInstall)' == '' And Exists('$(RhinoInstallDir)\System\RhinoCommon.dll')">true</GlauxUseRhinoInstall>
+    <EnableWindowsTargeting Condition="'$(OS)' != 'Windows_NT'">true</EnableWindowsTargeting>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(GlauxUseRhinoInstall)' != 'true'">
+    <PackageReference Include="Grasshopper" Version="8.0.23304.9001" ExcludeAssets="runtime" />
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+  </ItemGroup>
   <!-- Referências do Rhino / Grasshopper -->
-  <ItemGroup>
+  <ItemGroup Condition="'$(GlauxUseRhinoInstall)' == 'true'">
     <Reference Include="GH_IO">
       <HintPath>$(RhinoInstallDir)\Plug-ins\Grasshopper\GH_IO.dll</HintPath>
       <Private>False</Private>
@@ -29,8 +38,14 @@
       <HintPath>$(RhinoInstallDir)\System\RhinoCommon.dll</HintPath>
       <Private>False</Private>
     </Reference>
+  </ItemGroup>
+  <ItemGroup>
     <Reference Include="System.Numerics" />
     <Reference Include="Microsoft.CSharp" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Testes acessam os adaptadores internos (Dashboard, Hub, cofres) -->
+    <InternalsVisibleTo Include="Glaux_Tools.Tests" />
   </ItemGroup>
   <!-- PostBuild: Copia o .gha para Libraries do Grasshopper, Buraqueira_Tools_Dist e PLUGINS -->
 </Project>

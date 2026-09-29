@@ -20,7 +20,7 @@ namespace Buraqueira_Tools
 
     /// </summary>
 
-    public static class GlauxToolsIcons
+    public static partial class GlauxToolsIcons
 
     {
 

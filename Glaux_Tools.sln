@@ -7,6 +7,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{827E0CD3-B72
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Glaux_Tools", "src\Glaux_Tools.csproj", "{531A7BE3-5FD1-4345-B048-98E13D86C5C5}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{710438AA-2A39-421D-974F-26ABE240E998}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Glaux_Tools.Tests", "tests\Glaux_Tools.Tests\Glaux_Tools.Tests.csproj", "{E195A447-3B1B-41F5-A74D-67C70453EFF0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -29,11 +33,24 @@ Global
 		{531A7BE3-5FD1-4345-B048-98E13D86C5C5}.Release|x64.Build.0 = Release|Any CPU
 		{531A7BE3-5FD1-4345-B048-98E13D86C5C5}.Release|x86.ActiveCfg = Release|Any CPU
 		{531A7BE3-5FD1-4345-B048-98E13D86C5C5}.Release|x86.Build.0 = Release|Any CPU
+		{E195A447-3B1B-41F5-A74D-67C70453EFF0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E195A447-3B1B-41F5-A74D-67C70453EFF0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E195A447-3B1B-41F5-A74D-67C70453EFF0}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{E195A447-3B1B-41F5-A74D-67C70453EFF0}.Debug|x64.Build.0 = Debug|Any CPU
+		{E195A447-3B1B-41F5-A74D-67C70453EFF0}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{E195A447-3B1B-41F5-A74D-67C70453EFF0}.Debug|x86.Build.0 = Debug|Any CPU
+		{E195A447-3B1B-41F5-A74D-67C70453EFF0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E195A447-3B1B-41F5-A74D-67C70453EFF0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E195A447-3B1B-41F5-A74D-67C70453EFF0}.Release|x64.ActiveCfg = Release|Any CPU
+		{E195A447-3B1B-41F5-A74D-67C70453EFF0}.Release|x64.Build.0 = Release|Any CPU
+		{E195A447-3B1B-41F5-A74D-67C70453EFF0}.Release|x86.ActiveCfg = Release|Any CPU
+		{E195A447-3B1B-41F5-A74D-67C70453EFF0}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{531A7BE3-5FD1-4345-B048-98E13D86C5C5} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
+		{E195A447-3B1B-41F5-A74D-67C70453EFF0} = {710438AA-2A39-421D-974F-26ABE240E998}
 	EndGlobalSection
 EndGlobal
