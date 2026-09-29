@@ -10,5 +10,12 @@ namespace Glaux_Tools.Tests
         {
             Assert.Equal("ACU_T60", PillHub.CleanUpKey("ACU_T60 [s]"));
         }
+
+        [Fact]
+        public void PluginInfoVersion_ComesFromTheAssembly()
+        {
+            var v = typeof(PillHub).Assembly.GetName().Version;
+            Assert.Equal($"{v.Major}.{v.Minor}.{v.Build}", new BuraqueiraToolsAssemblyInfo().Version);
+        }
     }
 }

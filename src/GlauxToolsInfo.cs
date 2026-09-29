@@ -19,10 +19,18 @@ namespace Buraqueira_Tools
             "performance diagnostics and on-canvas dashboards.";
         public override string AuthorName => "Jefferson Freire Ribeiro";
         public override string AuthorContact => "https://github.com/jeffersonfreireribeiro-hash/glaux_tools";
-        public override string Version => "1.0.1.0";
+        // Lida do próprio assembly (definida em Glaux_Tools.csproj): não diverge mais da versão compilada
+        public override string Version => s_version;
+        private static readonly string s_version = ReadVersion();
         public override Bitmap Icon => GlauxToolsIcons.PluginTabIcon;
         public override Bitmap AssemblyIcon => GlauxToolsIcons.PluginTabIcon;
         public override Guid Id => new Guid("7c9a1b2e-3d4f-5a6b-7c8d-9e0f1a2b3c4d");
+
+        private static string ReadVersion()
+        {
+            var v = typeof(BuraqueiraToolsAssemblyInfo).Assembly.GetName().Version;
+            return v == null ? "0.0.0" : $"{v.Major}.{v.Minor}.{v.Build}";
+        }
     }
 
     /// <summary>

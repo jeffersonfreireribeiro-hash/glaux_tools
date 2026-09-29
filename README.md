@@ -13,7 +13,7 @@
   <a href="https://www.rhino3d.com/"><img src="https://img.shields.io/badge/Rhino-8%20(SR4%2B)-000000.svg?logo=rhinoceros&logoColor=white" alt="Rhino 8" /></a>
   <a href="https://www.rhino3d.com/6/features/grasshopper/"><img src="https://img.shields.io/badge/Grasshopper-1.0-4E8752.svg" alt="Grasshopper" /></a>
   <a href="https://dotnet.microsoft.com/"><img src="https://img.shields.io/badge/.NET%20Framework-4.8-512BD4.svg?logo=dotnet&logoColor=white" alt=".NET 4.8" /></a>
-  <a href="https://github.com/jeffersonfreireribeiro-hash/glaux_tools/releases"><img src="https://img.shields.io/badge/Release-v1.0.5-blue.svg" alt="Release v1.0.5" /></a>
+  <a href="https://github.com/jeffersonfreireribeiro-hash/glaux_tools/tags"><img src="https://img.shields.io/github/v/tag/jeffersonfreireribeiro-hash/glaux_tools?sort=semver&label=Release&color=blue" alt="Release" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT" /></a>
 </p>
 
