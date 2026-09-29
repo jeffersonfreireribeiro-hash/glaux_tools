@@ -48,6 +48,90 @@ namespace Buraqueira_Tools
         }));
 
         // ==========================================
+        // PILHA 2 — PERSISTENCE
+        // ==========================================
+
+        private static Bitmap _pillDbConnect, _pillDbWrite, _pillDbRead, _pillDbQuery, _pillSchemaInspector, _pillDataValidation, _pillDbSync;
+
+        public static Bitmap PillDbConnect => _pillDbConnect ?? (_pillDbConnect = DrawStackIcon(g =>
+        {
+            DrawCylinder(g, new RectangleF(3, 3, 13, 17), IconDB);
+            // Plugue
+            using (var pen = new Pen(IconInk, 1.6f))
+            {
+                g.DrawLine(pen, 16, 14, 19, 14);
+                g.DrawLine(pen, 19, 14, 19, 20);
+            }
+            using (var brush = new SolidBrush(IconOk))
+            {
+                g.FillRectangle(brush, 17, 18, 5, 4);
+            }
+        }));
+
+        public static Bitmap PillDbWrite => _pillDbWrite ?? (_pillDbWrite = DrawStackIcon(g =>
+        {
+            DrawCylinder(g, new RectangleF(2, 7, 13, 15), IconDB);
+            DrawArrow(g, new PointF(18.5f, 1.5f), new PointF(18.5f, 13), IconInk, 1.8f);
+        }));
+
+        public static Bitmap PillDbRead => _pillDbRead ?? (_pillDbRead = DrawStackIcon(g =>
+        {
+            DrawCylinder(g, new RectangleF(2, 7, 13, 15), IconDB);
+            DrawArrow(g, new PointF(18.5f, 13), new PointF(18.5f, 1.5f), IconInk, 1.8f);
+        }));
+
+        public static Bitmap PillDbQuery => _pillDbQuery ?? (_pillDbQuery = DrawStackIcon(g =>
+        {
+            DrawCylinder(g, new RectangleF(2, 2, 13, 16), IconDB);
+            using (var lens = new SolidBrush(Color.FromArgb(220, 255, 255, 255)))
+            using (var pen = new Pen(IconInk, 1.6f))
+            {
+                g.FillEllipse(lens, 11, 10, 8, 8);
+                g.DrawEllipse(pen, 11, 10, 8, 8);
+                pen.Width = 2.4f;
+                g.DrawLine(pen, 18, 17, 22, 21);
+            }
+        }));
+
+        public static Bitmap PillSchemaInspector => _pillSchemaInspector ?? (_pillSchemaInspector = DrawStackIcon(g =>
+        {
+            DrawCylinder(g, new RectangleF(1.5f, 4, 10, 15), IconDB);
+            DrawTableGlyph(g, new RectangleF(12.5f, 3.5f, 10, 16), IconDB);
+        }));
+
+        public static Bitmap PillDataValidation => _pillDataValidation ?? (_pillDataValidation = DrawStackIcon(g =>
+        {
+            var shield = new GraphicsPath();
+            shield.AddLines(new[] { new PointF(12, 2), new PointF(20.5f, 5), new PointF(20, 13) });
+            shield.AddBezier(new PointF(20, 13), new PointF(19, 18), new PointF(15, 20.5f), new PointF(12, 22));
+            shield.AddBezier(new PointF(12, 22), new PointF(9, 20.5f), new PointF(5, 18), new PointF(4, 13));
+            shield.AddLines(new[] { new PointF(4, 13), new PointF(3.5f, 5) });
+            shield.CloseFigure();
+            using (var fill = new LinearGradientBrush(new RectangleF(3, 2, 18, 20), ControlPaint.Light(IconDB, 0.35f), IconDB, LinearGradientMode.Vertical))
+            using (var pen = new Pen(IconInk, 1.1f))
+            {
+                g.FillPath(fill, shield);
+                g.DrawPath(pen, shield);
+            }
+            shield.Dispose();
+            using (var check = new Pen(Color.White, 2.2f) { StartCap = LineCap.Round, EndCap = LineCap.Round, LineJoin = LineJoin.Round })
+            {
+                g.DrawLines(check, new[] { new PointF(8, 12), new PointF(11, 15.5f), new PointF(16.5f, 8.5f) });
+            }
+        }));
+
+        public static Bitmap PillDbSync => _pillDbSync ?? (_pillDbSync = DrawStackIcon(g =>
+        {
+            DrawCylinder(g, new RectangleF(7, 6, 10, 12), IconDB);
+            using (var pen = new Pen(IconInk, 1.6f))
+            {
+                pen.CustomEndCap = new AdjustableArrowCap(3f, 3f, true);
+                g.DrawArc(pen, 2, 2, 20, 20, 200, 130);
+                g.DrawArc(pen, 2, 2, 20, 20, 20, 130);
+            }
+        }));
+
+        // ==========================================
         // PRIMITIVAS COMPARTILHADAS
         // ==========================================
 
