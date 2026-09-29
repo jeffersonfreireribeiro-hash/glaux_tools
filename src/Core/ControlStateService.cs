@@ -211,7 +211,6 @@ namespace Buraqueira_Tools
                     {
                         slider.Slider.RaiseEvents = raise;
                     }
-                    slider.ResetCurrentValue();
                     slider.ExpireSolution(false);
                     break;
                 case GH_BooleanToggle toggle when saved.Boolean.HasValue:
