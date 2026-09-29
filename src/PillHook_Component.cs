@@ -70,6 +70,9 @@ namespace Buraqueira_Tools
 
         protected override void SolveInstance(IGH_DataAccess DA)
         {
+            // Este cálculo lê o estado atual do barramento: descarta notificação pendente para não recalcular de novo
+            PillHub.AcknowledgeReceiver(InstanceGuid);
+
             string wireKey = "";
             bool hasWire = DA.GetData(0, ref wireKey) && !string.IsNullOrWhiteSpace(wireKey);
 
@@ -89,16 +92,16 @@ namespace Buraqueira_Tools
 
             string cleanKey = PillHub.CleanUpKey(activeKey);
 
-            // Gerencia inscrição no canal
+            // Gerencia inscrição no canal (Subscribe é idempotente: re-inscreve se o barramento tiver sido purgado)
             if (!string.Equals(_lastSubscribedKey, cleanKey, StringComparison.OrdinalIgnoreCase))
             {
                 if (!string.IsNullOrEmpty(_lastSubscribedKey))
                 {
                     PillHub.UnsubscribeReceiver(_lastSubscribedKey, InstanceGuid);
                 }
-                PillHub.SubscribeReceiver(cleanKey, InstanceGuid);
                 _lastSubscribedKey = cleanKey;
             }
+            PillHub.SubscribeReceiver(cleanKey, InstanceGuid);
 
             // 1. Tenta obter os dados prioritariamente pelo cabo físico oculto (Wire Display -> Hidden)
             // Mas IGNORA qualquer cabo vindo de PillSliderPool_Component para que os sliders operem 100% independentes via barramento de memória PillHub
@@ -124,12 +127,12 @@ namespace Buraqueira_Tools
                 StatusShort = itemCount > 1 ? $"{itemCount} it (Cabo ⚡)" : (itemCount == 1 ? "1 it (Cabo ⚡)" : "Vazio");
                 Message = "";
 
-                DA.SetDataTree(0, PillHub.CloneStructure(wireData));
+                DA.SetDataTree(0, wireData);
                 return;
             }
 
-            // 2. Fallback: barramento de memória (PillHub)
-            if (PillHub.TryGetChannel(cleanKey, out PillChannel channel))
+            // 2. Fallback: barramento de memória (PillHub). Sem clone: SetDataTree já copia os ramos.
+            if (PillHub.TryPeekChannel(cleanKey, out PillChannel channel))
             {
                 CurrentCleanKey = channel.CleanKey;
                 CurrentCategory = channel.Category;
@@ -143,7 +146,7 @@ namespace Buraqueira_Tools
 
                 if (channel.Data != null)
                 {
-                    DA.SetDataTree(0, PillHub.CloneStructure(channel.Data));
+                    DA.SetDataTree(0, channel.Data);
                 }
                 Message = "";
             }

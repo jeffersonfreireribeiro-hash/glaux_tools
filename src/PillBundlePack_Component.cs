@@ -183,6 +183,10 @@ namespace Buraqueira_Tools
 
         protected override void SolveInstance(IGH_DataAccess DA)
         {
+            // Este cálculo lê o estado atual do barramento: descarta notificação pendente para não recalcular de novo
+            PillHub.AcknowledgeReceiver(InstanceGuid);
+
+            HashSet<string> previousKeys = null;
             try
             {
                 var keys = new List<string>();
@@ -204,11 +208,9 @@ namespace Buraqueira_Tools
                     return;
                 }
 
-                // Limpa inscrições anteriores para renovar com os canais atuais
-                foreach (var k in _subscribedKeys)
-                {
-                    PillHub.UnsubscribeReceiver(k, InstanceGuid);
-                }
+                // Renova as inscrições por diferença (ver finally): cancelar e refazer todas a cada cálculo
+                // move este componente para o fim das listas do barramento e desloca a ordem/cor dos receptores.
+                previousKeys = new HashSet<string>(_subscribedKeys, StringComparer.OrdinalIgnoreCase);
                 _subscribedKeys.Clear();
 
                 var bundle = new PillBundle
@@ -315,7 +317,7 @@ namespace Buraqueira_Tools
                                 valObj = vData.AllData(true).Select(g => g?.SafeScriptVariable()).ToList();
                             }
                         }
-                        else if (tx != null && !string.IsNullOrEmpty(tx.CurrentCleanKey) && PillHub.TryGetChannel(tx.CurrentCleanKey, out var ch))
+                        else if (tx != null && !string.IsNullOrEmpty(tx.CurrentCleanKey) && PillHub.TryPeekChannel(tx.CurrentCleanKey, out var ch))
                         {
                             if (ch.Data != null && ch.Data.DataCount > 0)
                             {
@@ -576,6 +578,19 @@ namespace Buraqueira_Tools
             catch (Exception ex)
             {
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Error, $"Erro no Pill Bundle Pack: {ex.Message}");
+            }
+            finally
+            {
+                if (previousKeys != null)
+                {
+                    foreach (var k in previousKeys)
+                    {
+                        if (!_subscribedKeys.Contains(k))
+                        {
+                            PillHub.UnsubscribeReceiver(k, InstanceGuid);
+                        }
+                    }
+                }
             }
         }
     }

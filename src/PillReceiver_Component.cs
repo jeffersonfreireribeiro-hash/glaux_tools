@@ -63,6 +63,9 @@ namespace Buraqueira_Tools
 
         protected override void SolveInstance(IGH_DataAccess DA)
         {
+            // Este cálculo lê o estado atual do barramento: descarta notificação pendente para não recalcular de novo
+            PillHub.AcknowledgeReceiver(InstanceGuid);
+
             string inputKey = "";
             bool hasKeyWire = DA.GetData(0, ref inputKey);
             string keyToUse = hasKeyWire && !string.IsNullOrWhiteSpace(inputKey) ? inputKey : _internalSelectedKey;
@@ -146,8 +149,8 @@ namespace Buraqueira_Tools
                 return;
             }
 
-            // 2. Fallback: obtém do barramento de memória (PillHub)
-            if (PillHub.TryGetChannel(cleanKey, out PillChannel channel))
+            // 2. Fallback: obtém do barramento de memória (PillHub). Sem clone: SetDataTree já copia os ramos.
+            if (PillHub.TryPeekChannel(cleanKey, out PillChannel channel))
             {
                 CurrentCategory = channel.Category;
                 CurrentUnit = channel.Unit;

@@ -59,7 +59,8 @@ namespace Buraqueira_Tools
                 "Glaux Tools",
                 "Pills")
         {
-            RegisterRhinoDocEvents();
+            // Eventos do RhinoDoc são estáticos: registrar aqui prenderia na memória toda instância criada
+            // (ícones da ribbon, colar/desfazer) que nunca chega ao documento. AddedToDocument faz o registro.
         }
 
         public override Guid ComponentGuid => new Guid("a1100012-e1ef-4000-8000-000000000012");
@@ -97,7 +98,8 @@ namespace Buraqueira_Tools
             _eventsRegistered = true;
         }
 
-        private void UnregisterRhinoDocEvents()
+        // Também chamado pelo PillHub ao fechar o documento (o Grasshopper não chama RemovedFromDocument nesse caso)
+        internal void UnregisterRhinoDocEvents()
         {
             if (!_eventsRegistered) return;
             RhinoDoc.AddRhinoObject -= OnRhinoObjectModified;
@@ -171,6 +173,9 @@ namespace Buraqueira_Tools
 
         protected override void SolveInstance(IGH_DataAccess DA)
         {
+            // Idempotente: religa os eventos caso o PillHub os tenha soltado (documento removido do servidor)
+            RegisterRhinoDocEvents();
+
             var rhinoDoc = RhinoDoc.ActiveDoc;
             if (rhinoDoc == null)
             {

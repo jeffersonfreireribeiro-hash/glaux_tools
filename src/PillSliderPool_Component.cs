@@ -304,6 +304,15 @@ namespace Buraqueira_Tools
                 valuesList.Add(numVal);
                 tree.Append(valGoo, branchPath);
 
+                // A chave simples (ex: "GEO_Raio") continua ativa mesmo quando o valor não muda neste cálculo;
+                // se só entrasse no if abaixo, seria despublicada (e os receptores notificados) a cada solução sem mudança.
+                string simpleKey = $"{s.Category}_{s.Name}";
+                bool hasSimpleKey = !simpleKey.Equals(s.FullKey, StringComparison.OrdinalIgnoreCase);
+                if (hasSimpleKey)
+                {
+                    currentKeys.Add(PillHub.CleanUpKey(simpleKey));
+                }
+
                 // Só publica no canal PillHub se os valores mudaram ou se o canal ainda não foi publicado
                 bool shouldPublish = true;
                 if (_lastPublishedValues.TryGetValue(s.CleanKey, out var prev))
@@ -329,11 +338,9 @@ namespace Buraqueira_Tools
                     PillHub.Publish(s.FullKey, sTree, InstanceGuid, docGuid, s.Unit);
 
                     // Publica também sob chave simples para busca direta (ex: "GEO_Raio")
-                    string simpleKey = $"{s.Category}_{s.Name}";
-                    if (!simpleKey.Equals(s.FullKey, StringComparison.OrdinalIgnoreCase))
+                    if (hasSimpleKey)
                     {
                         PillHub.Publish(simpleKey, sTree, InstanceGuid, docGuid, s.Unit);
-                        currentKeys.Add(PillHub.CleanUpKey(simpleKey));
                     }
                 }
             }
