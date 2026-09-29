@@ -375,14 +375,15 @@ namespace Buraqueira_Tools
                     }
                 }
 
+                // Sem forceNotify: o PillHub compara com o canal atual e só notifica os receptores se os valores mudaram
                 PillHub.Publish(
                     CurrentCleanKey,
                     gooTree,
                     InstanceGuid,
                     docGuid,
                     CurrentUnit,
-                    true,
-                    NickName);
+                    forceNotify: false,
+                    sourceNickName: NickName);
                 _lastPublishedKey = CurrentCleanKey;
             }
             else if (!string.IsNullOrEmpty(_lastPublishedKey))
