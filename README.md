@@ -13,7 +13,7 @@
   <a href="https://www.rhino3d.com/"><img src="https://img.shields.io/badge/Rhino-8%20(SR4%2B)-000000.svg?logo=rhinoceros&logoColor=white" alt="Rhino 8" /></a>
   <a href="https://www.rhino3d.com/6/features/grasshopper/"><img src="https://img.shields.io/badge/Grasshopper-1.0-4E8752.svg" alt="Grasshopper" /></a>
   <a href="https://dotnet.microsoft.com/"><img src="https://img.shields.io/badge/.NET%20Framework-4.8-512BD4.svg?logo=dotnet&logoColor=white" alt=".NET 4.8" /></a>
-  <a href="https://github.com/jeffersonfreireribeiro-hash/glaux_tools/tags"><img src="https://img.shields.io/github/v/tag/jeffersonfreireribeiro-hash/glaux_tools?sort=semver&label=Release&color=blue" alt="Release" /></a>
+  <a href="#versoes"><img src="https://img.shields.io/badge/dynamic/xml?url=https%3A%2F%2Fraw.githubusercontent.com%2Fjeffersonfreireribeiro-hash%2Fglaux_tools%2Fmain%2Fsrc%2FGlaux_Tools.csproj&query=%2F%2FVersion&prefix=v&label=Version&color=blue" alt="Version" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT" /></a>
 </p>
 
@@ -241,11 +241,14 @@ chart Fitness | key=[OPT] Fitness | span=2
 
 ---
 
+<a name="versoes"></a>
+
 ## 🏷️ Histórico de Versões & Releases
 
 | Versão | Data | Principais Novidades & Melhorias |
 | :---: | :---: | :--- |
-| **v1.1.0** | 29/09/2026 | **Pilhas Funcionais & Dashboard**: 19 componentes novos em cinco painéis: `I/O` (serialização de DataTrees sem perda em JSON, CSV, binário e `.pilldata`), `Data` (banco local `.glauxdb` com revisões, consultas, validação e sincronização), `Vault` (snapshots, histórico, comparação, restauração e registro de experimentos), `Diagnostics` (`Pill Runtime Profiler`) e `Dashboard` (`Pill Dashboard` e `Pill Dashboard Builder`). PillHub com menos recomputações e sem vazamento de memória ao fechar documentos, correção de reentrância do `Pill Pulse Timer` ao abrir arquivos, projeto de testes automatizados e introdução do README em português e inglês. |
+| **v1.1.0** | 29/09/2026 | **Pilhas Funcionais & Dashboard**: 19 componentes novos em cinco painéis: `I/O` (serialização de DataTrees sem perda em JSON, CSV, binário e `.pilldata`), `Data` (banco local `.glauxdb` com revisões, consultas, validação e sincronização), `Vault` (snapshots, histórico, comparação, restauração e registro de experimentos), `Diagnostics` (`Pill Runtime Profiler`) e `Dashboard` (`Pill Dashboard` e `Pill Dashboard Builder`). PillHub com menos recomputações e sem vazamento de memória ao fechar documentos, projeto de testes automatizados e introdução do README em português e inglês. |
+| **v1.0.6** | 28/09/2026 | **Estabilidade do Pill Pulse Timer**: correção de reentrância ao abrir arquivos com o timer ativo. Um pulso que chega enquanto uma solução ainda está em andamento agora é reagendado para logo depois dela, em vez de disparar uma nova solução no meio da atual; falhas nesse momento viram um aviso na linha de comando do Rhino em vez de interromper a definição. |
 | **v1.0.5** | 26/09/2026 | **Cobertura Integral de 50 Fórmulas Estatísticas & ML**: 8 novos componentes (`Normal Distribution`, `Poisson Distribution`, `Probability & Bayes`, `Confidence Interval & t-Score`, `ANOVA & F-Test`, `Linear Regression OLS`, `Classification & Tree Metrics` e `Cluster Validation`). Solvers analíticos de alta precisão (Acklam, Incomplete Beta/Gamma, Halley). |
 | **v1.0.4** | 26/09/2026 | **Simbologia Técnica QGIS & ABNT**: Componente `Pill Pen Style` (`PillPen`) para estilização vetorial universal de curvas, pontos e polígonos com espessuras em mm, traçados técnicos e preenchimentos compatíveis com `PillSheet`. |
 | **v1.0.3** | 26/09/2026 | **Diagramação de Pranchas Vetoriais**: Componente `Pill Vector Sheet Layout` (`PillSheet`) para composição paramétrica de pranchas técnicas (SVG/PDF), carimbos customizáveis, escalas gráficas e pré-visualização instantânea no navegador via HTML5. |
