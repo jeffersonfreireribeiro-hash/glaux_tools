@@ -1,0 +1,49 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Testes automatizados do Glaux Tools (xUnit, .NET 8).
+    Carregam o Glaux_Tools.gha compilado (net48) e exercitam os serviços internos
+    (Data Core, Persistence, Project State, Diagnostics) sem abrir o Rhino.
+    Tipos que dependem da biblioteca nativa do Rhino (rhcommon_c) ou do canvas (WinForms)
+    não são exercitados aqui; veja tests/README.md.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <Nullable>disable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <!-- Grasshopper/RhinoCommon são net48: avisos de compatibilidade esperados -->
+    <NoWarn>$(NoWarn);NU1701;NU1702;MSB3277</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
+    <PackageReference Include="Grasshopper" Version="8.0.23304.9001" />
+    <!-- GH_IO referencia System.Drawing; no .NET 8 os tipos vêm deste pacote -->
+    <PackageReference Include="System.Drawing.Common" Version="8.0.8" />
+  </ItemGroup>
+
+  <!--
+    O plugin sai como .gha: o host do .NET recusa essa extensão na lista de assemblies do deps.json.
+    A ProjectReference só garante a ordem de build; a referência de compilação aponta para o .gha
+    e o PluginAssemblyLoader carrega o arquivo copiado para a pasta de saída.
+  -->
+  <PropertyGroup>
+    <GlauxGhaPath>$(MSBuildThisFileDirectory)..\..\src\bin\$(Configuration)\net48\Glaux_Tools.gha</GlauxGhaPath>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Glaux_Tools.csproj">
+      <SetTargetFramework>TargetFramework=net48</SetTargetFramework>
+      <SkipGetTargetFrameworkProperties>true</SkipGetTargetFrameworkProperties>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <Reference Include="Glaux_Tools">
+      <HintPath>$(GlauxGhaPath)</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+  <Target Name="CopyGlauxGha" AfterTargets="Build">
+    <Copy SourceFiles="$(GlauxGhaPath)" DestinationFolder="$(OutDir)" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

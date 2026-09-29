@@ -15,8 +15,17 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
+  <!-- Usa a instalação local do Rhino quando existir; senão (CI, Linux, máquinas sem Rhino) usa os pacotes NuGet oficiais da McNeel -->
+  <PropertyGroup>
+    <GlauxUseRhinoInstall Condition="'$(GlauxUseRhinoInstall)' == '' And Exists('$(RhinoInstallDir)\System\RhinoCommon.dll')">true</GlauxUseRhinoInstall>
+    <EnableWindowsTargeting Condition="'$(OS)' != 'Windows_NT'">true</EnableWindowsTargeting>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(GlauxUseRhinoInstall)' != 'true'">
+    <PackageReference Include="Grasshopper" Version="8.0.23304.9001" ExcludeAssets="runtime" />
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+  </ItemGroup>
   <!-- Referências do Rhino / Grasshopper -->
-  <ItemGroup>
+  <ItemGroup Condition="'$(GlauxUseRhinoInstall)' == 'true'">
     <Reference Include="GH_IO">
       <HintPath>$(RhinoInstallDir)\Plug-ins\Grasshopper\GH_IO.dll</HintPath>
       <Private>False</Private>
@@ -29,6 +38,8 @@
       <HintPath>$(RhinoInstallDir)\System\RhinoCommon.dll</HintPath>
       <Private>False</Private>
     </Reference>
+  </ItemGroup>
+  <ItemGroup>
     <Reference Include="System.Numerics" />
     <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
