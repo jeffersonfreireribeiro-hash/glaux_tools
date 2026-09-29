@@ -59,8 +59,8 @@
 | **Pill Performance Monitor** | Parcial | Data Timer (estatística básica) | `ProcessorTime` nativo | Fundido no **Runtime Profiler** (evita dois componentes quase iguais) |
 | **Pill Runtime Profiler** | Não | — | `ProcessorTime`, `SolutionStart/End` | **Sim** |
 | **Pill Metrics Logger** | Não | — | Store | Fundido no Profiler (entrada `Store` + `Log`) — séries lidas por History/Query |
-| **Pill Dashboard / Control Panel** | Parcial | Slider Pool já é um painel de controles | Renderização do Slider Pool, `Pill_Attributes` | Próximo ciclo (§6) |
-| **Pill Status / Gauge / Mini Chart** | Parcial | LED das cápsulas; Chart Line (gráfico completo) | Kit de renderização comum | Próximo ciclo |
+| **Pill Dashboard / Control Panel** | Parcial | Slider Pool já é um painel de controles | Linguagem visual do Slider Pool, PillHub, Preset Vault, `ControlStateService` | **Feito (MVP)**: Pill Dashboard + Pill Dashboard Builder — ver [06_Dashboard.md](06_Dashboard.md) |
+| **Pill Status / Gauge / Mini Chart** | Parcial | LED das cápsulas; Chart Line (gráfico completo) | Kit de renderização comum | Mini Chart, número com LED de faixa e progresso entraram como **widgets** do painel (não componentes soltos); Gauge fica para a próxima iteração |
 | **Pill Heatmap 3D** (Mesh/Surface/Brep) | Parcial | Spatial Heatmap (IDW em grade + viewport) | Paletas e IDW do Spatial Heatmap | Próximo ciclo, separando interpolação × cor |
 | **Pill Advanced Plot** | Parcial | Chart Line, Scatter, Box Plot, Loss, Iso Surface | Atributos de gráfico existentes | Estender (eixos múltiplos, polar, regiões, anotações), não recriar |
 | **Pill Network Graph** | Parcial | Hierarchical Cluster Graph (dendrograma) | — | Próximo ciclo |
@@ -133,7 +133,7 @@ PostgreSQL fica fora até existir um caso de uso remoto concreto.
 | 3. Project Vault & Provenance | Pill Snapshot, History, Compare, Restore, Experiment Logger | Preset Vault, Preset Manager, Accumulator, Tree Diff | Pilhas 1–2 | Média-alta | **3** |
 | 4. Performance & Diagnostics | Pill Runtime Profiler (+ log de métricas no store) | Data Timer | Pilha 2 (só para o log) | Média | **4** (independente; pode subir) |
 | 5. Import / Export | Coberta pelos adapters da pilha 1 (JSON, CSV longo, `.pilldata`) | CSV_In/Out | Pilha 1 | Baixa | Entregue junto com a 1 |
-| 6. Dashboard & Controls | Pill Dashboard (container), Pill Gauge, Pill Status, Pill Mini Chart | Slider Pool, LEDs, Chart Line | Kit visual comum | Alta (UI) | 5 |
+| 6. Dashboard & Controls | Pill Dashboard (container + widgets label, number, slider, toggle, button, dropdown, progress, chart), Pill Dashboard Builder | Slider Pool, LEDs, Chart Line | Kit visual comum (`PillVisualKit`), PillHub, Pilha 3 | Alta (UI) | 5 — **MVP feito** |
 | 7. Advanced Visualization | Pill Mesh Heatmap, extensões do Chart Line (eixos, polar, regiões), Pill Network Graph, Pill Viewport Annotation | Spatial Heatmap, gráficos, dendrograma | Kit visual, Pilha 1 | Alta | 6 |
 | 8. Animation & Timeline | Pill Timeline, Pill Keyframe, Pill Keyframe Tween, Pill Playback, Pill Frame Export | Pulse Timer, Viewport Capture | Pilhas 1 e 3 (estados), Pulse Timer | Alta | 7 |
 
@@ -145,7 +145,7 @@ PostgreSQL fica fora até existir um caso de uso remoto concreto.
 | 2 | Store local com revisões, leitura por revisão, deduplicação por hash, consultas estruturadas, inspeção, validação e sincronização com estado *dirty*/conflito. |
 | 3 | Snapshot com ambiente e hashes → histórico → comparação → restauração compatível; logger de experimentos append-only. |
 | 4 | Ranking de componentes por solução (sem instrumentação), estatísticas com percentis, memória, cache hits/misses, custo do próprio profiler, log opcional no store. |
-| 6 | Kit de renderização compartilhado + um container de dashboard que agrupa Gauge/Status/Mini Chart ligados a canais do PillHub. |
+| 6 | Kit visual compartilhado + painel com 8 widgets, layout stack/row/grid, estado separado da configuração, commit sem laços (live/release/auto), controles e indicadores ligados ao PillHub, presets e snapshots. |
 | 7 | Mesh Heatmap: interpolação (IDW/nearest em vértices, com raio máximo) separada do mapeamento de cor; máscara onde não há dado. |
 | 8 | Timeline (tempo) → Keyframes (estados = snapshots/bundles) → Tween (interpolação) → Playback (Pulse Timer) → Frame Export (Viewport Capture). |
 
@@ -163,10 +163,10 @@ Dashboard → Visualização → Animação ficam depois porque dependem de um k
 ## 7. Padrões para os componentes novos
 
 - GUIDs aleatórios (uuid4), verificados contra todo `src/` antes do uso.
-- Categoria `Glaux Tools`; painéis novos **Data** (persistência), **Vault** (estado e proveniência) e **Diagnostics**; serialização no painel existente **I/O**.
+- Categoria `Glaux Tools`; painéis novos **Data** (persistência), **Vault** (estado e proveniência), **Diagnostics** e **Dashboard**; serialização no painel existente **I/O**.
 - Nomes `Pill …` e nicknames `Pill…`, mensagens de runtime em português, erros como `Warning`/`Error` (nunca exceção para o canvas).
 - Cápsula visual via `IPillCapsule` (categoria, LED, chave, status).
-- Ícones desenhados em `GlauxToolsIcons` (24×24 GDI+), no mesmo estilo.
+- Ícones desenhados em `GlauxToolsIcons` (24×24 GDI+), no mesmo estilo; desenho no canvas pelo kit `PillVisualKit` (paleta, fontes em cache, primitivas de controle).
 - Documentação por pilha em `docs/stacks/` e por componente em `docs/` (gerada do catálogo).
 
 ## 8. Testes

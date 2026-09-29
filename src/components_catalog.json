@@ -4326,6 +4326,126 @@
     ]
   },
   {
+    "File": "PillDashboard_Component.cs",
+    "Name": "Pill Dashboard",
+    "NickName": "PillDash",
+    "Category": "Glaux Tools",
+    "SubCategory": "Dashboard",
+    "Description": "Painel interativo no canvas: reúne controles e indicadores num só componente, sem espalhar sliders, toggles e panels. - W: uma linha por widget, ex: 'slider Largura | min=0 | max=10 | step=0.5 | key=[GEO] Largura', ou widgets do Pill Dashboard Builder.   Tipos: label, number, slider, toggle, button, dropdown, progress, chart. Painel: 'title=', 'layout=stack|row|grid', 'columns=', 'width='. - Controles saem em V (um ramo por controle) e, com 'key=', no PillHub (leia com Pill Receiver em qualquer lugar). - Indicadores com 'key=' mostram canais do PillHub sem fios e sem recalcular nada; ou use D (PillBundle / 'nome=valor'). - Arrasto: commit=auto (padrão) entrega durante o arrasto enquanto a solução é leve e só ao soltar quando é pesada; commit=live|release força o modo. - S/LS: estado dos controles em linhas 'id=valor' para presets, Pill DB Write, Pill Snapshot e Pill Restore.",
+    "Inputs": [
+      {
+        "Name": "Widgets",
+        "Nick": "W",
+        "Type": "Generic",
+        "Desc": "Definições: linhas de texto ('slider Largura | min=0 | max=10') e/ou widgets do Pill Dashboard Builder."
+      },
+      {
+        "Name": "Data",
+        "Nick": "D",
+        "Type": "Generic",
+        "Desc": "Dados dos indicadores: PillBundle(s) ou textos 'nome=valor' (casados por 'source=', id ou rótulo). Resultados que dependem dos controles deste painel devem vir por 'key=' (PillHub), não por fio: fio criaria um ciclo."
+      },
+      {
+        "Name": "Load State",
+        "Nick": "LS",
+        "Type": "Text",
+        "Desc": "Estado a aplicar ('id=valor' por linha), ex: saída S de outro painel, Pill Restore ou Pill DB Read. Aplicado só quando muda."
+      }
+    ],
+    "Outputs": [
+      {
+        "Name": "Values",
+        "Nick": "V",
+        "Type": "Generic",
+        "Desc": "Valores dos controles: um ramo por controle, na ordem da definição (slider = número, toggle/botão = booleano, dropdown = texto ou índice com output=index)."
+      },
+      {
+        "Name": "Names",
+        "Nick": "N",
+        "Type": "Text",
+        "Desc": "Rótulo de cada controle (mesma ordem dos ramos de V)."
+      },
+      {
+        "Name": "State",
+        "Nick": "S",
+        "Type": "Text",
+        "Desc": "Estado dos controles persistentes em linhas 'id=valor' (para presets e snapshots)."
+      },
+      {
+        "Name": "Changed",
+        "Nick": "C",
+        "Type": "Text",
+        "Desc": "Id do controle que o usuário mudou e disparou esta solução (vazio se a solução veio de outro lugar)."
+      },
+      {
+        "Name": "Info",
+        "Nick": "I",
+        "Type": "Text",
+        "Desc": "Resumo: widgets, ligações com o PillHub, política de commit, última solução e avisos."
+      }
+    ]
+  },
+  {
+    "File": "PillDashboardBuilder_Component.cs",
+    "Name": "Pill Dashboard Builder",
+    "NickName": "DashBuild",
+    "Category": "Glaux Tools",
+    "SubCategory": "Dashboard",
+    "Description": "Gera widgets para o Pill Dashboard a partir de listas paralelas (lista mais longa, como no Grasshopper): - Kind: label, number, slider, toggle, button, dropdown, progress, chart. - Settings: 'min=0 | max=10 | step=0.5 | key=[GEO] Raio' (mesmas chaves das linhas de texto). - Values: ramo i → widget i. Indicadores mostram o valor; controles o usam como valor padrão. - Hub Group: cria um indicador por canal do PillHub do grupo (ex: 'ACU'), lido ao vivo pelo painel. A lista de canais é lida quando o Builder calcula; recalcule-o se surgirem canais novos.",
+    "Inputs": [
+      {
+        "Name": "Kind",
+        "Nick": "K",
+        "Type": "Text",
+        "Desc": "Tipo de cada widget (label, number, slider, toggle, button, dropdown, progress, chart)."
+      },
+      {
+        "Name": "Label",
+        "Nick": "L",
+        "Type": "Text",
+        "Desc": "Rótulo de cada widget."
+      },
+      {
+        "Name": "Settings",
+        "Nick": "S",
+        "Type": "Text",
+        "Desc": "Configurações de cada widget: 'chave=valor | chave=valor'."
+      },
+      {
+        "Name": "Values",
+        "Nick": "V",
+        "Type": "Generic",
+        "Desc": "Valores: ramo i para o widget i (ou uma lista simples com um valor por widget)."
+      },
+      {
+        "Name": "Hub Group",
+        "Nick": "H",
+        "Type": "Text",
+        "Desc": "Grupo ou chave do PillHub (ex: 'ACU', 'SALA_'): um indicador por canal."
+      }
+    ],
+    "Outputs": [
+      {
+        "Name": "Widgets",
+        "Nick": "W",
+        "Type": "Generic",
+        "Desc": "Widgets para a entrada W do Pill Dashboard."
+      },
+      {
+        "Name": "Definition",
+        "Nick": "Def",
+        "Type": "Text",
+        "Desc": "Definição textual equivalente (uma linha por widget), para salvar ou editar num Panel."
+      },
+      {
+        "Name": "Info",
+        "Nick": "I",
+        "Type": "Text",
+        "Desc": "Resumo e avisos."
+      }
+    ]
+  },
+  {
     "File": "PillDataValidation_Component.cs",
     "Name": "Pill Data Validation",
     "NickName": "PillValidate",

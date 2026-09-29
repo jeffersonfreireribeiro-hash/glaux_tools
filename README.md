@@ -22,13 +22,14 @@
 
 **Glaux Tools** é uma suíte de alta performance desenvolvida em C# nativo para o **Grasshopper / Rhino 8**, projetada para superar as limitações computacionais de fluxos paramétricos complexos. 
 
-O plugin reúne mais de **110 componentes especializados** em seis áreas fundamentais:
+O plugin reúne mais de **115 componentes especializados** em sete áreas fundamentais:
 1. **💊 Arquitetura Pill**: Comunicação sem fios (*Wireless*), barramento de dados centralizado (`PillHub`), caching com hashing criptográfico (SHA-256), gerenciamento de presets, diagramação de pranchas e automação de layers.
 2. **🌳 Engenharia de Árvores de Dados (`DataTree`)**: Diferenciação topológica estrutural (`Diff`), alinhamento de ramos, agrupamentos dinâmicos, buscas vetoriais e aritmética de caminhos.
 3. **📐 Álgebra Linear & Matrizes**: Autovalores/autovetores (`Eigen`), inversão, determinantes, multiplicação matricial e resolução de sistemas lineares $A \cdot x = b$.
 4. **📊 Estatística, Inferência & Machine Learning**: 50 fórmulas canônicas cobrindo distribuições (Normal, Poisson, Beta, Binomial, Chi-Square), inferência (Intervalos de Confiança, t-score, ANOVA, teste F), regressão linear OLS, árvores (Gini, Information Gain, Logit) e validação de clusters (Silhueta e Mahalanobis).
 5. **🗺️ Visualização de Dados, Desenho Técnico & Gráficos**: Diagramação de pranchas vetoriais (SVG/PDF com visualizador web instantâneo), simbologia técnica estilo QGIS/ABNT (`PillPen`), mapas de calor espaciais no viewport (`Spatial Heatmap`), superfícies 3D e box plots.
 6. **💾 Dados, Persistência, Proveniência & Diagnóstico**: serialização de DataTrees sem perda, store local com revisões (`.glauxdb`), consultas, validação e sincronização sem laços, snapshots de projeto com histórico/comparação/restauração, registro de experimentos e profiler de execução.
+7. **🎛️ Dashboard & Controles**: painéis interativos no canvas que reúnem controles e indicadores ligados ao PillHub, sem espalhar sliders e panels e sem recomputações em cascata durante o arrasto.
 
 <p align="center">
   <img src="assets/Glaux_Tools_Components_Map.png" alt="Mapa de Componentes do Glaux Tools" width="95%" />
@@ -177,7 +178,26 @@ Pilhas construídas sobre um núcleo compartilhado (modelo canônico de DataTree
 | :--- | :---: | :--- |
 | **Pill Runtime Profiler** | `PillProfiler` | Ranking de tempo por componente (média, mediana, p95), tempo da solução × componentes × Grasshopper, memória, cache e custo do próprio profiler; grava a série no store. |
 
-> A auditoria que levou a essas pilhas (o que já existia, o que foi reaproveitado, dependências avaliadas, MVPs e próximas pilhas: Dashboard, Visualização Avançada, Animação/Timeline) está em [`docs/stacks/00_Auditoria_e_Proposta.md`](docs/stacks/00_Auditoria_e_Proposta.md).
+### 7. 🎛️ Dashboard & Controles
+Um painel no canvas no lugar de dezenas de sliders, toggles e panels ([Pilha 6](docs/stacks/06_Dashboard.md)). A definição é texto (um Panel) ou vem do Builder:
+
+```text
+title = Sala 2
+layout = grid
+columns = 2
+slider Largura | min=4 | max=20 | step=0.5 | unit=m | key=[GEO] Largura
+toggle Mostrar raios | value=true
+dropdown Forro | options=Gesso;Madeira ripada;Lã mineral
+number T60 | key=[ACU] T60 | unit=s | decimals=2 | min=0.6 | max=1.2
+chart Fitness | key=[OPT] Fitness | span=2
+```
+
+| Componente | Nickname | Descrição |
+| :--- | :---: | :--- |
+| **Pill Dashboard** | `PillDash` | Painel com widgets label, number, slider, toggle, button, dropdown, progress e mini chart em layout stack/row/grid. Controles saem em V e, com `key=`, no PillHub; indicadores com `key=` mostram canais do Hub sem fios. Arrasto com commit `auto`/`live`/`release` (nada de uma solução por movimento do mouse). Estado separado da configuração: vai para o `.gh`, undo, Pill Preset Vault e Pill Snapshot/Restore. |
+| **Pill Dashboard Builder** | `DashBuild` | Gera widgets a partir de listas (tipo, rótulo, configurações, valores) ou de um grupo do PillHub, e devolve a definição textual equivalente. |
+
+> A auditoria que levou a essas pilhas (o que já existia, o que foi reaproveitado, dependências avaliadas, MVPs e próximas pilhas: Visualização Avançada, Animação/Timeline) está em [`docs/stacks/00_Auditoria_e_Proposta.md`](docs/stacks/00_Auditoria_e_Proposta.md).
 
 ---
 
@@ -216,7 +236,7 @@ O binário do plugin será gerado em:
 Sem o Rhino instalado (ex.: CI ou Linux), o projeto compila contra os pacotes NuGet `Grasshopper`/`RhinoCommon` automaticamente.
 
 ### Testes automatizados
-O projeto [`tests/Glaux_Tools.Tests`](tests/) (xUnit, .NET 8) carrega o `.gha` compilado e testa os núcleos fora do Rhino: round-trip de DataTrees, store (revisões, corrupção, compactação), sincronização, snapshot → alteração → restauração, cache, import/export e profiler × medição de referência.
+O projeto [`tests/Glaux_Tools.Tests`](tests/) (xUnit, .NET 8) carrega o `.gha` compilado e testa os núcleos fora do Rhino: round-trip de DataTrees, store (revisões, corrupção, compactação), sincronização, snapshot → alteração → restauração, cache, import/export, profiler × medição de referência e o Dashboard (definição, estado, layout, política de commit durante o arrasto, formatação e contratos com os cofres). A renderização do Dashboard tem uma galeria separada em [`tests/render`](tests/render/DashboardGallery.cs).
 
 ```powershell
 dotnet test tests/Glaux_Tools.Tests
@@ -245,7 +265,7 @@ Detalhes e limitações (geometria que exige o Rhino) em [`tests/README.md`](tes
 ---
 
 ## 📚 Documentação Técnica Adicional
-O repositório inclui a pasta [`docs/`](docs/) com **104 fichas técnicas individuais** detalhando a formulação matemática, diagramas Mermaid de fluxo de dados montante/jusante (*upstream/downstream*), contratos de conexão e exemplos práticos para cada componente. A pasta [`docs/stacks/`](docs/stacks/) documenta as pilhas funcionais (Data Core, Persistence, Project Vault, Diagnostics) e a proposta das próximas.
+O repositório inclui a pasta [`docs/`](docs/) com **106 fichas técnicas individuais** detalhando a formulação matemática, diagramas Mermaid de fluxo de dados montante/jusante (*upstream/downstream*), contratos de conexão e exemplos práticos para cada componente. A pasta [`docs/stacks/`](docs/stacks/) documenta as pilhas funcionais (Data Core, Persistence, Project Vault, Diagnostics, Dashboard) e a proposta das próximas.
 
 ---
 

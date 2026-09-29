@@ -243,7 +243,7 @@
   <div class="cover-box">
     <strong class="box-title">Visão Geral do Conjunto Completo:</strong>
     <ul>
-      <li><strong>114 Componentes Especializados:</strong> Catálogo técnico integral com parâmetros de entrada (Inputs), saídas (Outputs) e descrições de funcionamento.</li>
+      <li><strong>116 Componentes Especializados:</strong> Catálogo técnico integral com parâmetros de entrada (Inputs), saídas (Outputs) e descrições de funcionamento.</li>
       <li><strong>Ecossistema Pills:</strong> Transmissão de dados sem fios (PillHub), concentradores verticais de parâmetros, cofre de variantes com cabos estilo Galapagos e caches inteligentes.</li>
       <li><strong>Data Trees Avançadas:</strong> Álgebra e topologia de árvores, alinhamento, filtragem condicional e entrelaçamento de ramos.</li>
       <li><strong>Estatística &amp; Probabilidade:</strong> Média, variância, correlação, assimetria, curtose, tabelas de frequência e 7 distribuições probabilísticas.</li>
@@ -307,6 +307,10 @@
     <div class="toc-card">
       <h3>12. Desempenho &amp; Diagnóstico <span class="badge-cat">1 Pilha</span></h3>
       <p>Profiler de execução sem instrumentação: tempo por componente × tempo da solução, percentis, memória, cache e custo do próprio profiler, com série histórica no store.</p>
+    </div>
+    <div class="toc-card">
+      <h3>13. Dashboard &amp; Controles <span class="badge-cat">2 Pilhas</span></h3>
+      <p>Painéis interativos no canvas que reúnem controles (slider, toggle, botão, lista) e indicadores (texto, número, progresso, mini gráfico) ligados ao PillHub, com entrega ao Grasshopper sem recomputações em cascata e estado integrado a presets e snapshots.</p>
     </div>
   </div>
 </div>
@@ -9810,6 +9814,150 @@
         <td><span class="param-name">Report</span> <span class="param-type">(Rp)</span></td>
         <td><span class="param-type">Text</span></td>
         <td>Resumo legível: solução, componentes, GH, frequência, memória, cache e custo do profiler.</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+<div class="chapter-header">
+  <h1>13. Dashboard &amp; Controles</h1>
+  <p>Painéis interativos no canvas que reúnem controles (slider, toggle, botão, lista) e indicadores (texto, número, progresso, mini gráfico) ligados ao PillHub, com entrega ao Grasshopper sem recomputações em cascata e estado integrado a presets e snapshots. (Total: 2 componentes)</p>
+</div>
+<div class="component-card">
+  <div class="comp-title-bar">
+    <div>
+      <span class="comp-name">Pill Dashboard</span>
+      <span class="badge-cat">Dashboard</span>
+    </div>
+    <span class="comp-nick">PillDash</span>
+  </div>
+  <div class="comp-desc">Painel interativo no canvas: reúne controles e indicadores num só componente, sem espalhar sliders, toggles e panels. - W: uma linha por widget, ex: &#x27;slider Largura | min=0 | max=10 | step=0.5 | key=[GEO] Largura&#x27;, ou widgets do Pill Dashboard Builder.   Tipos: label, number, slider, toggle, button, dropdown, progress, chart. Painel: &#x27;title=&#x27;, &#x27;layout=stack|row|grid&#x27;, &#x27;columns=&#x27;, &#x27;width=&#x27;. - Controles saem em V (um ramo por controle) e, com &#x27;key=&#x27;, no PillHub (leia com Pill Receiver em qualquer lugar). - Indicadores com &#x27;key=&#x27; mostram canais do PillHub sem fios e sem recalcular nada; ou use D (PillBundle / &#x27;nome=valor&#x27;). - Arrasto: commit=auto (padrão) entrega durante o arrasto enquanto a solução é leve e só ao soltar quando é pesada; commit=live|release força o modo. - S/LS: estado dos controles em linhas &#x27;id=valor&#x27; para presets, Pill DB Write, Pill Snapshot e Pill Restore.</div>
+  <table class="params-table">
+    <thead>
+      <tr>
+        <th style="width: 10%;">Direção</th>
+        <th style="width: 25%;">Nome (Sigla)</th>
+        <th style="width: 20%;">Tipo</th>
+        <th>Descrição</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="io-tag io-in">INPUT</span></td>
+        <td><span class="param-name">Widgets</span> <span class="param-type">(W)</span></td>
+        <td><span class="param-type">Generic</span></td>
+        <td>Definições: linhas de texto (&#x27;slider Largura | min=0 | max=10&#x27;) e/ou widgets do Pill Dashboard Builder.</td>
+      </tr>
+      <tr>
+        <td><span class="io-tag io-in">INPUT</span></td>
+        <td><span class="param-name">Data</span> <span class="param-type">(D)</span></td>
+        <td><span class="param-type">Generic</span></td>
+        <td>Dados dos indicadores: PillBundle(s) ou textos &#x27;nome=valor&#x27; (casados por &#x27;source=&#x27;, id ou rótulo). Resultados que dependem dos controles deste painel devem vir por &#x27;key=&#x27; (PillHub), não por fio: fio criaria um ciclo.</td>
+      </tr>
+      <tr>
+        <td><span class="io-tag io-in">INPUT</span></td>
+        <td><span class="param-name">Load State</span> <span class="param-type">(LS)</span></td>
+        <td><span class="param-type">Text</span></td>
+        <td>Estado a aplicar (&#x27;id=valor&#x27; por linha), ex: saída S de outro painel, Pill Restore ou Pill DB Read. Aplicado só quando muda.</td>
+      </tr>
+      <tr>
+        <td><span class="io-tag io-out">OUTPUT</span></td>
+        <td><span class="param-name">Values</span> <span class="param-type">(V)</span></td>
+        <td><span class="param-type">Generic</span></td>
+        <td>Valores dos controles: um ramo por controle, na ordem da definição (slider = número, toggle/botão = booleano, dropdown = texto ou índice com output=index).</td>
+      </tr>
+      <tr>
+        <td><span class="io-tag io-out">OUTPUT</span></td>
+        <td><span class="param-name">Names</span> <span class="param-type">(N)</span></td>
+        <td><span class="param-type">Text</span></td>
+        <td>Rótulo de cada controle (mesma ordem dos ramos de V).</td>
+      </tr>
+      <tr>
+        <td><span class="io-tag io-out">OUTPUT</span></td>
+        <td><span class="param-name">State</span> <span class="param-type">(S)</span></td>
+        <td><span class="param-type">Text</span></td>
+        <td>Estado dos controles persistentes em linhas &#x27;id=valor&#x27; (para presets e snapshots).</td>
+      </tr>
+      <tr>
+        <td><span class="io-tag io-out">OUTPUT</span></td>
+        <td><span class="param-name">Changed</span> <span class="param-type">(C)</span></td>
+        <td><span class="param-type">Text</span></td>
+        <td>Id do controle que o usuário mudou e disparou esta solução (vazio se a solução veio de outro lugar).</td>
+      </tr>
+      <tr>
+        <td><span class="io-tag io-out">OUTPUT</span></td>
+        <td><span class="param-name">Info</span> <span class="param-type">(I)</span></td>
+        <td><span class="param-type">Text</span></td>
+        <td>Resumo: widgets, ligações com o PillHub, política de commit, última solução e avisos.</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+<div class="component-card">
+  <div class="comp-title-bar">
+    <div>
+      <span class="comp-name">Pill Dashboard Builder</span>
+      <span class="badge-cat">Dashboard</span>
+    </div>
+    <span class="comp-nick">DashBuild</span>
+  </div>
+  <div class="comp-desc">Gera widgets para o Pill Dashboard a partir de listas paralelas (lista mais longa, como no Grasshopper): - Kind: label, number, slider, toggle, button, dropdown, progress, chart. - Settings: &#x27;min=0 | max=10 | step=0.5 | key=[GEO] Raio&#x27; (mesmas chaves das linhas de texto). - Values: ramo i → widget i. Indicadores mostram o valor; controles o usam como valor padrão. - Hub Group: cria um indicador por canal do PillHub do grupo (ex: &#x27;ACU&#x27;), lido ao vivo pelo painel. A lista de canais é lida quando o Builder calcula; recalcule-o se surgirem canais novos.</div>
+  <table class="params-table">
+    <thead>
+      <tr>
+        <th style="width: 10%;">Direção</th>
+        <th style="width: 25%;">Nome (Sigla)</th>
+        <th style="width: 20%;">Tipo</th>
+        <th>Descrição</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="io-tag io-in">INPUT</span></td>
+        <td><span class="param-name">Kind</span> <span class="param-type">(K)</span></td>
+        <td><span class="param-type">Text</span></td>
+        <td>Tipo de cada widget (label, number, slider, toggle, button, dropdown, progress, chart).</td>
+      </tr>
+      <tr>
+        <td><span class="io-tag io-in">INPUT</span></td>
+        <td><span class="param-name">Label</span> <span class="param-type">(L)</span></td>
+        <td><span class="param-type">Text</span></td>
+        <td>Rótulo de cada widget.</td>
+      </tr>
+      <tr>
+        <td><span class="io-tag io-in">INPUT</span></td>
+        <td><span class="param-name">Settings</span> <span class="param-type">(S)</span></td>
+        <td><span class="param-type">Text</span></td>
+        <td>Configurações de cada widget: &#x27;chave=valor | chave=valor&#x27;.</td>
+      </tr>
+      <tr>
+        <td><span class="io-tag io-in">INPUT</span></td>
+        <td><span class="param-name">Values</span> <span class="param-type">(V)</span></td>
+        <td><span class="param-type">Generic</span></td>
+        <td>Valores: ramo i para o widget i (ou uma lista simples com um valor por widget).</td>
+      </tr>
+      <tr>
+        <td><span class="io-tag io-in">INPUT</span></td>
+        <td><span class="param-name">Hub Group</span> <span class="param-type">(H)</span></td>
+        <td><span class="param-type">Text</span></td>
+        <td>Grupo ou chave do PillHub (ex: &#x27;ACU&#x27;, &#x27;SALA_&#x27;): um indicador por canal.</td>
+      </tr>
+      <tr>
+        <td><span class="io-tag io-out">OUTPUT</span></td>
+        <td><span class="param-name">Widgets</span> <span class="param-type">(W)</span></td>
+        <td><span class="param-type">Generic</span></td>
+        <td>Widgets para a entrada W do Pill Dashboard.</td>
+      </tr>
+      <tr>
+        <td><span class="io-tag io-out">OUTPUT</span></td>
+        <td><span class="param-name">Definition</span> <span class="param-type">(Def)</span></td>
+        <td><span class="param-type">Text</span></td>
+        <td>Definição textual equivalente (uma linha por widget), para salvar ou editar num Panel.</td>
+      </tr>
+      <tr>
+        <td><span class="io-tag io-out">OUTPUT</span></td>
+        <td><span class="param-name">Info</span> <span class="param-type">(I)</span></td>
+        <td><span class="param-type">Text</span></td>
+        <td>Resumo e avisos.</td>
       </tr>
     </tbody>
   </table>

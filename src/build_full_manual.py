@@ -39,6 +39,7 @@ groups_order = [
     "Data",
     "Vault",
     "Diagnostics",
+    "Dashboard",
     "Utilitários"
 ]
 
@@ -91,8 +92,12 @@ group_titles = {
         "Title": "12. Desempenho & Diagnóstico",
         "Desc": "Profiler de execução sem instrumentação: tempo por componente × tempo da solução, percentis, memória, cache e custo do próprio profiler, com série histórica no store."
     },
+    "Dashboard": {
+        "Title": "13. Dashboard & Controles",
+        "Desc": "Painéis interativos no canvas que reúnem controles (slider, toggle, botão, lista) e indicadores (texto, número, progresso, mini gráfico) ligados ao PillHub, com entrega ao Grasshopper sem recomputações em cascata e estado integrado a presets e snapshots."
+    },
     "Utilitários": {
-        "Title": "13. Utilitários Gerais",
+        "Title": "14. Utilitários Gerais",
         "Desc": "Funções auxiliares e de suporte operacional ao Canvas do Grasshopper."
     }
 }
