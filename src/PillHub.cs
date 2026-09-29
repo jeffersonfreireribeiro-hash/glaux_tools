@@ -614,6 +614,10 @@ namespace Buraqueira_Tools
                 {
                     timer.StopTimer();
                 }
+                else if (obj is PillExperimentLogger_Component logger)
+                {
+                    logger.FlushPending();
+                }
             }
             if (docGuids.Count == 0) return;
 

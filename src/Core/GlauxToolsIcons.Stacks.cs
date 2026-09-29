@@ -132,6 +132,114 @@ namespace Buraqueira_Tools
         }));
 
         // ==========================================
+        // PILHA 3 — PROJECT VAULT & PROVENANCE
+        // ==========================================
+
+        private static Bitmap _pillSnapshot, _pillHistory, _pillCompare, _pillRestore, _pillExperimentLogger;
+
+        public static Bitmap PillSnapshot => _pillSnapshot ?? (_pillSnapshot = DrawStackIcon(g =>
+        {
+            // Câmera
+            using (var body = new LinearGradientBrush(new RectangleF(2, 7, 20, 14), ControlPaint.Light(IconVault, 0.3f), IconVault, LinearGradientMode.Vertical))
+            using (var pen = new Pen(IconInk, 1.1f))
+            {
+                g.FillRectangle(body, 2, 7, 20, 14);
+                g.DrawRectangle(pen, 2, 7, 20, 14);
+                g.FillRectangle(body, 7, 4, 8, 3);
+                g.DrawRectangle(pen, 7, 4, 8, 3);
+            }
+            using (var lens = new SolidBrush(Color.White))
+            using (var pen = new Pen(IconInk, 1.3f))
+            {
+                g.FillEllipse(lens, 7.5f, 9.5f, 9, 9);
+                g.DrawEllipse(pen, 7.5f, 9.5f, 9, 9);
+            }
+            using (var core = new SolidBrush(IconInk))
+            {
+                g.FillEllipse(core, 10, 12, 4, 4);
+            }
+        }));
+
+        public static Bitmap PillHistory => _pillHistory ?? (_pillHistory = DrawStackIcon(g =>
+        {
+            using (var face = new SolidBrush(Color.White))
+            using (var pen = new Pen(IconInk, 1.2f))
+            {
+                g.FillEllipse(face, 4, 4, 17, 17);
+                g.DrawEllipse(pen, 4, 4, 17, 17);
+                g.DrawLine(pen, 12.5f, 12.5f, 12.5f, 7);
+                g.DrawLine(pen, 12.5f, 12.5f, 16, 14);
+            }
+            using (var arrow = new Pen(IconVault, 2f))
+            {
+                arrow.CustomEndCap = new AdjustableArrowCap(3f, 3f, true);
+                g.DrawArc(arrow, 1.5f, 1.5f, 22, 22, 150, 110);
+            }
+        }));
+
+        public static Bitmap PillCompare => _pillCompare ?? (_pillCompare = DrawStackIcon(g =>
+        {
+            using (var a = new SolidBrush(ControlPaint.Light(IconVault, 0.55f)))
+            using (var b = new SolidBrush(IconVault))
+            using (var pen = new Pen(IconInk, 1.1f))
+            {
+                g.FillRectangle(a, 2, 3, 9, 13);
+                g.DrawRectangle(pen, 2, 3, 9, 13);
+                g.FillRectangle(b, 13, 8, 9, 13);
+                g.DrawRectangle(pen, 13, 8, 9, 13);
+            }
+            using (var pen = new Pen(IconInk, 1.5f))
+            {
+                g.DrawLine(pen, 7, 18, 17, 5);
+            }
+        }));
+
+        public static Bitmap PillRestore => _pillRestore ?? (_pillRestore = DrawStackIcon(g =>
+        {
+            using (var doc = new SolidBrush(Color.White))
+            using (var pen = new Pen(IconInk, 1.1f))
+            {
+                g.FillRectangle(doc, 8, 5, 12, 15);
+                g.DrawRectangle(pen, 8, 5, 12, 15);
+                g.DrawLine(pen, 10.5f, 9, 17.5f, 9);
+                g.DrawLine(pen, 10.5f, 12, 17.5f, 12);
+                g.DrawLine(pen, 10.5f, 15, 15, 15);
+            }
+            using (var arrow = new Pen(IconVault, 2.2f))
+            {
+                arrow.CustomEndCap = new AdjustableArrowCap(3f, 3f, true);
+                g.DrawArc(arrow, 1, 3, 14, 18, 300, -200);
+            }
+        }));
+
+        public static Bitmap PillExperimentLogger => _pillExperimentLogger ?? (_pillExperimentLogger = DrawStackIcon(g =>
+        {
+            // Frasco de laboratório
+            var flask = new GraphicsPath();
+            flask.AddLines(new[] { new PointF(6, 2), new PointF(12, 2), new PointF(12, 8), new PointF(17, 20), new PointF(1, 20), new PointF(6, 8) });
+            flask.CloseFigure();
+            using (var glass = new SolidBrush(Color.FromArgb(235, 255, 255, 255)))
+            using (var pen = new Pen(IconInk, 1.1f))
+            {
+                g.FillPath(glass, flask);
+                var liquid = new GraphicsPath();
+                liquid.AddLines(new[] { new PointF(3.3f, 14), new PointF(14.7f, 14), new PointF(17, 20), new PointF(1, 20) });
+                liquid.CloseFigure();
+                using (var fill = new SolidBrush(IconVault)) g.FillPath(fill, liquid);
+                liquid.Dispose();
+                g.DrawPath(pen, flask);
+            }
+            flask.Dispose();
+            // Lista de execuções
+            using (var pen = new Pen(IconInk, 1.4f))
+            {
+                g.DrawLine(pen, 17, 5, 23, 5);
+                g.DrawLine(pen, 17, 9, 23, 9);
+                g.DrawLine(pen, 19, 13, 23, 13);
+            }
+        }));
+
+        // ==========================================
         // PRIMITIVAS COMPARTILHADAS
         // ==========================================
 

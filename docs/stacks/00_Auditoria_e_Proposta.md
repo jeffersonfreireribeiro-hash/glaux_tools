@@ -162,7 +162,7 @@ Dashboard → Visualização → Animação ficam depois porque dependem de um k
 ## 7. Padrões para os componentes novos
 
 - GUIDs aleatórios (uuid4), verificados contra todo `src/` antes do uso.
-- Categoria `Glaux Tools`; painéis novos **Data** (persistência + vault) e **Diagnostics**; serialização no painel existente **I/O**.
+- Categoria `Glaux Tools`; painéis novos **Data** (persistência), **Vault** (estado e proveniência) e **Diagnostics**; serialização no painel existente **I/O**.
 - Nomes `Pill …` e nicknames `Pill…`, mensagens de runtime em português, erros como `Warning`/`Error` (nunca exceção para o canvas).
 - Cápsula visual via `IPillCapsule` (categoria, LED, chave, status).
 - Ícones desenhados em `GlauxToolsIcons` (24×24 GDI+), no mesmo estilo.
