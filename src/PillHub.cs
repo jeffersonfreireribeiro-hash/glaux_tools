@@ -618,6 +618,10 @@ namespace Buraqueira_Tools
                 {
                     logger.FlushPending();
                 }
+                else if (obj is PillRuntimeProfiler_Component profiler)
+                {
+                    profiler.Detach();
+                }
             }
             if (docGuids.Count == 0) return;
 

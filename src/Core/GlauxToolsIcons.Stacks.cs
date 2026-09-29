@@ -240,6 +240,36 @@ namespace Buraqueira_Tools
         }));
 
         // ==========================================
+        // PILHA 4 — PERFORMANCE & DIAGNOSTICS
+        // ==========================================
+
+        private static Bitmap _pillRuntimeProfiler;
+
+        public static Bitmap PillRuntimeProfiler => _pillRuntimeProfiler ?? (_pillRuntimeProfiler = DrawStackIcon(g =>
+        {
+            // Barras de ranking + cronômetro
+            float[] widths = { 13, 9.5f, 6.5f, 4 };
+            for (int i = 0; i < widths.Length; i++)
+            {
+                using (var bar = new SolidBrush(i == 0 ? IconDiag : ControlPaint.Light(IconDiag, 0.25f + 0.18f * i)))
+                using (var pen = new Pen(IconInk, 0.8f))
+                {
+                    g.FillRectangle(bar, 2, 3 + i * 4.5f, widths[i], 3.2f);
+                    g.DrawRectangle(pen, 2, 3 + i * 4.5f, widths[i], 3.2f);
+                }
+            }
+            using (var face = new SolidBrush(Color.White))
+            using (var pen = new Pen(IconInk, 1.2f))
+            {
+                g.FillEllipse(face, 12, 12, 10, 10);
+                g.DrawEllipse(pen, 12, 12, 10, 10);
+                g.DrawLine(pen, 17, 17, 17, 13.8f);
+                g.DrawLine(pen, 17, 17, 19.6f, 18.3f);
+                g.DrawLine(pen, 16, 11, 18, 11);
+            }
+        }));
+
+        // ==========================================
         // PRIMITIVAS COMPARTILHADAS
         // ==========================================
 
