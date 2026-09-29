@@ -19,6 +19,34 @@ namespace Buraqueira_Tools
             return sb.ToString();
         }
 
+        /// <summary>
+        /// Escreve uma string JSON entre aspas com escape completo (também usada para chaves de objetos).
+        /// </summary>
+        public static void AppendEscapedString(StringBuilder sb, string s)
+        {
+            sb.Append("\"");
+            foreach (char c in s ?? "")
+            {
+                switch (c)
+                {
+                    case '\"': sb.Append("\\\""); break;
+                    case '\\': sb.Append("\\\\"); break;
+                    case '\b': sb.Append("\\b"); break;
+                    case '\f': sb.Append("\\f"); break;
+                    case '\n': sb.Append("\\n"); break;
+                    case '\r': sb.Append("\\r"); break;
+                    case '\t': sb.Append("\\t"); break;
+                    default:
+                        if (c < 32)
+                            sb.AppendFormat("\\u{0:x4}", (int)c);
+                        else
+                            sb.Append(c);
+                        break;
+                }
+            }
+            sb.Append("\"");
+        }
+
         private static void SerializeValue(object obj, StringBuilder sb, bool pretty, int indent, int maxItems = -1)
         {
             if (obj == null)
@@ -35,27 +63,7 @@ namespace Buraqueira_Tools
 
             if (obj is string s)
             {
-                sb.Append("\"");
-                foreach (char c in s)
-                {
-                    switch (c)
-                    {
-                        case '\"': sb.Append("\\\""); break;
-                        case '\\': sb.Append("\\\\"); break;
-                        case '\b': sb.Append("\\b"); break;
-                        case '\f': sb.Append("\\f"); break;
-                        case '\n': sb.Append("\\n"); break;
-                        case '\r': sb.Append("\\r"); break;
-                        case '\t': sb.Append("\\t"); break;
-                        default:
-                            if (c < 32)
-                                sb.AppendFormat("\\u{0:x4}", (int)c);
-                            else
-                                sb.Append(c);
-                            break;
-                    }
-                }
-                sb.Append("\"");
+                AppendEscapedString(sb, s);
                 return;
             }
 
@@ -89,7 +97,8 @@ namespace Buraqueira_Tools
                 {
                     if (!first) sb.Append(",");
                     if (pretty) { sb.AppendLine(); sb.Append(new string(' ', (indent + 1) * 2)); }
-                    sb.Append("\"").Append(entry.Key?.ToString()).Append("\":");
+                    AppendEscapedString(sb, entry.Key?.ToString() ?? "");
+                    sb.Append(":");
                     if (pretty) sb.Append(" ");
                     SerializeValue(entry.Value, sb, pretty, indent + 1, maxItems);
                     first = false;

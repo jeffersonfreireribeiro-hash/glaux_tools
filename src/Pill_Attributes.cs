@@ -203,6 +203,15 @@ namespace Buraqueira_Tools
                     isWarning = dfilter.OutsideCount > 0 && dfilter.InsideCount == 0;
                     subText = $"{dfilter.InsideCount} in / {dfilter.OutsideCount} out";
                 }
+                else if (comp is IPillCapsule capsule)
+                {
+                    key = capsule.CapsuleKey;
+                    category = string.IsNullOrEmpty(capsule.CapsuleCategory) ? "GEN" : capsule.CapsuleCategory;
+                    unit = capsule.CapsuleUnit;
+                    catColor = capsule.CapsuleColor;
+                    isConnected = capsule.CapsuleOk;
+                    isWarning = capsule.CapsuleWarning;
+                }
                 else if (comp is PillInterpolator_Component interp)
                 {
                     key = string.IsNullOrEmpty(interp.CurrentCleanKey) ? "Interpolação" : interp.CurrentCleanKey;
@@ -230,6 +239,8 @@ namespace Buraqueira_Tools
                         key = "Filtro Geometria";
                     else if (comp is PillInterpolator_Component)
                         key = "Interpolador";
+                    else if (comp is IPillCapsule)
+                        key = "Aguardando";
                     else
                         key = "Transmitter (Sem Chave)";
                 }

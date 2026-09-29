@@ -13,6 +13,8 @@
     <LangVersion>latest</LangVersion>
     <!-- Grasshopper/RhinoCommon são net48: avisos de compatibilidade esperados -->
     <NoWarn>$(NoWarn);NU1701;NU1702;MSB3277</NoWarn>
+    <!-- Os pacotes da McNeel tiram Grasshopper/RhinoCommon da saída (correto para plugins); os testes precisam deles -->
+    <ShouldRemoveRhinoReferences>False</ShouldRemoveRhinoReferences>
   </PropertyGroup>
 
   <ItemGroup>
