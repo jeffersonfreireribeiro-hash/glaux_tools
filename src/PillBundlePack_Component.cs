@@ -7,6 +7,7 @@ using Grasshopper.Kernel;
 using Grasshopper.Kernel.Data;
 using Grasshopper.Kernel.Types;
 using System.Windows.Forms;
+using GH_IO.Serialization;
 
 namespace Buraqueira_Tools
 {
@@ -164,14 +165,25 @@ namespace Buraqueira_Tools
 
         protected override void RegisterInputParams(GH_InputParamManager pManager)
         {
-            pManager.AddTextParameter("Keys", "K", "Lista de chaves de parâmetros (ex: 'ACU_T60_Alvo [s]') OU nomes de grupos/categorias (ex: 'ACU', 'GEO', 'MAT', 'ALL'). Se for um grupo, todas as variáveis ativas dessa categoria são automaticamente colhidas do barramento PillHub.", GH_ParamAccess.list);
+            pManager.AddTextParameter("Keys", "K", "Lista de chaves de parâmetros (ex: 'ACU_T60_Alvo [s]') OU nomes de grupos/categorias (ex: 'ACU', 'GEO', 'MAT', 'ALL'). Se for um grupo, todas as variáveis ativas dessa categoria são automaticamente colhidas do barramento PillHub. Opcional quando há Wires ⚡; um transmissor ligado nos Wires entra uma vez só, mesmo que a chave também o encontre.", GH_ParamAccess.list);
             pManager.AddGenericParameter("Values", "V", "Valores manuais OPCIONAIS. DEIXE DESCONECTADO para colher automaticamente dos Transmitters do Canvas (via Wires ⚡ e PillHub). Conecte aqui apenas se quiser forçar valores manuais sem transmissores.", GH_ParamAccess.tree);
             pManager.AddTextParameter("Namespace", "NS", "Namespace ou prefixo de escopo opcional (ex: 'SALA_01' ou 'CONFIG').", GH_ParamAccess.item, "GLOBAL");
             pManager.AddGenericParameter("Wires", "⚡", "Cabos físicos ocultos automáticos (Wire Display: Hidden) dos Transmitters correspondentes para sincronização no Wallacei.", GH_ParamAccess.tree);
+            // Keys opcional: só Wires ⚡ já basta (o cálculo avisa quando não há nem chave nem fio)
+            pManager[0].Optional = true;
             pManager[1].Optional = true;
             pManager[2].Optional = true;
             pManager[3].Optional = true;
             pManager[3].WireDisplay = GH_ParamWireDisplay.hidden;
+        }
+
+        public override bool Read(GH_IReader reader)
+        {
+            bool ok = base.Read(reader);
+            // Arquivos da v1.2.0 ou anterior gravam Keys como obrigatória: sem chave, o componente nem calculava
+            // ("failed to collect data"), mesmo com Wires ⚡ ligados
+            if (Params.Input.Count > 0) Params.Input[0].Optional = true;
+            return ok;
         }
 
         protected override void RegisterOutputParams(GH_OutputParamManager pManager)
@@ -228,6 +240,9 @@ namespace Buraqueira_Tools
                 int wiresPackedCount = 0;
 
                 var packedKeysSet = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                // Transmissores ligados em Wires ⚡: os canais deles já entraram pelo fio e não voltam pelo barramento
+                var wiredTransmitters = new HashSet<Guid>();
+                int skippedWiredCount = 0;
 
                 // =========================================================================
                 // 1. PRIORIDADE FÍSICA: EMPACOTAMENTO DIRETO DE TODAS AS FONTES EM WIRES ⚡
@@ -248,6 +263,7 @@ namespace Buraqueira_Tools
 
                         if (tx != null)
                         {
+                            wiredTransmitters.Add(tx.InstanceGuid);
                             unit = tx.CurrentUnit ?? "";
                             category = tx.CurrentCategory ?? "";
                             if (!string.IsNullOrWhiteSpace(tx.CurrentCleanKey) &&
@@ -260,11 +276,7 @@ namespace Buraqueira_Tools
                         }
 
                         // Verifica se o componente tem NickName descritivo atribuído pelo usuário
-                        if (docObj != null && !string.IsNullOrWhiteSpace(docObj.NickName) &&
-                            !docObj.NickName.Equals("PillTx", StringComparison.OrdinalIgnoreCase) &&
-                            !docObj.NickName.Equals("Pill Transmitter", StringComparison.OrdinalIgnoreCase) &&
-                            !docObj.NickName.Equals("Transmitter", StringComparison.OrdinalIgnoreCase) &&
-                            !docObj.NickName.Equals("Tx", StringComparison.OrdinalIgnoreCase))
+                        if (docObj != null && !PillBundlePacking.IsGenericNickName(docObj.NickName))
                         {
                             // Se a chave for vazia, genérica ou apenas o nome de categoria (ex: "SRF"), usa o NickName
                             if (string.IsNullOrWhiteSpace(itemKey) || 
@@ -482,21 +494,14 @@ namespace Buraqueira_Tools
                             PillHub.SubscribeReceiver(ch.CleanKey, InstanceGuid);
                             _subscribedKeys.Add(ch.CleanKey);
 
-                            string itemKey = ch.CleanKey;
-                            if (!string.IsNullOrWhiteSpace(ch.SourceNickName) &&
-                                !ch.SourceNickName.Equals("PillTx", StringComparison.OrdinalIgnoreCase) &&
-                                !ch.SourceNickName.Equals("Transmitter", StringComparison.OrdinalIgnoreCase) &&
-                                !ch.SourceNickName.Equals(itemKey, StringComparison.OrdinalIgnoreCase))
+                            // Transmissor já ligado em Wires ⚡: os dados dele já estão no pacote
+                            if (PillBundlePacking.IsPackedByWire(ch, wiredTransmitters))
                             {
-                                if (itemKey.Equals("GEN", StringComparison.OrdinalIgnoreCase) || itemKey.Equals(ch.Category, StringComparison.OrdinalIgnoreCase))
-                                {
-                                    itemKey = ch.SourceNickName;
-                                }
-                                else if (!itemKey.Contains(ch.SourceNickName))
-                                {
-                                    itemKey = $"{itemKey}_{ch.SourceNickName}";
-                                }
+                                skippedWiredCount++;
+                                continue;
                             }
+
+                            string itemKey = PillBundlePacking.HubEntryKey(ch);
 
                             string scopedKey = string.IsNullOrEmpty(bundle.Namespace) || bundle.Namespace.Equals("GLOBAL", StringComparison.OrdinalIgnoreCase)
                                 ? itemKey
@@ -566,6 +571,7 @@ namespace Buraqueira_Tools
                 if (wiresPackedCount > 0) sbSummary.AppendLine($"  - Coletados via Wires ⚡: {wiresPackedCount}");
                 if (pulledFromHubCount > 0) sbSummary.AppendLine($"  - Coletados do PillHub: {pulledFromHubCount}");
                 if (explicitPackedCount > 0) sbSummary.AppendLine($"  - Empacotados manualmente: {explicitPackedCount}");
+                if (skippedWiredCount > 0) sbSummary.AppendLine($"  - Canais das Keys que já vieram pelos Wires ⚡ (não duplicados): {skippedWiredCount}");
 
                 string json = bundle.ToJson();
 

@@ -3569,7 +3569,7 @@
         "Name": "Keys",
         "Nick": "K",
         "Type": "Text",
-        "Desc": "Lista de chaves de parâmetros (ex: 'ACU_T60_Alvo [s]') OU nomes de grupos/categorias (ex: 'ACU', 'GEO', 'MAT', 'ALL'). Se for um grupo, todas as variáveis ativas dessa categoria são automaticamente colhidas do barramento PillHub."
+        "Desc": "Lista de chaves de parâmetros (ex: 'ACU_T60_Alvo [s]') OU nomes de grupos/categorias (ex: 'ACU', 'GEO', 'MAT', 'ALL'). Se for um grupo, todas as variáveis ativas dessa categoria são automaticamente colhidas do barramento PillHub. Opcional quando há Wires ⚡; um transmissor ligado nos Wires entra uma vez só, mesmo que a chave também o encontre."
       },
       {
         "Name": "Values",

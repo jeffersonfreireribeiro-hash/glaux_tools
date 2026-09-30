@@ -46,3 +46,20 @@ copia o arquivo para a pasta de saída e `PluginAssemblyLoader` o carrega sob de
 e mede o tempo de pintura. As instruções de compilação estão no cabeçalho do arquivo (mono no Linux, `csc` no Windows).
 As imagens de referência ficam em `docs/stacks/img/`.
 
+## Documento do Grasshopper no Rhino 8 (fora do CI)
+
+`tests/rhino/` tem testes que montam um `GH_Document` com componentes de verdade e calculam a solução num RhinoCore sem interface.
+Eles exigem o Rhino 8 instalado no Windows, por isso o CI não os roda:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File tests\rhino\Test-PillBundlePack-KeysWires.ps1
+```
+
+- `Test-PillBundlePack-KeysWires.ps1`: Pill Bundle Pack com `Keys`, com `Wires ⚡` e com os dois apontando para os mesmos transmissores.
+  Cobre apelidos genéricos e descritivos, casos mistos, namespace e a escala de um projeto real (17 transmissores, 157 itens).
+  Com `-OldGh <arquivo .gh da v1.2.0 ou anterior>`, confere também que a entrada `Keys`, gravada como obrigatória, abre como opcional.
+  `-Gha` escolhe o binário: a v1.2.0 falha em 18 de 24 verificações; a v1.2.1 passa em todas.
+
+**Neste Windows com Rhino:** o projeto de testes xUnit usa os pacotes NuGet da McNeel (Grasshopper 8.0). Para compilar o plugin com
+as mesmas referências, como no CI, rode `dotnet test tests/Glaux_Tools.Tests -p:GlauxUseRhinoInstall=false`. Sem isso, o plugin compila
+contra o Rhino instalado (8.x) e o projeto de testes falha com CS1705 (versão de referência mais nova).
