@@ -3,8 +3,10 @@
 # - Automático: um push na main que altera src/Glaux_Tools.csproj lê <Version>; se a tag vX.Y.Z ainda não existe,
 #   compila, roda os testes e cria a tag e a Release com o Glaux_Tools.gha anexado (notas = linha da versão no
 #   histórico do README).
-# - Manual (Actions → Release → Run workflow): publica uma versão antiga que ficou sem tag, usando o binário
-#   arquivado em dist/versions (ex: version 1.0.6, ref 82bbb2a).
+# - Tag criada à mão sem Release: a Release é criada nessa tag (com o binário de dist/versions se a tag não
+#   estiver no commit atual).
+# - Manual (Actions → Release → Run workflow): publica uma versão que ficou sem Release, usando o binário
+#   arquivado em dist/versions (ex: version 1.0.6, ref 82bbb2a). Com os campos vazios, publica a versão atual.
 name: Release
 
 on:
@@ -12,6 +14,8 @@ on:
     branches: [main]
     paths:
       - src/Glaux_Tools.csproj
+      # Mudanças no próprio workflow também rodam (sem efeito se a Release da versão atual já existe)
+      - .github/workflows/release.yml
   workflow_dispatch:
     inputs:
       version:
@@ -44,56 +48,75 @@ jobs:
       - name: Versão, commit e tag
         id: meta
         env:
+          GH_TOKEN: ${{ github.token }}
           INPUT_VERSION: ${{ inputs.version }}
           INPUT_REF: ${{ inputs.ref }}
         run: |
           set -euo pipefail
-          version="${INPUT_VERSION:-}"
-          if [ -z "$version" ]; then
-            version=$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' src/Glaux_Tools.csproj | head -n 1 | tr -d '[:space:]')
-          fi
+          current=$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' src/Glaux_Tools.csproj | head -n 1 | tr -d '[:space:]')
+          version="${INPUT_VERSION:-$current}"
           version="${version#v}"
           if ! [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             echo "::error::Versão inválida: '$version' (use X.Y.Z)."
             exit 1
           fi
-          target=$(git rev-parse --verify "${INPUT_REF:-HEAD}^{commit}")
           tag="v$version"
-          if git ls-remote --exit-code --tags origin "refs/tags/$tag" > /dev/null 2>&1; then
-            exists=true
-            echo "::notice::A tag $tag já existe; nada a publicar."
-          else
-            exists=false
+
+          # Já publicada: nada a fazer
+          if gh release view "$tag" > /dev/null 2>&1; then
+            echo "::notice::A Release $tag já existe; nada a publicar."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
+
+          # Tag criada à mão (sem Release): publica nela; senão, no commit pedido (ou no atual)
+          if git ls-remote --exit-code --tags origin "refs/tags/$tag" > /dev/null 2>&1; then
+            git fetch --quiet origin "refs/tags/$tag:refs/tags/$tag" || true
+            target=$(git rev-parse --verify "refs/tags/$tag^{commit}")
+            echo "::notice::A tag $tag já existe (commit ${target:0:7}) sem Release; a Release será criada nela."
+          else
+            if [ "$version" != "$current" ] && [ -z "${INPUT_REF:-}" ]; then
+              echo "::error::A versão $version não é a atual ($current): informe em 'ref' o commit dessa versão."
+              exit 1
+            fi
+            target=$(git rev-parse --verify "${INPUT_REF:-HEAD}^{commit}")
+          fi
+
           archived="dist/versions/Glaux_Tools_v$version.gha"
           [ -f "$archived" ] || archived="dist/versions/Glaux_Tools/Glaux_Tools_v$version.gha"
           [ -f "$archived" ] || archived=""
-          # Build a partir do código só quando a tag aponta para o commit atual; versões antigas usam o binário arquivado
-          if [ "$target" = "$(git rev-parse HEAD)" ] && [ -z "${INPUT_VERSION:-}" ]; then build=true; else build=false; fi
-          if [ "$exists" = false ] && [ "$build" = false ] && [ -z "$archived" ]; then
-            echo "::error::Sem binário arquivado para $version em dist/versions e o commit não é o atual da main."
+          # Compila a partir do código só quando a Release aponta para o commit atual com a versão atual;
+          # nos demais casos (tag antiga ou criada à mão em outro commit) usa o binário arquivado em dist/versions
+          if [ "$target" = "$(git rev-parse HEAD)" ] && [ "$version" = "$current" ]; then build=true; else build=false; fi
+          if [ "$build" = false ] && [ -z "$archived" ]; then
+            echo "::error::Sem binário arquivado para $version em dist/versions, e a Release não aponta para o commit atual."
             exit 1
           fi
+
+          # "Latest" só para a versão mais alta (uma versão antiga publicada depois não toma o lugar da atual)
+          highest=$(printf '%s\n%s\n' "$version" "$current" | sort -V | tail -n 1)
+          if [ "$highest" = "$version" ]; then latest=true; else latest=false; fi
           {
+            echo "skip=false"
             echo "version=$version"
             echo "tag=$tag"
             echo "target=$target"
-            echo "exists=$exists"
             echo "build=$build"
             echo "archived=$archived"
+            echo "latest=$latest"
           } >> "$GITHUB_OUTPUT"
 
       - uses: actions/setup-dotnet@v4
-        if: steps.meta.outputs.exists == 'false' && steps.meta.outputs.build == 'true'
+        if: steps.meta.outputs.skip == 'false' && steps.meta.outputs.build == 'true'
         with:
           dotnet-version: 8.0.x
 
       - name: Compila e testa
-        if: steps.meta.outputs.exists == 'false' && steps.meta.outputs.build == 'true'
+        if: steps.meta.outputs.skip == 'false' && steps.meta.outputs.build == 'true'
         run: dotnet test tests/Glaux_Tools.Tests -c Release
 
       - name: Notas da versão (histórico do README)
-        if: steps.meta.outputs.exists == 'false'
+        if: steps.meta.outputs.skip == 'false'
         env:
           VERSION: ${{ steps.meta.outputs.version }}
         run: |
@@ -114,7 +137,7 @@ jobs:
           cat release-notes.md
 
       - name: Cria a tag e a Release
-        if: steps.meta.outputs.exists == 'false'
+        if: steps.meta.outputs.skip == 'false'
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ steps.meta.outputs.tag }}
@@ -122,14 +145,13 @@ jobs:
           VERSION: ${{ steps.meta.outputs.version }}
           BUILD: ${{ steps.meta.outputs.build }}
           ARCHIVED: ${{ steps.meta.outputs.archived }}
+          LATEST: ${{ steps.meta.outputs.latest }}
         run: |
           set -euo pipefail
           if [ "$BUILD" = true ]; then asset="src/bin/Release/net48/Glaux_Tools.gha"; else asset="$ARCHIVED"; fi
           mkdir -p out
           cp "$asset" out/Glaux_Tools.gha
-          # Uma versão antiga publicada depois não pode virar a "Latest" no lugar da atual
-          latest="--latest"
-          if [ "$BUILD" != true ]; then latest="--latest=false"; fi
+          latest="--latest=$LATEST"
           gh release create "$TAG" out/Glaux_Tools.gha \
             --target "$TARGET" \
             --title "Glaux Tools v$VERSION" \
