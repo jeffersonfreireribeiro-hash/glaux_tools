@@ -309,7 +309,7 @@ dotnet test tests/Glaux_Tools.Tests
 Detalhes e limitações (geometria que exige o Rhino) em [`tests/README.md`](tests/README.md).
 
 ### Integração contínua e versões
-Cada pull request e cada push na `main` compila o plugin e roda os testes no GitHub Actions, em Linux e Windows ([`ci.yml`](.github/workflows/ci.yml)). Quando a versão em `src/Glaux_Tools.csproj` muda na `main`, o workflow [`release.yml`](.github/workflows/release.yml) cria a tag `vX.Y.Z` e publica a Release com o `Glaux_Tools.gha` anexado e as notas do histórico acima. Versões antigas sem tag podem ser publicadas pelo próprio workflow (**Actions → Release → Run workflow**, com a versão e o commit), usando o binário arquivado em `dist/versions`.
+Cada pull request e cada push na `main` compila o plugin e roda os testes no GitHub Actions, em Linux e Windows ([`ci.yml`](.github/workflows/ci.yml)). Quando a versão em `src/Glaux_Tools.csproj` muda na `main`, o workflow [`release.yml`](.github/workflows/release.yml) cria a tag `vX.Y.Z` e publica a Release com o `Glaux_Tools.gha` anexado e as notas do histórico acima. Se a tag já tiver sido criada à mão, a Release é publicada nela (com o binário de `dist/versions` quando a tag não está no commit atual). Versões antigas sem Release podem ser publicadas pelo próprio workflow (**Actions → Release → Run workflow**, com a versão e o commit), também com o binário arquivado em `dist/versions`.
 
 ---
 
