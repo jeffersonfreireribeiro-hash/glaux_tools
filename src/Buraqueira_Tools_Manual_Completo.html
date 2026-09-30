@@ -243,7 +243,7 @@
   <div class="cover-box">
     <strong class="box-title">Visão Geral do Conjunto Completo:</strong>
     <ul>
-      <li><strong>116 Componentes Especializados:</strong> Catálogo técnico integral com parâmetros de entrada (Inputs), saídas (Outputs) e descrições de funcionamento.</li>
+      <li><strong>120 Componentes Especializados:</strong> Catálogo técnico integral com parâmetros de entrada (Inputs), saídas (Outputs) e descrições de funcionamento.</li>
       <li><strong>Ecossistema Pills:</strong> Transmissão de dados sem fios (PillHub), concentradores verticais de parâmetros, cofre de variantes com cabos estilo Galapagos e caches inteligentes.</li>
       <li><strong>Data Trees Avançadas:</strong> Álgebra e topologia de árvores, alinhamento, filtragem condicional e entrelaçamento de ramos.</li>
       <li><strong>Estatística &amp; Probabilidade:</strong> Média, variância, correlação, assimetria, curtose, tabelas de frequência e 7 distribuições probabilísticas.</li>
@@ -311,6 +311,10 @@
     <div class="toc-card">
       <h3>13. Dashboard &amp; Controles <span class="badge-cat">2 Pilhas</span></h3>
       <p>Painéis interativos no canvas que reúnem controles (slider, toggle, botão, lista) e indicadores (texto, número, progresso, mini gráfico) ligados ao PillHub, com entrega ao Grasshopper sem recomputações em cascata e estado integrado a presets e snapshots.</p>
+    </div>
+    <div class="toc-card">
+      <h3>14. Exploração de Design <span class="badge-cat">4 Pilhas</span></h3>
+      <p>Geração sistemática de alternativas (grade, aleatório, Latin Hypercube, Sobol, Morris, Saltelli), execução em lote na própria definição com gravação de entradas, resultados e controles no store, e análise de sensibilidade (correlação/SRC, efeitos elementares de Morris e índices de Sobol).</p>
     </div>
   </div>
 </div>
@@ -9958,6 +9962,362 @@
         <td><span class="param-name">Info</span> <span class="param-type">(I)</span></td>
         <td><span class="param-type">Text</span></td>
         <td>Resumo e avisos.</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+<div class="chapter-header">
+  <h1>14. Exploração de Design</h1>
+  <p>Geração sistemática de alternativas (grade, aleatório, Latin Hypercube, Sobol, Morris, Saltelli), execução em lote na própria definição com gravação de entradas, resultados e controles no store, e análise de sensibilidade (correlação/SRC, efeitos elementares de Morris e índices de Sobol). (Total: 4 componentes)</p>
+</div>
+<div class="component-card">
+  <div class="comp-title-bar">
+    <div>
+      <span class="comp-name">Pill Batch Runner</span>
+      <span class="badge-cat">Explore</span>
+    </div>
+    <span class="comp-nick">Batch</span>
+  </div>
+  <div class="comp-desc">Roda cada amostra do plano na definição e guarda os resultados: 1. ligue o Plan (Pill Sampler) e, em Results, os resultados a medir (qualquer saída que dependa dos controles); 2. ligue Run (toggle): cada amostra é aplicada nos controles, a definição recalcula e os resultados são lidos; 3. desligue Run (ou Esc) para pausar; ligar de novo retoma da próxima amostra. Reset descarta as execuções. Com Experiment preenchido, cada execução é gravada no store (parâmetros, resultados, controles e tempo): o Pill Restore reaplica qualquer uma no canvas. As execuções ficam salvas no .gh. Ao terminar ou pausar, os controles voltam aos valores de antes (Restore).</div>
+  <table class="params-table">
+    <thead>
+      <tr>
+        <th style="width: 10%;">Direção</th>
+        <th style="width: 25%;">Nome (Sigla)</th>
+        <th style="width: 20%;">Tipo</th>
+        <th>Descrição</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="io-tag io-in">INPUT</span></td>
+        <td><span class="param-name">Plan</span> <span class="param-type">(P)</span></td>
+        <td><span class="param-type">Generic</span></td>
+        <td>Plano de amostras do Pill Sampler.</td>
+      </tr>
+      <tr>
+        <td><span class="io-tag io-in">INPUT</span></td>
+        <td><span class="param-name">Results</span> <span class="param-type">(R)</span></td>
+        <td><span class="param-type">Generic</span></td>
+        <td>Resultados a registrar em cada execução (números viram colunas; todos os itens, em ordem de ramo).</td>
+      </tr>
+      <tr>
+        <td><span class="io-tag io-in">INPUT</span></td>
+        <td><span class="param-name">Run</span> <span class="param-type">(Run)</span></td>
+        <td><span class="param-type">Boolean</span></td>
+        <td>Liga para rodar (ou retomar); desliga para pausar. Use um toggle.</td>
+      </tr>
+      <tr>
+        <td><span class="io-tag io-in">INPUT</span></td>
+        <td><span class="param-name">Reset</span> <span class="param-type">(Rst)</span></td>
+        <td><span class="param-type">Boolean</span></td>
+        <td>Descarta as execuções guardadas (na borda False → True; use um botão).</td>
+      </tr>
+      <tr>
+        <td><span class="io-tag io-in">INPUT</span></td>
+        <td><span class="param-name">Store</span> <span class="param-type">(S)</span></td>
+        <td><span class="param-type">Generic</span></td>
+        <td>Conexão do Pill DB Connect, ou caminho de um arquivo .glauxdb. Vazio = store padrão do projeto (pasta PillVault do .gh).</td>
+      </tr>
+      <tr>
+        <td><span class="io-tag io-in">INPUT</span></td>
+        <td><span class="param-name">Experiment</span> <span class="param-type">(E)</span></td>
+        <td><span class="param-type">Text</span></td>
+        <td>Nome do experimento no store (vazio = não grava; as execuções continuam no .gh).</td>
+      </tr>
+      <tr>
+        <td><span class="io-tag io-in">INPUT</span></td>
+        <td><span class="param-name">Settle</span> <span class="param-type">(ms)</span></td>
+        <td><span class="param-type">Integer</span></td>
+        <td>Espera entre execuções, em ms (para definições que precisam de um tempo extra).</td>
+      </tr>
+      <tr>
+        <td><span class="io-tag io-in">INPUT</span></td>
+        <td><span class="param-name">Restore</span> <span class="param-type">(Rs)</span></td>
+        <td><span class="param-type">Boolean</span></td>
+        <td>Ao terminar ou pausar, volta os controles aos valores de antes do lote.</td>
+      </tr>
+      <tr>
+        <td><span class="io-tag io-in">INPUT</span></td>
+        <td><span class="param-name">Live</span> <span class="param-type">(Lv)</span></td>
+        <td><span class="param-type">Boolean</span></td>
+        <td>Atualiza Inputs/Results a cada execução. Desligado, elas só aparecem com o lote parado: componentes pesados ligados às saídas (ex: Fast Pareto com milhares de linhas) não recalculam a cada passo.</td>
+      </tr>
+      <tr>
+        <td><span class="io-tag io-out">OUTPUT</span></td>
+        <td><span class="param-name">Plan</span> <span class="param-type">(P)</span></td>
+        <td><span class="param-type">Generic</span></td>
+        <td>Plano das execuções (ligue no Pill Sensitivity).</td>
+      </tr>
+      <tr>
+        <td><span class="io-tag io-out">OUTPUT</span></td>
+        <td><span class="param-name">Inputs</span> <span class="param-type">(In)</span></td>
+        <td><span class="param-type">Generic</span></td>
+        <td>Um ramo {i} por execução com os valores aplicados (i = índice da amostra).</td>
+      </tr>
+      <tr>
+        <td><span class="io-tag io-out">OUTPUT</span></td>
+        <td><span class="param-name">Results</span> <span class="param-type">(Res)</span></td>
+        <td><span class="param-type">Number</span></td>
+        <td>Um ramo {i} por execução com os resultados numéricos (NaN onde o item não era número). Pronto para Fast Pareto e Pill Sensitivity.</td>
+      </tr>
+      <tr>
+        <td><span class="io-tag io-out">OUTPUT</span></td>
+        <td><span class="param-name">Runs</span> <span class="param-type">(N)</span></td>
+        <td><span class="param-type">Integer</span></td>
+        <td>Execuções concluídas.</td>
+      </tr>
+      <tr>
+        <td><span class="io-tag io-out">OUTPUT</span></td>
+        <td><span class="param-name">Progress</span> <span class="param-type">(%)</span></td>
+        <td><span class="param-type">Number</span></td>
+        <td>Progresso de 0 a 1 (ligue num Transmitter para um widget progress do Pill Dashboard).</td>
+      </tr>
+      <tr>
+        <td><span class="io-tag io-out">OUTPUT</span></td>
+        <td><span class="param-name">Status</span> <span class="param-type">(St)</span></td>
+        <td><span class="param-type">Text</span></td>
+        <td>Rodando, pausado (e por quê) ou concluído.</td>
+      </tr>
+      <tr>
+        <td><span class="io-tag io-out">OUTPUT</span></td>
+        <td><span class="param-name">Info</span> <span class="param-type">(I)</span></td>
+        <td><span class="param-type">Text</span></td>
+        <td>Tempo por execução, tempo restante estimado e gravação no store.</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+<div class="component-card">
+  <div class="comp-title-bar">
+    <div>
+      <span class="comp-name">Pill Design Space</span>
+      <span class="badge-cat">Explore</span>
+    </div>
+    <span class="comp-nick">DesignSpace</span>
+  </div>
+  <div class="comp-desc">Define as variáveis de projeto a explorar (o que o Pill Sampler vai variar e o Pill Batch Runner vai aplicar): - Controls: ligue sliders, toggles, value lists, um Pill Slider Pool ou um Pill Dashboard (todos os controles dele); - Names: ou escolha controles pelo nome, com curingas (&#x27;Largura&#x27;, &#x27;[VAR]*&#x27;, &#x27;*&#x27;); - Ranges: ajuste faixas e níveis: &#x27;Largura | min=2 | max=8 | step=0.5&#x27;, &#x27;Material | levels=Concreto;Madeira&#x27;, &#x27;Rotação | off&#x27;. Por padrão vale a faixa do próprio controle; o passo vem da precisão do slider (inteiro, 1 casa decimal...).</div>
+  <table class="params-table">
+    <thead>
+      <tr>
+        <th style="width: 10%;">Direção</th>
+        <th style="width: 25%;">Nome (Sigla)</th>
+        <th style="width: 20%;">Tipo</th>
+        <th>Descrição</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="io-tag io-in">INPUT</span></td>
+        <td><span class="param-name">Controls</span> <span class="param-type">(C)</span></td>
+        <td><span class="param-type">Generic</span></td>
+        <td>Controles a variar (ligue sliders, toggles, value lists, Pill Slider Pool ou Pill Dashboard). Só a origem do fio importa, não o valor.</td>
+      </tr>
+      <tr>
+        <td><span class="io-tag io-in">INPUT</span></td>
+        <td><span class="param-name">Names</span> <span class="param-type">(N)</span></td>
+        <td><span class="param-type">Text</span></td>
+        <td>Controles pelo nome ou apelido, com curingas (* e ?). Sliders do Slider Pool: &#x27;[CATEGORIA] Nome&#x27;; do Dashboard: &#x27;Painel: Rótulo&#x27;.</td>
+      </tr>
+      <tr>
+        <td><span class="io-tag io-in">INPUT</span></td>
+        <td><span class="param-name">Ranges</span> <span class="param-type">(R)</span></td>
+        <td><span class="param-type">Text</span></td>
+        <td>Uma linha por ajuste: &#x27;Nome | min=… | max=… | step=…&#x27;, &#x27;Nome | levels=A;B;C&#x27; ou &#x27;Nome | off&#x27;. O nome aceita curingas.</td>
+      </tr>
+      <tr>
+        <td><span class="io-tag io-out">OUTPUT</span></td>
+        <td><span class="param-name">Space</span> <span class="param-type">(DS)</span></td>
+        <td><span class="param-type">Generic</span></td>
+        <td>Espaço de projeto (ligue no Pill Sampler).</td>
+      </tr>
+      <tr>
+        <td><span class="io-tag io-out">OUTPUT</span></td>
+        <td><span class="param-name">Names</span> <span class="param-type">(N)</span></td>
+        <td><span class="param-type">Text</span></td>
+        <td>Nome de cada variável, na ordem das colunas das amostras.</td>
+      </tr>
+      <tr>
+        <td><span class="io-tag io-out">OUTPUT</span></td>
+        <td><span class="param-name">Ranges</span> <span class="param-type">(R)</span></td>
+        <td><span class="param-type">Text</span></td>
+        <td>Faixa, passo ou níveis de cada variável.</td>
+      </tr>
+      <tr>
+        <td><span class="io-tag io-out">OUTPUT</span></td>
+        <td><span class="param-name">Count</span> <span class="param-type">(k)</span></td>
+        <td><span class="param-type">Integer</span></td>
+        <td>Quantidade de variáveis.</td>
+      </tr>
+      <tr>
+        <td><span class="io-tag io-out">OUTPUT</span></td>
+        <td><span class="param-name">Info</span> <span class="param-type">(I)</span></td>
+        <td><span class="param-type">Text</span></td>
+        <td>Resumo (tamanho do espaço discreto, avisos).</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+<div class="component-card">
+  <div class="comp-title-bar">
+    <div>
+      <span class="comp-name">Pill Sampler</span>
+      <span class="badge-cat">Explore</span>
+    </div>
+    <span class="comp-nick">Sampler</span>
+  </div>
+  <div class="comp-desc">Gera as alternativas a rodar a partir do Pill Design Space. Métodos: - lhs (padrão): Latin Hypercube, boa cobertura com poucas amostras; - sobol: sequência quase aleatória (use potências de 2: 64, 128, 256…); - random: Monte Carlo; grid: todas as combinações de N níveis; - morris: trajetórias para triagem de sensibilidade (Count = trajetórias; total = Count × (k + 1)); - saltelli: para índices de Sobol (Count = N base; total = N × (k + 2)). Mesma semente → mesmas amostras. Nada muda no canvas: ligue o plano no Pill Batch Runner.</div>
+  <table class="params-table">
+    <thead>
+      <tr>
+        <th style="width: 10%;">Direção</th>
+        <th style="width: 25%;">Nome (Sigla)</th>
+        <th style="width: 20%;">Tipo</th>
+        <th>Descrição</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="io-tag io-in">INPUT</span></td>
+        <td><span class="param-name">Space</span> <span class="param-type">(DS)</span></td>
+        <td><span class="param-type">Generic</span></td>
+        <td>Espaço de projeto do Pill Design Space.</td>
+      </tr>
+      <tr>
+        <td><span class="io-tag io-in">INPUT</span></td>
+        <td><span class="param-name">Method</span> <span class="param-type">(M)</span></td>
+        <td><span class="param-type">Text</span></td>
+        <td>lhs, sobol, random, grid, morris ou saltelli.</td>
+      </tr>
+      <tr>
+        <td><span class="io-tag io-in">INPUT</span></td>
+        <td><span class="param-name">Count</span> <span class="param-type">(N)</span></td>
+        <td><span class="param-type">Integer</span></td>
+        <td>Amostras (lhs, sobol, random), total aproximado (grid), trajetórias (morris) ou N base (saltelli).</td>
+      </tr>
+      <tr>
+        <td><span class="io-tag io-in">INPUT</span></td>
+        <td><span class="param-name">Seed</span> <span class="param-type">(S)</span></td>
+        <td><span class="param-type">Integer</span></td>
+        <td>Semente: a mesma semente gera as mesmas amostras.</td>
+      </tr>
+      <tr>
+        <td><span class="io-tag io-in">INPUT</span></td>
+        <td><span class="param-name">Options</span> <span class="param-type">(O)</span></td>
+        <td><span class="param-type">Text</span></td>
+        <td>Opcional: &#x27;levels=5&#x27; (grid: níveis por variável; morris: níveis da grade), &#x27;maximin=20&#x27; (lhs), &#x27;centered&#x27; (lhs), &#x27;scramble=false&#x27; (sobol/saltelli).</td>
+      </tr>
+      <tr>
+        <td><span class="io-tag io-out">OUTPUT</span></td>
+        <td><span class="param-name">Plan</span> <span class="param-type">(P)</span></td>
+        <td><span class="param-type">Generic</span></td>
+        <td>Plano de amostras (ligue no Pill Batch Runner).</td>
+      </tr>
+      <tr>
+        <td><span class="io-tag io-out">OUTPUT</span></td>
+        <td><span class="param-name">Samples</span> <span class="param-type">(S)</span></td>
+        <td><span class="param-type">Generic</span></td>
+        <td>Um ramo {i} por amostra com o valor de cada variável (níveis como texto).</td>
+      </tr>
+      <tr>
+        <td><span class="io-tag io-out">OUTPUT</span></td>
+        <td><span class="param-name">Unit</span> <span class="param-type">(U)</span></td>
+        <td><span class="param-type">Number</span></td>
+        <td>Mesmas amostras em coordenadas unitárias [0, 1] (úteis para gráficos).</td>
+      </tr>
+      <tr>
+        <td><span class="io-tag io-out">OUTPUT</span></td>
+        <td><span class="param-name">Count</span> <span class="param-type">(N)</span></td>
+        <td><span class="param-type">Integer</span></td>
+        <td>Quantidade de amostras (execuções necessárias).</td>
+      </tr>
+      <tr>
+        <td><span class="io-tag io-out">OUTPUT</span></td>
+        <td><span class="param-name">Info</span> <span class="param-type">(I)</span></td>
+        <td><span class="param-type">Text</span></td>
+        <td>Método, tamanho e observações.</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+<div class="component-card">
+  <div class="comp-title-bar">
+    <div>
+      <span class="comp-name">Pill Sensitivity</span>
+      <span class="badge-cat">Explore</span>
+    </div>
+    <span class="comp-nick">Sensitivity</span>
+  </div>
+  <div class="comp-desc">Mostra quais variáveis mais pesam em cada resultado, a partir do Plan e dos Results do Pill Batch Runner: - correlation (planos lhs, sobol, random, grid): Pearson (com p-valor), Spearman e coeficientes de regressão padronizados (SRC). Importância = |SRC|; o R² diz se um modelo linear explica o resultado; - morris (plano morris): μ* (importância), μ (sinal) e σ (não linearidade ou interação); - sobol (plano saltelli): índices S1 (efeito sozinho) e ST (efeito total, com interações). Importância = ST. Com Method vazio, o método segue o plano. Funciona com execuções parciais (lote pausado).</div>
+  <table class="params-table">
+    <thead>
+      <tr>
+        <th style="width: 10%;">Direção</th>
+        <th style="width: 25%;">Nome (Sigla)</th>
+        <th style="width: 20%;">Tipo</th>
+        <th>Descrição</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="io-tag io-in">INPUT</span></td>
+        <td><span class="param-name">Plan</span> <span class="param-type">(P)</span></td>
+        <td><span class="param-type">Generic</span></td>
+        <td>Plano executado (saída Plan do Pill Batch Runner ou do Pill Sampler).</td>
+      </tr>
+      <tr>
+        <td><span class="io-tag io-in">INPUT</span></td>
+        <td><span class="param-name">Results</span> <span class="param-type">(R)</span></td>
+        <td><span class="param-type">Generic</span></td>
+        <td>Um ramo por execução; o último índice do caminho é a amostra (saída Results do Batch Runner).</td>
+      </tr>
+      <tr>
+        <td><span class="io-tag io-in">INPUT</span></td>
+        <td><span class="param-name">Names</span> <span class="param-type">(N)</span></td>
+        <td><span class="param-type">Text</span></td>
+        <td>Nome de cada resultado (colunas de Results), para o ranking.</td>
+      </tr>
+      <tr>
+        <td><span class="io-tag io-in">INPUT</span></td>
+        <td><span class="param-name">Method</span> <span class="param-type">(M)</span></td>
+        <td><span class="param-type">Text</span></td>
+        <td>auto (padrão), correlation, morris ou sobol.</td>
+      </tr>
+      <tr>
+        <td><span class="io-tag io-out">OUTPUT</span></td>
+        <td><span class="param-name">Variables</span> <span class="param-type">(V)</span></td>
+        <td><span class="param-type">Text</span></td>
+        <td>Variáveis, na ordem das colunas de Importance.</td>
+      </tr>
+      <tr>
+        <td><span class="io-tag io-out">OUTPUT</span></td>
+        <td><span class="param-name">Importance</span> <span class="param-type">(Imp)</span></td>
+        <td><span class="param-type">Number</span></td>
+        <td>Um ramo {r} por resultado: importância de cada variável (|SRC|, μ* ou ST).</td>
+      </tr>
+      <tr>
+        <td><span class="io-tag io-out">OUTPUT</span></td>
+        <td><span class="param-name">Ranking</span> <span class="param-type">(Rk)</span></td>
+        <td><span class="param-type">Text</span></td>
+        <td>Uma linha por resultado, da variável mais para a menos importante.</td>
+      </tr>
+      <tr>
+        <td><span class="io-tag io-out">OUTPUT</span></td>
+        <td><span class="param-name">Details</span> <span class="param-type">(D)</span></td>
+        <td><span class="param-type">Number</span></td>
+        <td>Ramo {r; variável}: todas as medidas, na ordem de Measures.</td>
+      </tr>
+      <tr>
+        <td><span class="io-tag io-out">OUTPUT</span></td>
+        <td><span class="param-name">Measures</span> <span class="param-type">(Ms)</span></td>
+        <td><span class="param-type">Text</span></td>
+        <td>Nome das medidas em Details.</td>
+      </tr>
+      <tr>
+        <td><span class="io-tag io-out">OUTPUT</span></td>
+        <td><span class="param-name">Info</span> <span class="param-type">(I)</span></td>
+        <td><span class="param-type">Text</span></td>
+        <td>Método, execuções usadas, ajuste (R² ou soma dos S1) e observações.</td>
       </tr>
     </tbody>
   </table>

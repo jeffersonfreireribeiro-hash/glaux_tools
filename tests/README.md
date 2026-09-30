@@ -1,7 +1,7 @@
 # Testes do Glaux Tools
 
 Projeto xUnit (`tests/Glaux_Tools.Tests`, .NET 8) que compila o plugin e testa os serviços internos
-das pilhas (Data Core, Persistence, Project State, Diagnostics, Dashboard) fora do Rhino.
+das pilhas (Data Core, Persistence, Project State, Diagnostics, Dashboard, Exploração de Design) fora do Rhino.
 
 ## Como rodar
 
@@ -12,6 +12,8 @@ dotnet test tests/Glaux_Tools.Tests
 - Com o Rhino 8 instalado (Windows), o plugin compila contra a instalação local, como antes.
 - Sem Rhino (CI, Linux, macOS), `src/Glaux_Tools.csproj` usa os pacotes NuGet oficiais `Grasshopper`/`RhinoCommon`
   (só para compilar; nada é copiado para o `.gha`).
+- No GitHub Actions, [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) roda estes testes em Linux e Windows em cada pull request
+  e em cada push na `main`.
 
 Só os benchmarks:
 
@@ -27,6 +29,7 @@ dotnet test tests/Glaux_Tools.Tests --filter Category=Benchmark --logger "consol
 | Caminho genérico de serialização (`GH_IO`) usado por qualquer tipo complexo | Renderização no canvas (WinForms/GDI+), viewport |
 | Store, revisões, consultas, validação, sincronização, snapshots, estatísticas do profiler | Leitura dos tempos reais dos componentes (`ProcessorTime`) num documento aberto |
 | Dashboard: definição (ida e volta), estado, layout, política de commit do arrasto, formatação, adaptadores do PillHub e dos cofres | Mouse, captura, menus e tooltip no canvas; componentes (carregam WinForms, indisponível no .NET 8 do Linux) |
+| Exploração de Design: variáveis e faixas, amostragem (Sobol conferido com o scipy, LHS, grade, Morris, Saltelli), sensibilidade (correlação/SRC, Morris, índices de Sobol da função de Ishigami), estado do lote, conversão valor ↔ estado de cada tipo de controle | O laço do Pill Batch Runner (aplicar → solução → ler resultados → próxima) num documento do Grasshopper; Slider Pool e Dashboard com receptores do PillHub durante o lote |
 
 As geometrias passam pelo mesmo caminho genérico (blob `GH_IO`) que é exercitado com complexos e transformações.
 

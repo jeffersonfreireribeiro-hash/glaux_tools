@@ -40,6 +40,7 @@ groups_order = [
     "Vault",
     "Diagnostics",
     "Dashboard",
+    "Explore",
     "Utilitários"
 ]
 
@@ -96,8 +97,12 @@ group_titles = {
         "Title": "13. Dashboard & Controles",
         "Desc": "Painéis interativos no canvas que reúnem controles (slider, toggle, botão, lista) e indicadores (texto, número, progresso, mini gráfico) ligados ao PillHub, com entrega ao Grasshopper sem recomputações em cascata e estado integrado a presets e snapshots."
     },
+    "Explore": {
+        "Title": "14. Exploração de Design",
+        "Desc": "Geração sistemática de alternativas (grade, aleatório, Latin Hypercube, Sobol, Morris, Saltelli), execução em lote na própria definição com gravação de entradas, resultados e controles no store, e análise de sensibilidade (correlação/SRC, efeitos elementares de Morris e índices de Sobol)."
+    },
     "Utilitários": {
-        "Title": "14. Utilitários Gerais",
+        "Title": "15. Utilitários Gerais",
         "Desc": "Funções auxiliares e de suporte operacional ao Canvas do Grasshopper."
     }
 }

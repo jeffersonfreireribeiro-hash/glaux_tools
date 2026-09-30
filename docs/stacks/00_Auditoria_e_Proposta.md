@@ -2,6 +2,8 @@
 
 > Status: proposta consolidada a partir da auditoria do código (branch `claude/glaux-functional-stacks`).
 > As pilhas 1–4 têm MVP implementado neste ciclo; as pilhas 6–8 estão definidas aqui e ficam para os próximos ciclos.
+> Atualização (v1.2.0): pilha 6 (Dashboard) e a nova pilha 7 (Exploração de Design, [07_Exploracao_de_Design.md](07_Exploracao_de_Design.md)) feitas;
+> Visualização Avançada e Animação passam a ser as pilhas 8 e 9.
 
 ---
 
@@ -68,6 +70,7 @@
 | **Timeline / Keyframe / Playback** | Não | Pulse Timer (fonte de tempo) | Pulse Timer, Slider Pool, Snapshot | Próximo ciclo |
 | **"Pill Interpolator"** (animação) | **Nome já usado** | `Data Interpolator` (reamostragem de listas) | — | Renomear a proposta para **Pill Keyframe Tween** |
 | **Animation Export** | Parcial | Viewport Capture (captura única) | Viewport Capture | Próximo ciclo |
+| **Exploração de Design** (espaço de projeto, amostragem, lote, sensibilidade) | Não | Slider Pool (modo Wallacei), Experiment Logger (registra, não gera), Fast Pareto, correlação/regressão (um par por vez) | `ControlStateService`, store `.glauxdb`, `SnapshotCodec`, `SpecialFunctions`, `ScheduleSolution` | **Feito (MVP)**: Pill Design Space, Pill Sampler, Pill Batch Runner, Pill Sensitivity — ver [07_Exploracao_de_Design.md](07_Exploracao_de_Design.md) |
 
 ---
 
@@ -134,8 +137,9 @@ PostgreSQL fica fora até existir um caso de uso remoto concreto.
 | 4. Performance & Diagnostics | Pill Runtime Profiler (+ log de métricas no store) | Data Timer | Pilha 2 (só para o log) | Média | **4** (independente; pode subir) |
 | 5. Import / Export | Coberta pelos adapters da pilha 1 (JSON, CSV longo, `.pilldata`) | CSV_In/Out | Pilha 1 | Baixa | Entregue junto com a 1 |
 | 6. Dashboard & Controls | Pill Dashboard (container + widgets label, number, slider, toggle, button, dropdown, progress, chart), Pill Dashboard Builder | Slider Pool, LEDs, Chart Line | Kit visual comum (`PillVisualKit`), PillHub, Pilha 3 | Alta (UI) | 5 — **MVP feito** |
-| 7. Advanced Visualization | Pill Mesh Heatmap, extensões do Chart Line (eixos, polar, regiões), Pill Network Graph, Pill Viewport Annotation | Spatial Heatmap, gráficos, dendrograma | Kit visual, Pilha 1 | Alta | 6 |
-| 8. Animation & Timeline | Pill Timeline, Pill Keyframe, Pill Keyframe Tween, Pill Playback, Pill Frame Export | Pulse Timer, Viewport Capture | Pilhas 1 e 3 (estados), Pulse Timer | Alta | 7 |
+| 7. Exploração de Design | Pill Design Space, Pill Sampler, Pill Batch Runner, Pill Sensitivity (próximo: Pill Surrogate) | Slider Pool, Experiment Logger, Pareto, estatística | Pilhas 2–3 (store, controles), Pilha 6 (controles do painel) | Alta | 6 — **MVP feito** |
+| 8. Advanced Visualization | Pill Mesh Heatmap, extensões do Chart Line (eixos, polar, regiões), Pill Network Graph, Pill Viewport Annotation | Spatial Heatmap, gráficos, dendrograma | Kit visual, Pilha 1 | Alta | 7 |
+| 9. Animation & Timeline | Pill Timeline, Pill Keyframe, Pill Keyframe Tween, Pill Playback, Pill Frame Export | Pulse Timer, Viewport Capture | Pilhas 1 e 3 (estados), Pulse Timer | Alta | 8 |
 
 ### MVP de cada pilha
 
@@ -146,8 +150,9 @@ PostgreSQL fica fora até existir um caso de uso remoto concreto.
 | 3 | Snapshot com ambiente e hashes → histórico → comparação → restauração compatível; logger de experimentos append-only. |
 | 4 | Ranking de componentes por solução (sem instrumentação), estatísticas com percentis, memória, cache hits/misses, custo do próprio profiler, log opcional no store. |
 | 6 | Kit visual compartilhado + painel com 8 widgets, layout stack/row/grid, estado separado da configuração, commit sem laços (live/release/auto), controles e indicadores ligados ao PillHub, presets e snapshots. |
-| 7 | Mesh Heatmap: interpolação (IDW/nearest em vértices, com raio máximo) separada do mapeamento de cor; máscara onde não há dado. |
-| 8 | Timeline (tempo) → Keyframes (estados = snapshots/bundles) → Tween (interpolação) → Playback (Pulse Timer) → Frame Export (Viewport Capture). |
+| 7 | Espaço de projeto ligado aos controles (sliders, toggles, value lists, Slider Pool, Dashboard) → amostragem determinística (grade, aleatório, LHS maximin, Sobol, Morris, Saltelli) → lote sem reentrância, com pausa/retomada, persistência no `.gh` e gravação no store com os controles aplicados → sensibilidade (correlação/SRC, Morris, Sobol). |
+| 8 | Mesh Heatmap: interpolação (IDW/nearest em vértices, com raio máximo) separada do mapeamento de cor; máscara onde não há dado. |
+| 9 | Timeline (tempo) → Keyframes (estados = snapshots/bundles) → Tween (interpolação) → Playback (Pulse Timer) → Frame Export (Viewport Capture). |
 
 ### Ordem e justificativa
 
@@ -157,6 +162,8 @@ A ordem sugerida foi mantida, com dois ajustes:
 2. **Diagnostics não depende de nada** (usa `ProcessorTime` nativo). Fica em 4.º para poder gravar métricas no store, mas pode ser usada desde já para medir as pilhas seguintes.
 
 Dashboard → Visualização → Animação ficam depois porque dependem de um kit visual comum (evitar que cada componente recrie fontes, paletas e layout) e, no caso da animação, dos estados da pilha 3.
+
+**Exploração de Design antes da Visualização (v1.2.0):** junta num fluxo único o que as pilhas 1 a 6 já entregavam separadamente (controles, store, histórico, Pareto, painel) e atende direto ao uso principal do plugin (otimização multiobjetivo e estudos paramétricos), sem depender de kit visual novo.
 
 ---
 
