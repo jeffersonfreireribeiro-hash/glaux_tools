@@ -1,0 +1,137 @@
+# Publica uma Release quando a versão do plugin muda na main.
+#
+# - Automático: um push na main que altera src/Glaux_Tools.csproj lê <Version>; se a tag vX.Y.Z ainda não existe,
+#   compila, roda os testes e cria a tag e a Release com o Glaux_Tools.gha anexado (notas = linha da versão no
+#   histórico do README).
+# - Manual (Actions → Release → Run workflow): publica uma versão antiga que ficou sem tag, usando o binário
+#   arquivado em dist/versions (ex: version 1.0.6, ref 82bbb2a).
+name: Release
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - src/Glaux_Tools.csproj
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Versão a publicar (ex: 1.0.6). Vazio = a versão do src/Glaux_Tools.csproj na main."
+        required: false
+        default: ""
+      ref:
+        description: "Commit, branch ou tag onde criar a tag (vazio = main)."
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Versão, commit e tag
+        id: meta
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+          INPUT_REF: ${{ inputs.ref }}
+        run: |
+          set -euo pipefail
+          version="${INPUT_VERSION:-}"
+          if [ -z "$version" ]; then
+            version=$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' src/Glaux_Tools.csproj | head -n 1 | tr -d '[:space:]')
+          fi
+          version="${version#v}"
+          if ! [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Versão inválida: '$version' (use X.Y.Z)."
+            exit 1
+          fi
+          target=$(git rev-parse --verify "${INPUT_REF:-HEAD}^{commit}")
+          tag="v$version"
+          if git ls-remote --exit-code --tags origin "refs/tags/$tag" > /dev/null 2>&1; then
+            exists=true
+            echo "::notice::A tag $tag já existe; nada a publicar."
+          else
+            exists=false
+          fi
+          archived="dist/versions/Glaux_Tools_v$version.gha"
+          [ -f "$archived" ] || archived="dist/versions/Glaux_Tools/Glaux_Tools_v$version.gha"
+          [ -f "$archived" ] || archived=""
+          # Build a partir do código só quando a tag aponta para o commit atual; versões antigas usam o binário arquivado
+          if [ "$target" = "$(git rev-parse HEAD)" ] && [ -z "${INPUT_VERSION:-}" ]; then build=true; else build=false; fi
+          if [ "$exists" = false ] && [ "$build" = false ] && [ -z "$archived" ]; then
+            echo "::error::Sem binário arquivado para $version em dist/versions e o commit não é o atual da main."
+            exit 1
+          fi
+          {
+            echo "version=$version"
+            echo "tag=$tag"
+            echo "target=$target"
+            echo "exists=$exists"
+            echo "build=$build"
+            echo "archived=$archived"
+          } >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-dotnet@v4
+        if: steps.meta.outputs.exists == 'false' && steps.meta.outputs.build == 'true'
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Compila e testa
+        if: steps.meta.outputs.exists == 'false' && steps.meta.outputs.build == 'true'
+        run: dotnet test tests/Glaux_Tools.Tests -c Release
+
+      - name: Notas da versão (histórico do README)
+        if: steps.meta.outputs.exists == 'false'
+        env:
+          VERSION: ${{ steps.meta.outputs.version }}
+        run: |
+          set -euo pipefail
+          row=$(grep -m 1 -F "| **v$VERSION** |" README.md || true)
+          {
+            if [ -n "$row" ]; then
+              printf '%s\n' "$row" | awk -F'|' '{ sub(/^ +/, "", $4); sub(/ +$/, "", $4); print $4 }'
+            else
+              echo "Glaux Tools v$VERSION."
+            fi
+            echo
+            echo "---"
+            echo "**Instalação:** baixe o \`Glaux_Tools.gha\` abaixo e copie para a pasta de Libraries do Grasshopper (ou use o \`INSTALAR.bat\` do repositório). Desbloqueie o arquivo em Propriedades se o Windows marcar como baixado da internet."
+            echo
+            echo "**Installation:** download \`Glaux_Tools.gha\` below and copy it to the Grasshopper Libraries folder (or use the repository's \`INSTALAR.bat\`). Unblock the file in Properties if Windows flags it as downloaded from the internet."
+          } > release-notes.md
+          cat release-notes.md
+
+      - name: Cria a tag e a Release
+        if: steps.meta.outputs.exists == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.meta.outputs.tag }}
+          TARGET: ${{ steps.meta.outputs.target }}
+          VERSION: ${{ steps.meta.outputs.version }}
+          BUILD: ${{ steps.meta.outputs.build }}
+          ARCHIVED: ${{ steps.meta.outputs.archived }}
+        run: |
+          set -euo pipefail
+          if [ "$BUILD" = true ]; then asset="src/bin/Release/net48/Glaux_Tools.gha"; else asset="$ARCHIVED"; fi
+          mkdir -p out
+          cp "$asset" out/Glaux_Tools.gha
+          # Uma versão antiga publicada depois não pode virar a "Latest" no lugar da atual
+          latest="--latest"
+          if [ "$BUILD" != true ]; then latest="--latest=false"; fi
+          gh release create "$TAG" out/Glaux_Tools.gha \
+            --target "$TARGET" \
+            --title "Glaux Tools v$VERSION" \
+            --notes-file release-notes.md \
+            "$latest"
