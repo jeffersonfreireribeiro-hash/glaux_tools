@@ -297,6 +297,116 @@ namespace Buraqueira_Tools
             DrawPanelGlyph(g, new RectangleF(10f, 3.5f, 12.5f, 17));
         }));
 
+        // ==========================================
+        // PILHA 7 — EXPLORAÇÃO DE DESIGN
+        // ==========================================
+
+        private static readonly Color IconExplore = Color.FromArgb(20, 184, 166);
+        private static Bitmap _pillDesignSpace, _pillSampler, _pillBatchRunner, _pillSensitivity;
+
+        // Três sliders com a faixa explorada destacada entre colchetes
+        public static Bitmap PillDesignSpace => _pillDesignSpace ?? (_pillDesignSpace = DrawStackIcon(g =>
+        {
+            float[][] ranges = { new[] { 4f, 15f }, new[] { 8f, 20f }, new[] { 2.5f, 11f } };
+            for (int i = 0; i < 3; i++)
+            {
+                float y = 5 + i * 7;
+                using (var rail = new Pen(Color.FromArgb(160, 170, 185), 1.4f))
+                using (var band = new Pen(IconExplore, 2.6f))
+                using (var bracket = new Pen(IconInk, 1.1f))
+                {
+                    g.DrawLine(rail, 1.5f, y, 22.5f, y);
+                    g.DrawLine(band, ranges[i][0], y, ranges[i][1], y);
+                    foreach (float x in ranges[i])
+                    {
+                        float dir = x == ranges[i][0] ? 1f : -1f;
+                        g.DrawLines(bracket, new[] { new PointF(x + dir * 1.4f, y - 2.6f), new PointF(x, y - 2.6f), new PointF(x, y + 2.6f), new PointF(x + dir * 1.4f, y + 2.6f) });
+                    }
+                }
+            }
+        }));
+
+        // Quadrado unitário com amostras espalhadas: uma por linha e coluna (Latin Hypercube)
+        public static Bitmap PillSampler => _pillSampler ?? (_pillSampler = DrawStackIcon(g =>
+        {
+            var r = new RectangleF(1.5f, 1.5f, 21, 21);
+            using (var body = new SolidBrush(Color.White))
+            using (var grid = new Pen(Color.FromArgb(38, IconInk), 0.6f))
+            using (var border = new Pen(IconInk, 1.1f))
+            {
+                g.FillRectangle(body, r);
+                for (int i = 1; i < 6; i++)
+                {
+                    g.DrawLine(grid, r.X + i * r.Width / 6, r.Y, r.X + i * r.Width / 6, r.Bottom);
+                    g.DrawLine(grid, r.X, r.Y + i * r.Height / 6, r.Right, r.Y + i * r.Height / 6);
+                }
+                g.DrawRectangle(border, r.X, r.Y, r.Width, r.Height);
+            }
+            int[] rows = { 3, 0, 4, 1, 5, 2 };
+            using (var dot = new SolidBrush(IconExplore))
+            using (var outline = new Pen(IconInk, 0.7f))
+            {
+                for (int c = 0; c < 6; c++)
+                {
+                    float cx = r.X + (c + 0.5f) * r.Width / 6, cy = r.Y + (rows[c] + 0.5f) * r.Height / 6;
+                    g.FillEllipse(dot, cx - 1.7f, cy - 1.7f, 3.4f, 3.4f);
+                    g.DrawEllipse(outline, cx - 1.7f, cy - 1.7f, 3.4f, 3.4f);
+                }
+            }
+        }));
+
+        // Pilha de execuções com "play" e barra de progresso
+        public static Bitmap PillBatchRunner => _pillBatchRunner ?? (_pillBatchRunner = DrawStackIcon(g =>
+        {
+            for (int i = 2; i >= 0; i--)
+            {
+                var card = new RectangleF(1.5f + i * 2.2f, 1.5f + i * 2.2f, 15.5f, 12.5f);
+                using (var path = RoundedPath(card, 2f))
+                using (var body = new SolidBrush(i == 0 ? Color.White : ControlPaint.Light(IconExplore, 0.55f + 0.15f * i)))
+                using (var pen = new Pen(IconInk, 1f))
+                {
+                    g.FillPath(body, path);
+                    g.DrawPath(pen, path);
+                }
+            }
+            using (var play = new SolidBrush(IconExplore))
+            using (var pen = new Pen(IconInk, 0.9f))
+            {
+                var tri = new[] { new PointF(6.5f, 4.5f), new PointF(6.5f, 11.5f), new PointF(12.5f, 8f) };
+                g.FillPolygon(play, tri);
+                g.DrawPolygon(pen, tri);
+            }
+            var bar = new RectangleF(1.5f, 19.5f, 21, 3);
+            using (var track = new SolidBrush(Color.FromArgb(220, 226, 232)))
+            using (var fill = new SolidBrush(IconExplore))
+            using (var pen = new Pen(IconInk, 0.8f))
+            {
+                g.FillRectangle(track, bar);
+                g.FillRectangle(fill, bar.X, bar.Y, bar.Width * 0.62f, bar.Height);
+                g.DrawRectangle(pen, bar.X, bar.Y, bar.Width, bar.Height);
+            }
+        }));
+
+        // Gráfico de tornado: barras em volta de um eixo, da variável que mais pesa para a que menos pesa
+        public static Bitmap PillSensitivity => _pillSensitivity ?? (_pillSensitivity = DrawStackIcon(g =>
+        {
+            float[] halves = { 9.5f, 7f, 4.5f, 2.5f };
+            for (int i = 0; i < halves.Length; i++)
+            {
+                float y = 2.5f + i * 5f;
+                using (var bar = new SolidBrush(i == 0 ? IconExplore : ControlPaint.Light(IconExplore, 0.2f + 0.17f * i)))
+                using (var pen = new Pen(IconInk, 0.8f))
+                {
+                    g.FillRectangle(bar, 12 - halves[i], y, 2 * halves[i], 3.4f);
+                    g.DrawRectangle(pen, 12 - halves[i], y, 2 * halves[i], 3.4f);
+                }
+            }
+            using (var axis = new Pen(IconInk, 1.3f))
+            {
+                g.DrawLine(axis, 12, 1, 12, 23);
+            }
+        }));
+
         /// <summary>Cartão com cabeçalho violeta, um trilho de slider e um switch (linguagem do Slider Pool).</summary>
         private static void DrawPanelGlyph(Graphics g, RectangleF r)
         {

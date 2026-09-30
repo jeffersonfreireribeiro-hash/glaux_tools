@@ -1,0 +1,42 @@
+# Compila o plugin e roda os testes em cada pull request e em cada push na main.
+# Sem Rhino instalado, o projeto usa os pacotes NuGet oficiais da McNeel (só para compilar).
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    name: Build e testes (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Testes (compila o .gha e roda o xUnit)
+        run: dotnet test tests/Glaux_Tools.Tests -c Release --logger "console;verbosity=normal"
+
+      - name: Guarda o .gha compilado
+        if: matrix.os == 'windows-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: Glaux_Tools-gha
+          path: src/bin/Release/net48/Glaux_Tools.gha
+          retention-days: 14

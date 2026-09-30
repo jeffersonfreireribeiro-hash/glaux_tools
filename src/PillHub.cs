@@ -705,6 +705,17 @@ namespace Buraqueira_Tools
             targetDoc.ScheduleSolution(5, doc => ExecuteSafeExpiration(doc));
         }
 
+        /// <summary>
+        /// Expira já os receptores com dado novo, em vez de esperar o callback agendado. Necessário quando se publica de
+        /// dentro de outro callback de <c>ScheduleSolution</c>: o Grasshopper copia a lista de callbacks antes de chamá-los,
+        /// então o agendado pelo <see cref="NotifyReceivers"/> só rodaria na solução seguinte (receptores um passo atrasados).
+        /// </summary>
+        internal static void ExpirePendingReceivers(GH_Document doc)
+        {
+            if (doc == null || doc.SolutionState == GH_ProcessStep.Process) return;
+            ExecuteSafeExpiration(doc);
+        }
+
         private static void ExecuteSafeExpiration(GH_Document doc)
         {
             if (doc == null)

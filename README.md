@@ -14,6 +14,7 @@
   <a href="https://www.rhino3d.com/6/features/grasshopper/"><img src="https://img.shields.io/badge/Grasshopper-1.0-4E8752.svg" alt="Grasshopper" /></a>
   <a href="https://dotnet.microsoft.com/"><img src="https://img.shields.io/badge/.NET%20Framework-4.8-512BD4.svg?logo=dotnet&logoColor=white" alt=".NET 4.8" /></a>
   <a href="#versoes"><img src="https://img.shields.io/badge/dynamic/xml?url=https%3A%2F%2Fraw.githubusercontent.com%2Fjeffersonfreireribeiro-hash%2Fglaux_tools%2Fmain%2Fsrc%2FGlaux_Tools.csproj&query=%2F%2FVersion&prefix=v&label=Version&color=blue" alt="Version" /></a>
+  <a href="https://github.com/jeffersonfreireribeiro-hash/glaux_tools/actions/workflows/ci.yml"><img src="https://github.com/jeffersonfreireribeiro-hash/glaux_tools/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT" /></a>
 </p>
 
@@ -44,6 +45,7 @@ Ele foi pensado para três problemas comuns nesse tipo de definição:
 5. **🗺️ Visualização e desenho técnico:** gráficos no próprio canvas, mapas de calor no viewport, superfícies de resposta e pranchas vetoriais (SVG/PDF) com simbologia técnica inspirada no QGIS e na ABNT.
 6. **💾 Dados, proveniência e diagnóstico:** serialização de DataTrees sem perda, banco local com revisões, snapshots do projeto, registro de experimentos e profiler de execução.
 7. **🎛️ Dashboard:** painéis interativos no canvas que reúnem controles e indicadores ligados ao `PillHub`.
+8. **🧪 Exploração de design:** geração de alternativas (Latin Hypercube, Sobol, grade, Morris), execução em lote na própria definição com registro no banco local e análise de sensibilidade: quais parâmetros mais pesam em cada resultado.
 
 <a name="english"></a>
 
@@ -66,6 +68,7 @@ It targets three problems that are common in this kind of definition:
 5. **🗺️ Visualization and technical drawing:** charts drawn on the canvas, viewport heatmaps, response surfaces and vector sheets (SVG/PDF) with QGIS/ABNT-inspired technical line styles.
 6. **💾 Data, provenance and diagnostics:** lossless DataTree serialization, a local database with revisions, project snapshots, experiment logging and a runtime profiler.
 7. **🎛️ Dashboard:** interactive on-canvas panels that combine controls and indicators linked to `PillHub`.
+8. **🧪 Design exploration:** systematic alternatives (Latin Hypercube, Sobol, grid, Morris), batch runs inside the definition with every run logged to the local database, and sensitivity analysis: which parameters drive each result.
 
 **Quick start:** run [`INSTALAR.bat`](INSTALAR.bat) (or `install.ps1`) on Windows, or copy [`dist/Glaux_Tools.gha`](dist/Glaux_Tools.gha) to `%APPDATA%\Grasshopper\Libraries\Glaux\` and unblock the file. The **Glaux Tools** tab appears in Grasshopper after restarting Rhino 8.
 
@@ -237,6 +240,22 @@ chart Fitness | key=[OPT] Fitness | span=2
 | **Pill Dashboard** | `PillDash` | Painel com widgets label, number, slider, toggle, button, dropdown, progress e mini chart em layout stack/row/grid. Controles saem em V e, com `key=`, no PillHub; indicadores com `key=` mostram canais do Hub sem fios. Arrasto com commit `auto`/`live`/`release` (nada de uma solução por movimento do mouse). Estado separado da configuração: vai para o `.gh`, undo, Pill Preset Vault e Pill Snapshot/Restore. |
 | **Pill Dashboard Builder** | `DashBuild` | Gera widgets a partir de listas (tipo, rótulo, configurações, valores) ou de um grupo do PillHub, e devolve a definição textual equivalente. |
 
+### 8. 🧪 Exploração de Design
+Gera alternativas de forma sistemática, roda cada uma na própria definição e mostra quais parâmetros mais pesam em cada resultado ([Pilha 7](docs/stacks/07_Exploracao_de_Design.md)):
+
+```text
+Design Space ──► Sampler ──► Batch Runner ──► Sensitivity
+ (variáveis)     (amostras)   (roda e grava)    (o que pesa)
+                                  └──► Fast Pareto · Pill DB Query · Pill Restore (reaplica uma execução)
+```
+
+| Componente | Nickname | Descrição |
+| :--- | :---: | :--- |
+| **Pill Design Space** | `DesignSpace` | Variáveis a explorar: sliders, toggles e value lists ligados por fio (ou um Pill Slider Pool / Pill Dashboard inteiro) ou escolhidos pelo nome, com faixas, passos e níveis ajustáveis (`Largura \| min=4 \| max=12 \| step=0.5`). |
+| **Pill Sampler** | `Sampler` | Plano de amostras determinístico: Latin Hypercube (maximin), Sobol, aleatório, grade, trajetórias de Morris e esquema de Saltelli. |
+| **Pill Batch Runner** | `Batch` | Aplica cada amostra nos controles, espera a solução e registra os resultados, sem reentrância (callback de `ScheduleSolution`). Pausa, retoma, sobrevive a salvar/reabrir o `.gh`, restaura os controles no fim e grava cada execução no store com os controles aplicados (o Pill Restore reaplica qualquer uma). |
+| **Pill Sensitivity** | `Sensitivity` | Ranking das variáveis por resultado: correlação e regressão padronizada (SRC, R²), efeitos elementares de Morris (μ*, σ) ou índices de Sobol (S1, ST). |
+
 > A auditoria que levou a essas pilhas (o que já existia, o que foi reaproveitado, dependências avaliadas, MVPs e próximas pilhas: Visualização Avançada, Animação/Timeline) está em [`docs/stacks/00_Auditoria_e_Proposta.md`](docs/stacks/00_Auditoria_e_Proposta.md).
 
 ---
@@ -247,6 +266,7 @@ chart Fitness | key=[OPT] Fitness | span=2
 
 | Versão | Data | Principais Novidades & Melhorias |
 | :---: | :---: | :--- |
+| **v1.2.0** | 30/09/2026 | **Exploração de Design**: 4 componentes novos no painel `Explore`: `Pill Design Space` (variáveis a partir de sliders, toggles, value lists, Slider Pool e Dashboard), `Pill Sampler` (Latin Hypercube, Sobol, aleatório, grade, Morris e Saltelli), `Pill Batch Runner` (roda cada alternativa na definição, com pausa, retomada e gravação no store) e `Pill Sensitivity` (correlação/SRC, Morris e índices de Sobol). Aplicação de controles pelo Pill Restore e pelo Preset Vault sem soluções extras em value lists e panels, receptores do PillHub atualizados na mesma solução e build, testes e publicação de versões automáticos no GitHub Actions. |
 | **v1.1.0** | 29/09/2026 | **Pilhas Funcionais & Dashboard**: 19 componentes novos em cinco painéis: `I/O` (serialização de DataTrees sem perda em JSON, CSV, binário e `.pilldata`), `Data` (banco local `.glauxdb` com revisões, consultas, validação e sincronização), `Vault` (snapshots, histórico, comparação, restauração e registro de experimentos), `Diagnostics` (`Pill Runtime Profiler`) e `Dashboard` (`Pill Dashboard` e `Pill Dashboard Builder`). PillHub com menos recomputações e sem vazamento de memória ao fechar documentos, projeto de testes automatizados e introdução do README em português e inglês. |
 | **v1.0.6** | 28/09/2026 | **Estabilidade do Pill Pulse Timer**: correção de reentrância ao abrir arquivos com o timer ativo. Um pulso que chega enquanto uma solução ainda está em andamento agora é reagendado para logo depois dela, em vez de disparar uma nova solução no meio da atual; falhas nesse momento viram um aviso na linha de comando do Rhino em vez de interromper a definição. |
 | **v1.0.5** | 26/09/2026 | **Cobertura Integral de 50 Fórmulas Estatísticas & ML**: 8 novos componentes (`Normal Distribution`, `Poisson Distribution`, `Probability & Bayes`, `Confidence Interval & t-Score`, `ANOVA & F-Test`, `Linear Regression OLS`, `Classification & Tree Metrics` e `Cluster Validation`). Solvers analíticos de alta precisão (Acklam, Incomplete Beta/Gamma, Halley). |
@@ -280,13 +300,16 @@ O binário do plugin será gerado em:
 Sem o Rhino instalado (ex.: CI ou Linux), o projeto compila contra os pacotes NuGet `Grasshopper`/`RhinoCommon` automaticamente.
 
 ### Testes automatizados
-O projeto [`tests/Glaux_Tools.Tests`](tests/) (xUnit, .NET 8) carrega o `.gha` compilado e testa os núcleos fora do Rhino: round-trip de DataTrees, store (revisões, corrupção, compactação), sincronização, snapshot → alteração → restauração, cache, import/export, profiler × medição de referência e o Dashboard (definição, estado, layout, política de commit durante o arrasto, formatação e contratos com os cofres). A renderização do Dashboard tem uma galeria separada em [`tests/render`](tests/render/DashboardGallery.cs).
+O projeto [`tests/Glaux_Tools.Tests`](tests/) (xUnit, .NET 8) carrega o `.gha` compilado e testa os núcleos fora do Rhino: round-trip de DataTrees, store (revisões, corrupção, compactação), sincronização, snapshot → alteração → restauração, cache, import/export, profiler × medição de referência, o Dashboard (definição, estado, layout, política de commit durante o arrasto, formatação e contratos com os cofres) e a Exploração de Design (sequência de Sobol conferida com o scipy, índices de Sobol da função de Ishigami contra os valores analíticos, Morris, Latin Hypercube e o estado do lote). A renderização do Dashboard tem uma galeria separada em [`tests/render`](tests/render/DashboardGallery.cs).
 
 ```powershell
 dotnet test tests/Glaux_Tools.Tests
 ```
 
 Detalhes e limitações (geometria que exige o Rhino) em [`tests/README.md`](tests/README.md).
+
+### Integração contínua e versões
+Cada pull request e cada push na `main` compila o plugin e roda os testes no GitHub Actions, em Linux e Windows ([`ci.yml`](.github/workflows/ci.yml)). Quando a versão em `src/Glaux_Tools.csproj` muda na `main`, o workflow [`release.yml`](.github/workflows/release.yml) cria a tag `vX.Y.Z` e publica a Release com o `Glaux_Tools.gha` anexado e as notas do histórico acima. Versões antigas sem tag podem ser publicadas pelo próprio workflow (**Actions → Release → Run workflow**, com a versão e o commit), usando o binário arquivado em `dist/versions`.
 
 ---
 
@@ -309,7 +332,7 @@ Detalhes e limitações (geometria que exige o Rhino) em [`tests/README.md`](tes
 ---
 
 ## 📚 Documentação Técnica Adicional
-O repositório inclui a pasta [`docs/`](docs/) com **106 fichas técnicas individuais** detalhando a formulação matemática, diagramas Mermaid de fluxo de dados montante/jusante (*upstream/downstream*), contratos de conexão e exemplos práticos para cada componente. A pasta [`docs/stacks/`](docs/stacks/) documenta as pilhas funcionais (Data Core, Persistence, Project Vault, Diagnostics, Dashboard) e a proposta das próximas.
+O repositório inclui a pasta [`docs/`](docs/) com **110 fichas técnicas individuais** detalhando a formulação matemática, diagramas Mermaid de fluxo de dados montante/jusante (*upstream/downstream*), contratos de conexão e exemplos práticos para cada componente. A pasta [`docs/stacks/`](docs/stacks/) documenta as pilhas funcionais (Data Core, Persistence, Project Vault, Diagnostics, Dashboard, Exploração de Design) e a proposta das próximas.
 
 ---
 

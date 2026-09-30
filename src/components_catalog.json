@@ -3450,6 +3450,114 @@
     ]
   },
   {
+    "File": "PillBatchRunner_Component.cs",
+    "Name": "Pill Batch Runner",
+    "NickName": "Batch",
+    "Category": "Glaux Tools",
+    "SubCategory": "Explore",
+    "Description": "Roda cada amostra do plano na definição e guarda os resultados: 1. ligue o Plan (Pill Sampler) e, em Results, os resultados a medir (qualquer saída que dependa dos controles); 2. ligue Run (toggle): cada amostra é aplicada nos controles, a definição recalcula e os resultados são lidos; 3. desligue Run (ou Esc) para pausar; ligar de novo retoma da próxima amostra. Reset descarta as execuções. Com Experiment preenchido, cada execução é gravada no store (parâmetros, resultados, controles e tempo): o Pill Restore reaplica qualquer uma no canvas. As execuções ficam salvas no .gh. Ao terminar ou pausar, os controles voltam aos valores de antes (Restore).",
+    "Inputs": [
+      {
+        "Name": "Plan",
+        "Nick": "P",
+        "Type": "Generic",
+        "Desc": "Plano de amostras do Pill Sampler."
+      },
+      {
+        "Name": "Results",
+        "Nick": "R",
+        "Type": "Generic",
+        "Desc": "Resultados a registrar em cada execução (números viram colunas; todos os itens, em ordem de ramo)."
+      },
+      {
+        "Name": "Run",
+        "Nick": "Run",
+        "Type": "Boolean",
+        "Desc": "Liga para rodar (ou retomar); desliga para pausar. Use um toggle."
+      },
+      {
+        "Name": "Reset",
+        "Nick": "Rst",
+        "Type": "Boolean",
+        "Desc": "Descarta as execuções guardadas (na borda False → True; use um botão)."
+      },
+      {
+        "Name": "Store",
+        "Nick": "S",
+        "Type": "Generic",
+        "Desc": "Conexão do Pill DB Connect, ou caminho de um arquivo .glauxdb. Vazio = store padrão do projeto (pasta PillVault do .gh)."
+      },
+      {
+        "Name": "Experiment",
+        "Nick": "E",
+        "Type": "Text",
+        "Desc": "Nome do experimento no store (vazio = não grava; as execuções continuam no .gh)."
+      },
+      {
+        "Name": "Settle",
+        "Nick": "ms",
+        "Type": "Integer",
+        "Desc": "Espera entre execuções, em ms (para definições que precisam de um tempo extra)."
+      },
+      {
+        "Name": "Restore",
+        "Nick": "Rs",
+        "Type": "Boolean",
+        "Desc": "Ao terminar ou pausar, volta os controles aos valores de antes do lote."
+      },
+      {
+        "Name": "Live",
+        "Nick": "Lv",
+        "Type": "Boolean",
+        "Desc": "Atualiza Inputs/Results a cada execução. Desligado, elas só aparecem com o lote parado: componentes pesados ligados às saídas (ex: Fast Pareto com milhares de linhas) não recalculam a cada passo."
+      }
+    ],
+    "Outputs": [
+      {
+        "Name": "Plan",
+        "Nick": "P",
+        "Type": "Generic",
+        "Desc": "Plano das execuções (ligue no Pill Sensitivity)."
+      },
+      {
+        "Name": "Inputs",
+        "Nick": "In",
+        "Type": "Generic",
+        "Desc": "Um ramo {i} por execução com os valores aplicados (i = índice da amostra)."
+      },
+      {
+        "Name": "Results",
+        "Nick": "Res",
+        "Type": "Number",
+        "Desc": "Um ramo {i} por execução com os resultados numéricos (NaN onde o item não era número). Pronto para Fast Pareto e Pill Sensitivity."
+      },
+      {
+        "Name": "Runs",
+        "Nick": "N",
+        "Type": "Integer",
+        "Desc": "Execuções concluídas."
+      },
+      {
+        "Name": "Progress",
+        "Nick": "%",
+        "Type": "Number",
+        "Desc": "Progresso de 0 a 1 (ligue num Transmitter para um widget progress do Pill Dashboard)."
+      },
+      {
+        "Name": "Status",
+        "Nick": "St",
+        "Type": "Text",
+        "Desc": "Rodando, pausado (e por quê) ou concluído."
+      },
+      {
+        "Name": "Info",
+        "Nick": "I",
+        "Type": "Text",
+        "Desc": "Tempo por execução, tempo restante estimado e gravação no store."
+      }
+    ]
+  },
+  {
     "File": "PillBundlePack_Component.cs",
     "Name": "Pill Bundle Pack (Parameter Hub)",
     "NickName": "PillPack",
@@ -4550,6 +4658,66 @@
         "Nick": "S",
         "Type": "Text",
         "Desc": "Resumo por regra."
+      }
+    ]
+  },
+  {
+    "File": "PillDesignSpace_Component.cs",
+    "Name": "Pill Design Space",
+    "NickName": "DesignSpace",
+    "Category": "Glaux Tools",
+    "SubCategory": "Explore",
+    "Description": "Define as variáveis de projeto a explorar (o que o Pill Sampler vai variar e o Pill Batch Runner vai aplicar): - Controls: ligue sliders, toggles, value lists, um Pill Slider Pool ou um Pill Dashboard (todos os controles dele); - Names: ou escolha controles pelo nome, com curingas ('Largura', '[VAR]*', '*'); - Ranges: ajuste faixas e níveis: 'Largura | min=2 | max=8 | step=0.5', 'Material | levels=Concreto;Madeira', 'Rotação | off'. Por padrão vale a faixa do próprio controle; o passo vem da precisão do slider (inteiro, 1 casa decimal...).",
+    "Inputs": [
+      {
+        "Name": "Controls",
+        "Nick": "C",
+        "Type": "Generic",
+        "Desc": "Controles a variar (ligue sliders, toggles, value lists, Pill Slider Pool ou Pill Dashboard). Só a origem do fio importa, não o valor."
+      },
+      {
+        "Name": "Names",
+        "Nick": "N",
+        "Type": "Text",
+        "Desc": "Controles pelo nome ou apelido, com curingas (* e ?). Sliders do Slider Pool: '[CATEGORIA] Nome'; do Dashboard: 'Painel: Rótulo'."
+      },
+      {
+        "Name": "Ranges",
+        "Nick": "R",
+        "Type": "Text",
+        "Desc": "Uma linha por ajuste: 'Nome | min=… | max=… | step=…', 'Nome | levels=A;B;C' ou 'Nome | off'. O nome aceita curingas."
+      }
+    ],
+    "Outputs": [
+      {
+        "Name": "Space",
+        "Nick": "DS",
+        "Type": "Generic",
+        "Desc": "Espaço de projeto (ligue no Pill Sampler)."
+      },
+      {
+        "Name": "Names",
+        "Nick": "N",
+        "Type": "Text",
+        "Desc": "Nome de cada variável, na ordem das colunas das amostras."
+      },
+      {
+        "Name": "Ranges",
+        "Nick": "R",
+        "Type": "Text",
+        "Desc": "Faixa, passo ou níveis de cada variável."
+      },
+      {
+        "Name": "Count",
+        "Nick": "k",
+        "Type": "Integer",
+        "Desc": "Quantidade de variáveis."
+      },
+      {
+        "Name": "Info",
+        "Nick": "I",
+        "Type": "Text",
+        "Desc": "Resumo (tamanho do espaço discreto, avisos)."
       }
     ]
   },
@@ -5844,6 +6012,78 @@
     ]
   },
   {
+    "File": "PillSampler_Component.cs",
+    "Name": "Pill Sampler",
+    "NickName": "Sampler",
+    "Category": "Glaux Tools",
+    "SubCategory": "Explore",
+    "Description": "Gera as alternativas a rodar a partir do Pill Design Space. Métodos: - lhs (padrão): Latin Hypercube, boa cobertura com poucas amostras; - sobol: sequência quase aleatória (use potências de 2: 64, 128, 256…); - random: Monte Carlo; grid: todas as combinações de N níveis; - morris: trajetórias para triagem de sensibilidade (Count = trajetórias; total = Count × (k + 1)); - saltelli: para índices de Sobol (Count = N base; total = N × (k + 2)). Mesma semente → mesmas amostras. Nada muda no canvas: ligue o plano no Pill Batch Runner.",
+    "Inputs": [
+      {
+        "Name": "Space",
+        "Nick": "DS",
+        "Type": "Generic",
+        "Desc": "Espaço de projeto do Pill Design Space."
+      },
+      {
+        "Name": "Method",
+        "Nick": "M",
+        "Type": "Text",
+        "Desc": "lhs, sobol, random, grid, morris ou saltelli."
+      },
+      {
+        "Name": "Count",
+        "Nick": "N",
+        "Type": "Integer",
+        "Desc": "Amostras (lhs, sobol, random), total aproximado (grid), trajetórias (morris) ou N base (saltelli)."
+      },
+      {
+        "Name": "Seed",
+        "Nick": "S",
+        "Type": "Integer",
+        "Desc": "Semente: a mesma semente gera as mesmas amostras."
+      },
+      {
+        "Name": "Options",
+        "Nick": "O",
+        "Type": "Text",
+        "Desc": "Opcional: 'levels=5' (grid: níveis por variável; morris: níveis da grade), 'maximin=20' (lhs), 'centered' (lhs), 'scramble=false' (sobol/saltelli)."
+      }
+    ],
+    "Outputs": [
+      {
+        "Name": "Plan",
+        "Nick": "P",
+        "Type": "Generic",
+        "Desc": "Plano de amostras (ligue no Pill Batch Runner)."
+      },
+      {
+        "Name": "Samples",
+        "Nick": "S",
+        "Type": "Generic",
+        "Desc": "Um ramo {i} por amostra com o valor de cada variável (níveis como texto)."
+      },
+      {
+        "Name": "Unit",
+        "Nick": "U",
+        "Type": "Number",
+        "Desc": "Mesmas amostras em coordenadas unitárias [0, 1] (úteis para gráficos)."
+      },
+      {
+        "Name": "Count",
+        "Nick": "N",
+        "Type": "Integer",
+        "Desc": "Quantidade de amostras (execuções necessárias)."
+      },
+      {
+        "Name": "Info",
+        "Nick": "I",
+        "Type": "Text",
+        "Desc": "Método, tamanho e observações."
+      }
+    ]
+  },
+  {
     "File": "PillSchemaInspector_Component.cs",
     "Name": "Pill Schema Inspector",
     "NickName": "PillSchema",
@@ -5924,6 +6164,78 @@
         "Nick": "I",
         "Type": "Text",
         "Desc": "Arquivo, tamanho, versão e integridade."
+      }
+    ]
+  },
+  {
+    "File": "PillSensitivity_Component.cs",
+    "Name": "Pill Sensitivity",
+    "NickName": "Sensitivity",
+    "Category": "Glaux Tools",
+    "SubCategory": "Explore",
+    "Description": "Mostra quais variáveis mais pesam em cada resultado, a partir do Plan e dos Results do Pill Batch Runner: - correlation (planos lhs, sobol, random, grid): Pearson (com p-valor), Spearman e coeficientes de regressão padronizados (SRC). Importância = |SRC|; o R² diz se um modelo linear explica o resultado; - morris (plano morris): μ* (importância), μ (sinal) e σ (não linearidade ou interação); - sobol (plano saltelli): índices S1 (efeito sozinho) e ST (efeito total, com interações). Importância = ST. Com Method vazio, o método segue o plano. Funciona com execuções parciais (lote pausado).",
+    "Inputs": [
+      {
+        "Name": "Plan",
+        "Nick": "P",
+        "Type": "Generic",
+        "Desc": "Plano executado (saída Plan do Pill Batch Runner ou do Pill Sampler)."
+      },
+      {
+        "Name": "Results",
+        "Nick": "R",
+        "Type": "Generic",
+        "Desc": "Um ramo por execução; o último índice do caminho é a amostra (saída Results do Batch Runner)."
+      },
+      {
+        "Name": "Names",
+        "Nick": "N",
+        "Type": "Text",
+        "Desc": "Nome de cada resultado (colunas de Results), para o ranking."
+      },
+      {
+        "Name": "Method",
+        "Nick": "M",
+        "Type": "Text",
+        "Desc": "auto (padrão), correlation, morris ou sobol."
+      }
+    ],
+    "Outputs": [
+      {
+        "Name": "Variables",
+        "Nick": "V",
+        "Type": "Text",
+        "Desc": "Variáveis, na ordem das colunas de Importance."
+      },
+      {
+        "Name": "Importance",
+        "Nick": "Imp",
+        "Type": "Number",
+        "Desc": "Um ramo {r} por resultado: importância de cada variável (|SRC|, μ* ou ST)."
+      },
+      {
+        "Name": "Ranking",
+        "Nick": "Rk",
+        "Type": "Text",
+        "Desc": "Uma linha por resultado, da variável mais para a menos importante."
+      },
+      {
+        "Name": "Details",
+        "Nick": "D",
+        "Type": "Number",
+        "Desc": "Ramo {r; variável}: todas as medidas, na ordem de Measures."
+      },
+      {
+        "Name": "Measures",
+        "Nick": "Ms",
+        "Type": "Text",
+        "Desc": "Nome das medidas em Details."
+      },
+      {
+        "Name": "Info",
+        "Nick": "I",
+        "Type": "Text",
+        "Desc": "Método, execuções usadas, ajuste (R² ou soma dos S1) e observações."
       }
     ]
   },
