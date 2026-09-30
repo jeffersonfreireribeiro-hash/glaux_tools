@@ -120,9 +120,11 @@ namespace Buraqueira_Tools.Explore
             }
         }
 
+        /// <summary>Pausa um lote em andamento (sem efeito em lote parado, concluído ou vazio).</summary>
         public void Pause(string reason)
         {
-            if (State == BatchState.Running) State = BatchState.Paused;
+            if (State != BatchState.Running) return;
+            State = BatchState.Paused;
             StopReason = reason ?? "";
         }
 
