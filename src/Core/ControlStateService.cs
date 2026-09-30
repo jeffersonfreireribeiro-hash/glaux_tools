@@ -118,21 +118,7 @@ namespace Buraqueira_Tools
 
             Action apply = () =>
             {
-                var touchedPools = new HashSet<PillSliderPool_Component>();
-                var touchedProviders = new HashSet<IGH_ActiveObject>();
-                foreach (var m in compatible)
-                {
-                    try
-                    {
-                        ApplyOne(doc, m, touchedPools, touchedProviders);
-                    }
-                    catch
-                    {
-                        // Um controle que falhar não impede os demais
-                    }
-                }
-                foreach (var pool in touchedPools) pool.ExpireSolution(false);
-                foreach (var provider in touchedProviders) provider.ExpireSolution(false);
+                ApplyNow(doc, compatible);
                 Grasshopper.Instances.RedrawCanvas();
                 doc.NewSolution(false);
             };
@@ -151,6 +137,33 @@ namespace Buraqueira_Tools
             {
                 apply();
             }
+        }
+
+        /// <summary>
+        /// Aplica os controles compatíveis e expira os objetos alterados, sem disparar solução: para quem roda a solução
+        /// logo em seguida (ex: callback de <c>ScheduleSolution</c>, que roda antes da solução agendada).
+        /// </summary>
+        public static void ApplyNow(GH_Document doc, IList<ControlMatch> matches)
+        {
+            if (doc == null || matches == null) return;
+            var touchedPools = new HashSet<PillSliderPool_Component>();
+            var touchedProviders = new HashSet<IGH_ActiveObject>();
+            foreach (var m in matches)
+            {
+                if (!m.Compatible) continue;
+                try
+                {
+                    ApplyOne(doc, m, touchedPools, touchedProviders);
+                }
+                catch
+                {
+                    // Um controle que falhar não impede os demais
+                }
+            }
+            foreach (var pool in touchedPools) pool.ExpireSolution(false);
+            foreach (var provider in touchedProviders) provider.ExpireSolution(false);
+            // Sliders do pool e controles com key= publicaram no PillHub: os receptores entram nesta mesma solução
+            if (touchedPools.Count > 0 || touchedProviders.Count > 0) PillHub.ExpirePendingReceivers(doc);
         }
 
         private static void ApplyOne(GH_Document doc, ControlMatch m, HashSet<PillSliderPool_Component> touchedPools, HashSet<IGH_ActiveObject> touchedProviders)
@@ -218,17 +231,28 @@ namespace Buraqueira_Tools
                     toggle.ExpireSolution(false);
                     break;
                 case GH_ValueList list when saved.Text != null:
+                    // SelectItem dispararia uma solução (e um undo) por lista; aqui a seleção é direta e o
+                    // documento recalcula uma vez no fim, como nos sliders
+                    int target = -1;
                     for (int i = 0; i < list.ListItems.Count; i++)
                     {
                         if (string.Equals(list.ListItems[i].Name, saved.Text, StringComparison.OrdinalIgnoreCase))
                         {
-                            list.SelectItem(i);
+                            target = i;
                             break;
                         }
                     }
+                    if (target >= 0)
+                    {
+                        for (int i = 0; i < list.ListItems.Count; i++) list.ListItems[i].Selected = i == target;
+                        list.ExpireSolution(false);
+                    }
                     break;
                 case GH_Panel panel when saved.Text != null:
-                    panel.SetUserText(saved.Text);
+                    // SetUserText também dispara uma solução; mesma estratégia da value list
+                    panel.UserText = saved.Text;
+                    panel.Attributes?.ExpireLayout();
+                    panel.ExpireSolution(false);
                     break;
             }
         }

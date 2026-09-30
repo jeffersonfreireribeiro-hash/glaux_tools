@@ -288,7 +288,8 @@ namespace Buraqueira_Tools
         public bool ApplyControlState(string controlId, ControlState saved)
         {
             bool changed = DashboardVault.Apply(Controller, controlId, saved);
-            if (changed) _pendingChanged = controlId;
+            // Publica já (como no clique): publicar só no SolveInstance deixaria os receptores de key= com o valor antigo
+            if (changed) PrepareCommit(controlId);
             return changed;
         }
 
@@ -298,6 +299,7 @@ namespace Buraqueira_Tools
         {
             var changed = Controller.State.Apply(lines, Controller.Spec);
             if (changed.Count == 0) return false;
+            foreach (var id in changed) PrepareCommit(id);
             _pendingChanged = string.Join(",", changed);
             ExpireSolution(false);
             return true;
