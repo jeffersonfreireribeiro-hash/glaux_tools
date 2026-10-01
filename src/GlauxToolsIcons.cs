@@ -289,6 +289,10 @@ namespace Buraqueira_Tools
 
         public static Bitmap IsometricSurfaceGraph => _isometricSurfaceGraph ?? (_isometricSurfaceGraph = DrawIsometricSurfaceGraph());
 
+        private static Bitmap _chart3DColumn;
+
+        public static Bitmap Chart3DColumn => _chart3DColumn ?? (_chart3DColumn = DrawChart3DColumn());
+
         // ==========================================
 
         // MÉTODOS DE RENDERIZAÇÃO GDI+ (24x24 px)
@@ -6458,6 +6462,82 @@ namespace Buraqueira_Tools
                 {
                     g.DrawString("S", font, brush, 1, 15);
                 }
+            }
+            return bmp;
+        }
+
+        private static Bitmap DrawChart3DColumn()
+        {
+            var bmp = new Bitmap(24, 24, PixelFormat.Format32bppArgb);
+            using (var g = InitGfx(bmp))
+            {
+                // Grade isométrica base sutil
+                using (var gridPen = new Pen(Color.FromArgb(90, 110, 135), 0.9f))
+                {
+                    g.DrawLine(gridPen, 2f, 17f, 12f, 22f);
+                    g.DrawLine(gridPen, 12f, 22f, 22f, 17f);
+                    g.DrawLine(gridPen, 2f, 17f, 12f, 12f);
+                    g.DrawLine(gridPen, 12f, 12f, 22f, 17f);
+                }
+
+                void DrawIsoColumn(float bx, float by, float w, float h, Color topCol, Color frontCol, Color sideCol)
+                {
+                    float halfW = w * 0.5f;
+                    float depthY = w * 0.28f;
+
+                    PointF bFront = new PointF(bx, by);
+                    PointF bRight = new PointF(bx + halfW, by - depthY);
+                    PointF bBack  = new PointF(bx, by - depthY * 2f);
+                    PointF bLeft  = new PointF(bx - halfW, by - depthY);
+
+                    PointF tFront = new PointF(bFront.X, bFront.Y - h);
+                    PointF tRight = new PointF(bRight.X, bRight.Y - h);
+                    PointF tBack  = new PointF(bBack.X,  bBack.Y  - h);
+                    PointF tLeft  = new PointF(bLeft.X,  bLeft.Y  - h);
+
+                    using (var br = new SolidBrush(frontCol))
+                    {
+                        g.FillPolygon(br, new PointF[] { bLeft, bFront, tFront, tLeft });
+                    }
+
+                    using (var br = new SolidBrush(sideCol))
+                    {
+                        g.FillPolygon(br, new PointF[] { bFront, bRight, tRight, tFront });
+                    }
+
+                    using (var br = new SolidBrush(topCol))
+                    {
+                        g.FillPolygon(br, new PointF[] { tLeft, tFront, tRight, tBack });
+                    }
+
+                    using (var edgePen = new Pen(Color.FromArgb(160, 20, 28, 38), 0.8f))
+                    {
+                        g.DrawPolygon(edgePen, new PointF[] { tLeft, tFront, tRight, tBack });
+                        g.DrawLine(edgePen, bFront, tFront);
+                        g.DrawLine(edgePen, bLeft, tLeft);
+                        g.DrawLine(edgePen, bRight, tRight);
+                        g.DrawLine(edgePen, bLeft, bFront);
+                        g.DrawLine(edgePen, bFront, bRight);
+                    }
+                }
+
+                // Coluna 1 (Fundo / Centro): Laranja / Dourado
+                DrawIsoColumn(11.5f, 15f, 5.5f, 9.5f,
+                    Color.FromArgb(255, 185, 70),
+                    Color.FromArgb(240, 140, 25),
+                    Color.FromArgb(195, 95, 10));
+
+                // Coluna 2 (Frente / Esquerda): Ciano brilhante
+                DrawIsoColumn(6.5f, 18.5f, 5.0f, 6.5f,
+                    Color.FromArgb(100, 230, 255),
+                    Color.FromArgb(0, 180, 230),
+                    Color.FromArgb(0, 135, 180));
+
+                // Coluna 3 (Frente / Direita): Verde Esmeralda
+                DrawIsoColumn(16.5f, 18.5f, 5.0f, 11f,
+                    Color.FromArgb(90, 240, 150),
+                    Color.FromArgb(35, 200, 100),
+                    Color.FromArgb(20, 150, 70));
             }
             return bmp;
         }
