@@ -37,6 +37,12 @@ Projetado especialmente para visualização de matrizes espaciais, distribuiçõ
 
 ---
 
+## 🆕 v1.5.1 — proporção real, rótulo do eixo e estatísticas
+
+* **Proporção X × Y:** a caixa 3D respeita os intervalos reais (`MaxX−MinX` × `MaxY−MinY`): o maior eixo tem extensão 1 e o outro, a razão entre os intervalos (mín. 0,05). Z continua com altura fixa. A mesma projeção vale para a caixa, a superfície, os eixos e o ajuste de enquadramento (canvas e PNG).
+* **Rótulo `x2` (eixo Y):** os números e o rótulo do eixo Y ficam do lado externo da caixa, ao longo da normal do eixo; o rótulo vem **depois** dos números (não cai mais sobre o tick do meio). Se o número da quina coincide com o do eixo X (“0.125 / 0.125”), aparece uma só vez; se difere, o do eixo Y é deslocado ao longo do eixo.
+* **Estatísticas (mesmos índices do [[Line Chart & Statistics]]):** N, média, mediana, σ, mínimo e máximo dos valores Z. No PNG, painel “ESTATÍSTICAS” no canto superior esquerdo; no canvas, rodapé com `N | Média | Mediana | σ | Mín/Máx` (e a linha de grade/visão/paleta abaixo); o resumo textual (`Rep`) ganhou N, mediana e mín/máx dos dados.
+* Não testado: desenho no canvas do Grasshopper com janela (PNG verificado por imagens geradas headless).
 ## 📥 Entradas (Inputs)
 
 | Parâmetro | Nick | Acesso | Tipo C# / Goo | Descrição |

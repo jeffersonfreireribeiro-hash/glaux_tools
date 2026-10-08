@@ -64,6 +64,8 @@ namespace Buraqueira_Tools
         public double MinY = 0, MaxY = 1;
         public double MinZ = 0, MaxZ = 1;
         public double MeanZ = 0;
+        public int StatN;                       // nº de valores Z válidos
+        public double MedianZ, DataMinZ, DataMaxZ;   // mediana e extremos dos DADOS (MinZ/MaxZ podem ser o domínio do usuário)
         public double StdDevZ = 0;
 
         // Configurações de visualização
@@ -349,6 +351,7 @@ namespace Buraqueira_Tools
             double minZ = double.MaxValue;
             double maxZ = double.MinValue;
             int countZ = 0;
+            var allZ = new List<double>();
 
             for (int i = 0; i < Nx; i++)
             {
@@ -361,6 +364,7 @@ namespace Buraqueira_Tools
                         if (v > maxZ) maxZ = v;
                         sumZ += v;
                         countZ++;
+                        allZ.Add(v);
                     }
                 }
             }
@@ -372,6 +376,9 @@ namespace Buraqueira_Tools
             }
 
             MeanZ = sumZ / countZ;
+            StatN = countZ; DataMinZ = minZ; DataMaxZ = maxZ;
+            allZ.Sort();
+            MedianZ = (countZ % 2 == 1) ? allZ[countZ / 2] : (allZ[countZ / 2 - 1] + allZ[countZ / 2]) * 0.5;
             double varSum = 0;
             for (int i = 0; i < Nx; i++)
             {
@@ -415,7 +422,10 @@ namespace Buraqueira_Tools
             sb.AppendLine($"Eixo X ({XLabel})      : Min = {MinX:F3}, Max = {MaxX:F3}");
             sb.AppendLine($"Eixo Y ({YLabel})      : Min = {MinY:F3}, Max = {MaxY:F3}");
             sb.AppendLine($"Eixo Z ({ZLabel})      : Min = {MinZ:F4}, Max = {MaxZ:F4}");
+            sb.AppendLine($"Valores válidos (N): {StatN}");
             sb.AppendLine($"Média de Z         : {MeanZ:F4}");
+            sb.AppendLine($"Mediana de Z       : {MedianZ:F4}");
+            sb.AppendLine($"Mín / Máx dos dados: {DataMinZ:F4} / {DataMaxZ:F4}");
             sb.AppendLine($"Desvio Padrão (σ)  : {StdDevZ:F4}");
             sb.AppendLine($"Quadrante Isométrico: {Quadrant} (Elevação: {ElevationDeg:F1}°)");
             sb.AppendLine($"Paleta de Cores    : {ActiveColormapName}");
@@ -867,12 +877,32 @@ namespace Buraqueira_Tools
         /// <summary>
         /// Projeta um ponto 3D normalizado [-1, 1] no plano de tela 2D com profundidade de ordenação.
         /// </summary>
+        // Proporção real entre X e Y: a caixa tem meia-largura aspX (em X) e aspY (em Y), com o maior eixo = 1; Z continua [-1, 1].
+        // Definida por ApplyAspect() no início de cada desenho (por thread: cada desenho roda de ponta a ponta numa única thread).
+        [ThreadStatic] private static double s_aspX;
+        [ThreadStatic] private static double s_aspY;
+
+        /// <summary>Ajusta a caixa 3D à proporção real dos intervalos de X e Y (ex.: X de 0 a 3 e Y de 0 a 1,5 → Y com metade da extensão de X).</summary>
+        internal void ApplyAspect()
+        {
+            double rx = MaxX - MinX, ry = MaxY - MinY;
+            if (!(rx > 0) || double.IsInfinity(rx)) rx = 1.0;
+            if (!(ry > 0) || double.IsInfinity(ry)) ry = 1.0;
+            double m = Math.Max(rx, ry);
+            s_aspX = Math.Max(0.05, rx / m);
+            s_aspY = Math.Max(0.05, ry / m);
+        }
+
+        private static double AspX => s_aspX > 0 ? s_aspX : 1.0;
+        private static double AspY => s_aspY > 0 ? s_aspY : 1.0;
+
         internal static void ProjectIsometricPoint(
             double xNorm, double yNorm, double zNorm,
             double thetaRad, double sinPhi, double cosPhi,
             float cx, float cy, float scaleX, float scaleY,
             out PointF screenPt, out double depth)
         {
+            xNorm *= AspX; yNorm *= AspY;
             double cosTheta = Math.Cos(thetaRad);
             double sinTheta = Math.Sin(thetaRad);
 
@@ -921,8 +951,9 @@ namespace Buraqueira_Tools
             {
                 foreach (double yn in new double[] { -1.0, 1.0 })
                 {
-                    double xRot = xn * cosTheta - yn * sinTheta;
-                    double yRot = xn * sinTheta + yn * cosTheta;
+                    double xs = xn * AspX, ys = yn * AspY;
+                    double xRot = xs * cosTheta - ys * sinTheta;
+                    double yRot = xs * sinTheta + ys * cosTheta;
                     double u = xRot;
 
                     foreach (double zn in new double[] { -1.0, 1.0 })
@@ -961,6 +992,7 @@ namespace Buraqueira_Tools
 
         public Bitmap RenderWhiteBackgroundBitmap(int width, int height)
         {
+            ApplyAspect();
             var bmp = new Bitmap(width, height, PixelFormat.Format32bppArgb);
             using (var g = Graphics.FromImage(bmp))
             {
@@ -1029,6 +1061,9 @@ namespace Buraqueira_Tools
 
                 // 5. Desenhar Barra de Cores Lateral (Colorbar Legend)
                 DrawColorbar(g, colorbarRect, MinZ, MaxZ, ActiveColormap, isDark: false);
+
+                // 6. Painel de estatísticas (mesmos índices do Line Chart & Statistics)
+                DrawStatsLegend(g, padLeft + 8f, padTop + 8f, isDark: false);
             }
 
             return bmp;
@@ -1270,26 +1305,48 @@ namespace Buraqueira_Tools
                 ProjectIsometricPoint(frontX, 1, -1, theta, sinPhi, cosPhi, cx, cy, scaleX, scaleY, out PointF yEnd, out _);
                 g.DrawLine(axisPen, yStart, yEnd);
 
+                // normal EXTERNA do eixo Y (aponta para longe do centro da base): ticks, números e rótulo ficam desse lado,
+                // com o rótulo "x2" depois dos números — nunca em cima de um tick.
+                ProjectIsometricPoint(0, 0, -1, theta, sinPhi, cosPhi, cx, cy, scaleX, scaleY, out PointF baseCenter, out _);
+                PointF yMid = new PointF((yStart.X + yEnd.X) * 0.5f, (yStart.Y + yEnd.Y) * 0.5f);
+                float ddx = yEnd.X - yStart.X, ddy = yEnd.Y - yStart.Y;
+                float dlen = (float)Math.Sqrt(ddx * ddx + ddy * ddy); if (dlen < 1e-3f) dlen = 1f;
+                float nx = -ddy / dlen, ny = ddx / dlen;
+                if (nx * (yMid.X - baseCenter.X) + ny * (yMid.Y - baseCenter.Y) < 0) { nx = -nx; ny = -ny; }
+
                 int yTicksCount = 4;
+                float yTickLen = isDark ? 3f : 5f;
+                float maxTickW = 0f, tickH = 0f;
                 for (int j = 0; j <= yTicksCount; j++)
                 {
                     double t = -1.0 + 2.0 * j / yTicksCount;
                     double realVal = MinY + (MaxY - MinY) * (j / (double)yTicksCount);
                     ProjectIsometricPoint(frontX, t, -1, theta, sinPhi, cosPhi, cx, cy, scaleX, scaleY, out PointF pTick, out _);
-
-                    float dxTick = isDark ? -3f : -5f;
-                    float dyTick = isDark ? 2f : 3f;
-                    g.DrawLine(tickPen, pTick.X, pTick.Y, pTick.X + dxTick, pTick.Y + dyTick);
+                    g.DrawLine(tickPen, pTick.X, pTick.Y, pTick.X + nx * yTickLen, pTick.Y + ny * yTickLen);
 
                     string valStr = FormatTickValue(realVal);
-                    var sf = new StringFormat { Alignment = StringAlignment.Far, LineAlignment = StringAlignment.Center };
-                    g.DrawString(valStr, tickFont, textBrush, pTick.X + dxTick - 2f, pTick.Y + dyTick, sf);
+                    // quina compartilhada com o eixo X: se o número é o mesmo, desenha só o do eixo X (evita "0.125 0.125" sobrepostos)
+                    bool atCorner = Math.Abs(t - frontY) < 1e-9;
+                    bool sameText = atCorner && valStr == FormatTickValue(frontX > 0 ? MaxX : MinX);
+                    SizeF tsz = g.MeasureString(valStr, tickFont);
+                    if (sameText) continue;
+                    // número diferente na mesma quina: afasta o do eixo Y ao longo do próprio eixo para não sobrepor o do eixo X
+                    float slide = atCorner ? tsz.Height * 1.1f : 0f;
+                    maxTickW = Math.Max(maxTickW, tsz.Width); tickH = tsz.Height;
+                    var sf = new StringFormat
+                    {
+                        Alignment = Math.Abs(nx) < 0.3f ? StringAlignment.Center : (nx > 0 ? StringAlignment.Near : StringAlignment.Far),
+                        LineAlignment = ny > 0.3f ? StringAlignment.Near : (ny < -0.3f ? StringAlignment.Far : StringAlignment.Center)
+                    };
+                    float ax = (yEnd.X - yStart.X) / dlen, ay = (yEnd.Y - yStart.Y) / dlen;   // direção do eixo Y na tela
+                    float inward = (t < 0 ? 1f : -1f) * slide;                                   // do canto para o interior do eixo
+                    g.DrawString(valStr, tickFont, textBrush, pTick.X + nx * (yTickLen + 2f) + ax * inward, pTick.Y + ny * (yTickLen + 2f) + ay * inward, sf);
                 }
 
-                PointF yMid = new PointF((yStart.X + yEnd.X) * 0.5f, (yStart.Y + yEnd.Y) * 0.5f);
-                var sfYLab = new StringFormat { Alignment = StringAlignment.Far, LineAlignment = StringAlignment.Center };
-                g.DrawString(YLabel, labelFont, textBrush, yMid.X - (isDark ? 14f : 22f), yMid.Y, sfYLab);
-
+                SizeF labSz = g.MeasureString(YLabel, labelFont);
+                float labOff = yTickLen + 6f + Math.Abs(nx) * maxTickW + Math.Abs(ny) * tickH + Math.Abs(nx) * labSz.Width * 0.5f + Math.Abs(ny) * labSz.Height * 0.5f;
+                var sfYLab = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center };
+                g.DrawString(YLabel, labelFont, textBrush, yMid.X + nx * labOff, yMid.Y + ny * labOff, sfYLab);
                 // 3. Eixo Z vertical (no canto que fica mais à esquerda da projeção para não cortar a malha)
                 double minU = double.MaxValue;
                 double zCornerX = -1.0;
@@ -1299,7 +1356,7 @@ namespace Buraqueira_Tools
                 {
                     foreach (double cyVal in new double[] { -1.0, 1.0 })
                     {
-                        double uVal = cxVal * cosTheta - cyVal * sinTheta;
+                        double uVal = cxVal * AspX * cosTheta - cyVal * AspY * sinTheta;
                         if (uVal < minU)
                         {
                             minU = uVal;
@@ -1330,6 +1387,40 @@ namespace Buraqueira_Tools
                 float zMidY = (zBottom.Y + zTop.Y) * 0.5f;
                 var sfZLab = new StringFormat { Alignment = StringAlignment.Far, LineAlignment = StringAlignment.Center };
                 g.DrawString(ZLabel, labelFont, textBrush, zBottom.X - (isDark ? 28f : 42f), zMidY, sfZLab);
+            }
+        }
+
+        /// <summary>Painel "ESTATÍSTICAS" (mesmos índices do Line Chart &amp; Statistics): N, média, mediana, desvio padrão, mínimo e máximo dos valores Z.</summary>
+        internal void DrawStatsLegend(Graphics g, float x, float y, bool isDark)
+        {
+            if (StatN <= 0) return;
+            var ci = System.Globalization.CultureInfo.InvariantCulture;
+            string fontName = isDark ? GH_FontServer.Standard.FontFamily.Name : "Arial";
+            using (var titleFont = new Font(fontName, isDark ? 7f : 9.5f, FontStyle.Bold))
+            using (var rowFont = new Font(fontName, isDark ? 6.5f : 9f, FontStyle.Regular))
+            using (var tb = new SolidBrush(isDark ? Color.FromArgb(220, 230, 245) : Color.FromArgb(51, 65, 85)))
+            using (var sb = new SolidBrush(isDark ? Color.FromArgb(160, 172, 190) : Color.FromArgb(100, 115, 130)))
+            {
+                string n = ZLabel;
+                string[] rows =
+                {
+                    $"N = {StatN}",
+                    $"μ ({n}) = {MeanZ.ToString("0.###", ci)}",
+                    $"Mediana = {MedianZ.ToString("0.###", ci)}",
+                    $"σ = {StdDevZ.ToString("0.###", ci)}",
+                    $"Mín = {DataMinZ.ToString("0.###", ci)}",
+                    $"Máx = {DataMaxZ.ToString("0.###", ci)}"
+                };
+                float lh = rowFont.GetHeight(g) + 2f;
+                float w = 0f; foreach (var r in rows) w = Math.Max(w, g.MeasureString(r, rowFont).Width);
+                float h = titleFont.GetHeight(g) + 6f + rows.Length * lh + 6f;
+                var box = new RectangleF(x, y, w + 16f, h);
+                using (var bg = new SolidBrush(isDark ? Color.FromArgb(200, 20, 24, 32) : Color.FromArgb(230, 255, 255, 255)))
+                using (var bp = new Pen(isDark ? Color.FromArgb(70, 80, 95) : Color.FromArgb(215, 222, 232), 1f))
+                { g.FillRectangle(bg, box); g.DrawRectangle(bp, box.X, box.Y, box.Width, box.Height); }
+                g.DrawString("ESTATÍSTICAS", titleFont, tb, x + 8f, y + 4f);
+                float cy = y + 4f + titleFont.GetHeight(g) + 4f;
+                foreach (var r in rows) { g.DrawString(r, rowFont, sb, x + 8f, cy); cy += lh; }
             }
         }
 
@@ -1863,6 +1954,7 @@ namespace Buraqueira_Tools
                 {
                     if (comp.Nx >= 2 && comp.Ny >= 2)
                     {
+                        comp.ApplyAspect();
                         double theta = PillIsometricSurfaceGraph_Component.GetQuadrantAzimuth(comp.Quadrant);
                         double phi = comp.ElevationDeg * Math.PI / 180.0;
                         double sinPhi = Math.Sin(phi);
@@ -1906,8 +1998,14 @@ namespace Buraqueira_Tools
                 using (var footerBrush = new SolidBrush(Color.FromArgb(140, 150, 165)))
                 {
                     var sfFooter = new StringFormat { Alignment = StringAlignment.Near, LineAlignment = StringAlignment.Center };
-                    string info = $"Grade: {comp.Nx}x{comp.Ny} ({comp.Nx * comp.Ny} pts) | Visão: {comp.Quadrant} ({comp.ElevationDeg:F0}°) | Paleta: {comp.ActiveColormapName}";
-                    graphics.DrawString(info, footerFont, footerBrush, footerRect.X + 8, footerRect.Y + footerRect.Height * 0.5f, sfFooter);
+                    var ci = System.Globalization.CultureInfo.InvariantCulture;
+                    string info = $"Grade {comp.Nx}x{comp.Ny} | {comp.Quadrant} ({comp.ElevationDeg:F0}°) | {comp.ActiveColormapName}";
+                    string stats = comp.StatN > 0
+                        ? $"N: {comp.StatN} | Média: {comp.MeanZ.ToString("0.###", ci)} | Mediana: {comp.MedianZ.ToString("0.###", ci)} | σ: {comp.StdDevZ.ToString("0.###", ci)} | Mín/Máx: {comp.DataMinZ.ToString("0.###", ci)}/{comp.DataMaxZ.ToString("0.###", ci)}"
+                        : "";
+                    var sfTop = new StringFormat { Alignment = StringAlignment.Near, LineAlignment = StringAlignment.Near };
+                    graphics.DrawString(stats, footerFont, footerBrush, footerRect.X + 8, footerRect.Y + 2f, sfTop);
+                    graphics.DrawString(info, footerFont, footerBrush, footerRect.X + 8, footerRect.Y + 11f, sfTop);
                 }
             }
         }
