@@ -37,6 +37,16 @@ Projetado especialmente para visualização de matrizes espaciais, distribuiçõ
 
 ---
 
+## 🆕 v1.5.2 — unidades de medida
+
+Novas entradas no **fim** (arquivos antigos continuam abrindo):
+
+| Parâmetro | Tipo | Descrição |
+| :--- | :---: | :--- |
+| **Unit** (`U`) | Text | Unidade dos valores Z (`dB`, `s`, `lux`, `°C`, `%`…). Aceita `[dB]` ou `(dB)`. Se omitida, é extraída do `Z Label` quando ele traz a unidade (`EDT [s]`). |
+| **Axis Unit** (`AU`) | Text | Unidade das coordenadas X e Y (`m`, `mm`…). Se omitida, é extraída dos rótulos X/Y entre colchetes/parênteses. |
+
+Onde aparece: rótulos dos eixos (`x1 [m]`, `x2 [m]`, `D1 [dB]` — sem duplicar quando o rótulo já a contém), título `[dB]` acima da barra de cores, painel/rodapé de estatísticas (`μ = 33.885 dB`) e o resumo `Rep` (linha “Unidades” e valores com a unidade). A unidade conectada vence a extraída do rótulo. Testes: `tests/rhino/Test-IsoSurfaceUnits.ps1` (11).
 ## 🆕 v1.5.1 — proporção real, rótulo do eixo e estatísticas
 
 * **Proporção X × Y:** a caixa 3D respeita os intervalos reais (`MaxX−MinX` × `MaxY−MinY`): o maior eixo tem extensão 1 e o outro, a razão entre os intervalos (mín. 0,05). Z continua com altura fixa. A mesma projeção vale para a caixa, a superfície, os eixos e o ajuste de enquadramento (canvas e PNG).

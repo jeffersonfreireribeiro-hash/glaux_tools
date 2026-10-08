@@ -75,7 +75,9 @@ namespace Buraqueira_Tools
         public string ChartTitle = "Shoebox EDT";
         public string XLabel = "x1";
         public string YLabel = "x2";
-        public string ZLabel = "D1";
+        public string ZLabel = "D1";          // rótulo de exibição (já com a unidade: "D1 [dB]")
+        public string UnitText = "";          // unidade dos valores Z (ex.: dB, s, lux)
+        public string AxisUnitText = "";      // unidade dos eixos X e Y (ex.: m)
         public string ActiveColormapName = "Jet";
         public List<Color> ActiveColormap = new List<Color>();
 
@@ -219,6 +221,57 @@ namespace Buraqueira_Tools
                 "Gatilho booleano para exportar imagem PNG em altíssima resolução (300 DPI) com fundo branco para publicações.",
                 GH_ParamAccess.item, false);
             pManager[13].Optional = true;
+
+            // 14: Unidade de medida dos valores (Z)
+            pManager.AddTextParameter(
+                "Unit", "U",
+                "Unidade de medida dos valores Z (ex.: 'dB', 's', 'lux', '°C', '%'). Aparece no rótulo do eixo Z ('D1 [dB]'), no título da barra de cores, no painel de estatísticas e no resumo. " +
+                "Se omitida, é extraída do 'Z Label' quando ele traz a unidade entre colchetes ou parênteses (ex.: 'EDT [s]').",
+                GH_ParamAccess.item, "");
+            pManager[14].Optional = true;
+
+            // 15: Unidade de medida dos eixos X e Y
+            pManager.AddTextParameter(
+                "Axis Unit", "AU",
+                "Unidade de medida das coordenadas dos eixos X e Y (ex.: 'm', 'mm', 'cm'). Aparece nos rótulos 'x1 [m]' e 'x2 [m]'. Se omitida, é extraída dos rótulos X/Y quando trazem a unidade entre colchetes ou parênteses.",
+                GH_ParamAccess.item, "");
+            pManager[15].Optional = true;
+        }
+
+        /// <summary>Remove colchetes/parênteses externos e espaços: "[dB]" → "dB".</summary>
+        internal static string CleanUnit(string u)
+        {
+            if (string.IsNullOrWhiteSpace(u)) return "";
+            u = u.Trim();
+            if ((u.StartsWith("[") && u.EndsWith("]")) || (u.StartsWith("(") && u.EndsWith(")"))) u = u.Substring(1, u.Length - 2).Trim();
+            return u;
+        }
+
+        /// <summary>Unidade entre colchetes ou parênteses no fim do rótulo ("EDT [s]" → "s"); vazio se não houver.</summary>
+        internal static string ExtractUnitFromLabel(string label)
+        {
+            if (string.IsNullOrWhiteSpace(label)) return "";
+            foreach (var pair in new[] { new[] { '[', ']' }, new[] { '(', ')' } })
+            {
+                int a = label.LastIndexOf(pair[0]), b = label.LastIndexOf(pair[1]);
+                if (a >= 0 && b > a) return label.Substring(a + 1, b - a - 1).Trim();
+            }
+            return "";
+        }
+
+        /// <summary>Rótulo de exibição com a unidade: "D1" + "dB" → "D1 [dB]" (não duplica se o rótulo já a contém).</summary>
+        internal static string LabelWithUnit(string label, string unit)
+        {
+            if (string.IsNullOrWhiteSpace(unit)) return label;
+            if (!string.IsNullOrEmpty(ExtractUnitFromLabel(label))) return label;
+            return $"{label} [{unit}]";
+        }
+
+        /// <summary>Número formatado com a unidade (ex.: "32.859 dB").</summary>
+        public string ValueWithUnit(double v)
+        {
+            string s = v.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture);
+            return string.IsNullOrWhiteSpace(UnitText) ? s : s + " " + UnitText;
         }
 
         protected override void RegisterOutputParams(GH_OutputParamManager pManager)
@@ -299,15 +352,27 @@ namespace Buraqueira_Tools
 
             string xLab = "x1";
             DA.GetData(7, ref xLab);
-            XLabel = string.IsNullOrWhiteSpace(xLab) ? "x1" : xLab;
+            xLab = string.IsNullOrWhiteSpace(xLab) ? "x1" : xLab;
 
             string yLab = "x2";
             DA.GetData(8, ref yLab);
-            YLabel = string.IsNullOrWhiteSpace(yLab) ? "x2" : yLab;
+            yLab = string.IsNullOrWhiteSpace(yLab) ? "x2" : yLab;
 
             string zLab = "D1";
             DA.GetData(9, ref zLab);
-            ZLabel = string.IsNullOrWhiteSpace(zLab) ? "D1" : zLab;
+            zLab = string.IsNullOrWhiteSpace(zLab) ? "D1" : zLab;
+
+            // Unidades: o valor conectado vence; senão, a unidade entre colchetes/parênteses do próprio rótulo
+            string unitIn = ""; DA.GetData(14, ref unitIn);
+            string axisIn = ""; DA.GetData(15, ref axisIn);
+            UnitText = CleanUnit(unitIn);
+            if (UnitText.Length == 0) UnitText = ExtractUnitFromLabel(zLab);
+            AxisUnitText = CleanUnit(axisIn);
+            if (AxisUnitText.Length == 0) AxisUnitText = ExtractUnitFromLabel(xLab);
+            if (AxisUnitText.Length == 0) AxisUnitText = ExtractUnitFromLabel(yLab);
+            XLabel = LabelWithUnit(xLab, AxisUnitText);
+            YLabel = LabelWithUnit(yLab, AxisUnitText);
+            ZLabel = LabelWithUnit(zLab, UnitText);
 
             bool wireframe = true;
             DA.GetData(10, ref wireframe);
@@ -422,10 +487,12 @@ namespace Buraqueira_Tools
             sb.AppendLine($"Eixo X ({XLabel})      : Min = {MinX:F3}, Max = {MaxX:F3}");
             sb.AppendLine($"Eixo Y ({YLabel})      : Min = {MinY:F3}, Max = {MaxY:F3}");
             sb.AppendLine($"Eixo Z ({ZLabel})      : Min = {MinZ:F4}, Max = {MaxZ:F4}");
+            sb.AppendLine($"Unidades           : valores Z = {(string.IsNullOrEmpty(UnitText) ? "(não informada)" : UnitText)}; eixos X/Y = {(string.IsNullOrEmpty(AxisUnitText) ? "(não informada)" : AxisUnitText)}");
             sb.AppendLine($"Valores válidos (N): {StatN}");
-            sb.AppendLine($"Média de Z         : {MeanZ:F4}");
-            sb.AppendLine($"Mediana de Z       : {MedianZ:F4}");
-            sb.AppendLine($"Mín / Máx dos dados: {DataMinZ:F4} / {DataMaxZ:F4}");
+            string uSuf = string.IsNullOrEmpty(UnitText) ? "" : " " + UnitText;
+            sb.AppendLine($"Média de Z         : {MeanZ:F4}{uSuf}");
+            sb.AppendLine($"Mediana de Z       : {MedianZ:F4}{uSuf}");
+            sb.AppendLine($"Mín / Máx dos dados: {DataMinZ:F4} / {DataMaxZ:F4}{uSuf}");
             sb.AppendLine($"Desvio Padrão (σ)  : {StdDevZ:F4}");
             sb.AppendLine($"Quadrante Isométrico: {Quadrant} (Elevação: {ElevationDeg:F1}°)");
             sb.AppendLine($"Paleta de Cores    : {ActiveColormapName}");
@@ -883,7 +950,7 @@ namespace Buraqueira_Tools
         [ThreadStatic] private static double s_aspY;
 
         /// <summary>Ajusta a caixa 3D à proporção real dos intervalos de X e Y (ex.: X de 0 a 3 e Y de 0 a 1,5 → Y com metade da extensão de X).</summary>
-        internal void ApplyAspect()
+        public void ApplyAspect()
         {
             double rx = MaxX - MinX, ry = MaxY - MinY;
             if (!(rx > 0) || double.IsInfinity(rx)) rx = 1.0;
@@ -1405,11 +1472,11 @@ namespace Buraqueira_Tools
                 string[] rows =
                 {
                     $"N = {StatN}",
-                    $"μ ({n}) = {MeanZ.ToString("0.###", ci)}",
-                    $"Mediana = {MedianZ.ToString("0.###", ci)}",
-                    $"σ = {StdDevZ.ToString("0.###", ci)}",
-                    $"Mín = {DataMinZ.ToString("0.###", ci)}",
-                    $"Máx = {DataMaxZ.ToString("0.###", ci)}"
+                    $"μ = {ValueWithUnit(MeanZ)}",
+                    $"Mediana = {ValueWithUnit(MedianZ)}",
+                    $"σ = {ValueWithUnit(StdDevZ)}",
+                    $"Mín = {ValueWithUnit(DataMinZ)}",
+                    $"Máx = {ValueWithUnit(DataMaxZ)}"
                 };
                 float lh = rowFont.GetHeight(g) + 2f;
                 float w = 0f; foreach (var r in rows) w = Math.Max(w, g.MeasureString(r, rowFont).Width);
@@ -1449,6 +1516,13 @@ namespace Buraqueira_Tools
                 g.DrawRectangle(borderPen, rect.X, rect.Y, rect.Width, rect.Height);
             }
 
+            if (!string.IsNullOrWhiteSpace(UnitText))
+            {
+                using (var uf = new Font(isDark ? GH_FontServer.Standard.FontFamily.Name : "Arial", isDark ? 7f : 9f, FontStyle.Bold))
+                using (var ub = new SolidBrush(isDark ? Color.FromArgb(220, 230, 245) : Color.FromArgb(20, 20, 20)))
+                using (var usf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Far })
+                    g.DrawString($"[{UnitText}]", uf, ub, rect.X + rect.Width * 0.5f + (isDark ? 6f : 8f), rect.Y - (isDark ? 2f : 5f), usf);
+            }
             int ticksCount = 5;
             Color textCol = isDark ? Color.FromArgb(220, 230, 245) : Color.FromArgb(20, 20, 20);
             float fontSz = isDark ? 7f : 8.5f;
@@ -1931,7 +2005,7 @@ namespace Buraqueira_Tools
                 float cbTotalW = 54f;
                 float cbRight = graphRect.Right - 8f;
                 float cbLeft = cbRight - cbTotalW;
-                RectangleF colorbarRect = new RectangleF(cbLeft, innerTop + 10f, cbWidth, innerHeight - 20f);
+                RectangleF colorbarRect = new RectangleF(cbLeft, innerTop + 20f, cbWidth, innerHeight - 30f);
 
                 // Área da Superfície 3D
                 float plotLeft = graphRect.X + 6;
@@ -2001,7 +2075,7 @@ namespace Buraqueira_Tools
                     var ci = System.Globalization.CultureInfo.InvariantCulture;
                     string info = $"Grade {comp.Nx}x{comp.Ny} | {comp.Quadrant} ({comp.ElevationDeg:F0}°) | {comp.ActiveColormapName}";
                     string stats = comp.StatN > 0
-                        ? $"N: {comp.StatN} | Média: {comp.MeanZ.ToString("0.###", ci)} | Mediana: {comp.MedianZ.ToString("0.###", ci)} | σ: {comp.StdDevZ.ToString("0.###", ci)} | Mín/Máx: {comp.DataMinZ.ToString("0.###", ci)}/{comp.DataMaxZ.ToString("0.###", ci)}"
+                        ? $"N: {comp.StatN} | Média: {comp.ValueWithUnit(comp.MeanZ)} | Mediana: {comp.ValueWithUnit(comp.MedianZ)} | σ: {comp.ValueWithUnit(comp.StdDevZ)} | Mín/Máx: {comp.DataMinZ.ToString("0.###", ci)}/{comp.ValueWithUnit(comp.DataMaxZ)}"
                         : "";
                     var sfTop = new StringFormat { Alignment = StringAlignment.Near, LineAlignment = StringAlignment.Near };
                     graphics.DrawString(stats, footerFont, footerBrush, footerRect.X + 8, footerRect.Y + 2f, sfTop);
