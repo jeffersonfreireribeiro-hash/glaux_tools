@@ -56,6 +56,18 @@ namespace Buraqueira_Tools
         public bool Has3DSlope = false;
         public bool NormalizeElevation = false;
 
+        // Escala lateral de valores (preview de viewport; ver SpatialHeatmapZScale.cs). A ativação é a entrada
+        // "Show Value Scale"; estas duas opções secundárias ficam no menu do componente para não poluir as entradas.
+        public bool ShowScaleLines = true;
+        public bool ShowScaleTitle = false;
+        private ZScaleDefinition _zScale;
+        private string _zScaleNote = "";
+
+        /// <summary>Escala de valores calculada na última solução (null se desativada ou sem deformação em Z).</summary>
+        public ZScaleDefinition ValueScale => _zScale;
+        public string ValueScaleNote => _zScaleNote;
+        public Mesh CachedHeatmapMesh => _cachedMesh;
+
         // Modo Diagnóstico de Alvo (Sugestão Editorial do Professor: Tricolor + Máscara de Tolerância)
         public bool UseTargetMaskMode = false;
         public double TargetTolerance = 0.10; // 10% por padrão (JND acústico ISO 3382)
@@ -114,6 +126,10 @@ namespace Buraqueira_Tools
             pManager.AddGenericParameter("Target Tolerance & Mask", "TolMask", "Tolerância do Alvo e Máscara de Conformidade (Modo Diagnóstico do Professor).\nPermite diagnosticar visualmente o que está ABAIXO (aquém) e ACIMA (além) do alvo em gradiente tricolor (Azul = Abaixo, Vermelho = Acima) com sobreposição de MÁSCARA contrastante (Magenta, Ciano, Verde, etc.) exatamente nas áreas em conformidade com o TR ideal.\nAceita:\n- Valor de tolerância numérico ou texto (ex: 0.15 ou '10%')\n- Cor da máscara (ex: Magenta, Ciano, Swatch do GH)\n- Texto combinado (ex: '0.15 Magenta', '±10% Ciano', '0.2 Verde').", GH_ParamAccess.item);
             pManager.AddGenericParameter("Display Mode", "Mode", "Modo de Visualização do Heatmap (Escolha entre as 3 Opções):\n0 = Gradiente Contínuo Padrão (Valores Absolutos de Mínimo a Máximo)\n1 = Desvio do Alvo (|v - Target|, de 0 a Desvio Máximo)\n2 = Diagnóstico de Alvo (Sugestão do Professor: Tricolor [Azul/Vermelho] + Máscara de Tolerância [Magenta/Ciano]).\nAceita: 0, 1, 2 ou textos ('Padrão', 'Desvio', 'Diagnóstico', 'Tricolor').\nSe não conectado: adota Modo 2 se houver Alvo e TolMask; Modo 1 se houver Alvo; ou Modo 0.", GH_ParamAccess.item);
 
+            // Acrescentadas por último (16, 17) para não deslocar fios de arquivos .gh existentes
+            pManager.AddBooleanParameter("Show Value Scale", "ShowScale", "Mostra, ao lado da malha, uma escala vertical com os VALORES DOS DADOS na altura que a malha usa para cada um (ticks, rótulos e linhas de referência). Só aparece quando há deformação em Z ('Z Elevation Scale' ≠ 0 ou normalização). Respeita 'Value Limits' se definido; usa a Unidade de 'Unit'. Padrão: False (visual anterior).", GH_ParamAccess.item, false);
+            pManager.AddIntegerParameter("Scale Divisions", "Div", "Quantidade aproximada de marcações da escala de valores (2 a 12). Os valores são arredondados para números legíveis (1, 2, 2.5, 5 × 10ⁿ). Padrão: 5.", GH_ParamAccess.item, 5);
+
             pManager[2].Optional = true;
             pManager[3].Optional = true;
             pManager[4].Optional = true;
@@ -128,6 +144,8 @@ namespace Buraqueira_Tools
             pManager[13].Optional = true;
             pManager[14].Optional = true;
             pManager[15].Optional = true;
+            pManager[16].Optional = true;
+            pManager[17].Optional = true;
         }
 
         protected override void RegisterOutputParams(GH_OutputParamManager pManager)
@@ -143,6 +161,9 @@ namespace Buraqueira_Tools
 
         protected override void SolveInstance(IGH_DataAccess DA)
         {
+            _zScale = null;
+            _zScaleNote = "";
+
             var inPts = new List<Point3d>();
             if (!DA.GetDataList(0, inPts) || inPts == null || inPts.Count == 0)
             {
@@ -601,6 +622,33 @@ namespace Buraqueira_Tools
             _cachedMesh = mesh;
             _cachedBbox = mesh.GetBoundingBox(true);
 
+            // Escala lateral de valores: só CONSOME a transformação valor → altura já aplicada acima
+            // (altura = base + zBase + t·zSpan, ou base + (v − mínimo)·zScale); não altera malha, cores nem interpolação.
+            bool showValueScale = false;
+            int scaleDivisions = 5;
+            if (Params.Input.Count > 16) DA.GetData(16, ref showValueScale);
+            if (Params.Input.Count > 17) DA.GetData(17, ref scaleDivisions);
+            if (showValueScale)
+            {
+                double offsetA = isZNormalized ? zBase : 0.0;
+                double offsetB = isZNormalized ? (zNormRange > 1e-9 ? zSpan / zNormRange : 0.0) : zScale;
+                bool manualDomain = userLim.HasValue && userLim.Value.Length > 1e-6;
+                double scaleLo = manualDomain ? userLim.Value.Min : zNormMin;
+                double scaleHi = manualDomain ? userLim.Value.Max : zNormMax;
+
+                _zScale = ZScaleBuilder.Build(scaleLo, scaleHi, scaleDivisions, UnitText,
+                    zNormMin, offsetA, offsetB, gridZMatrix[0, 0], minX, maxX, minY, maxY);
+                if (_zScale == null)
+                {
+                    _zScaleNote = "Escala de valores oculta: não há deformação em Z (ZScale = 0 ou sem variação).";
+                }
+                else
+                {
+                    _zScale.Title = GetFullTitle();
+                    _cachedBbox.Union(_zScale.Bounds);
+                }
+            }
+
             // Calcular estatísticas de conformidade com o Alvo (Dentro, Abaixo, Acima)
             if (IsTricolorActive && idealTarget.HasValue)
             {
@@ -659,6 +707,16 @@ namespace Buraqueira_Tools
             else
             {
                 repBuilder.AppendLine($"  Elevação 3D (Z):     Plano 2D (0.0)");
+            }
+            if (_zScale != null)
+            {
+                repBuilder.AppendLine($"  Escala de Valores:   {_zScale.Ticks.Count} marcações em [{_zScale.ValueMin:G6} .. {_zScale.ValueMax:G6}] {UnitText}" +
+                                      (userLim.HasValue && userLim.Value.Length > 1e-6 ? " [domínio de Value Limits]" : " [faixa interpolada da malha]") +
+                                      $"; rótulos = valor dos dados, altura = {_zScale.OffsetB:G4} por unidade");
+            }
+            else if (!string.IsNullOrEmpty(_zScaleNote))
+            {
+                repBuilder.AppendLine($"  Escala de Valores:   {_zScaleNote}");
             }
 
             if (idealTarget.HasValue)
@@ -1212,6 +1270,20 @@ namespace Buraqueira_Tools
                 ExpireSolution(true);
             }, true, NormalizeElevation);
 
+            Menu_AppendItem(menu, "Escala de valores: linhas de referência", (sender, e) =>
+            {
+                RecordUndoEvent("Toggle Value Scale Lines");
+                ShowScaleLines = !ShowScaleLines;
+                ExpireSolution(true);
+            }, true, ShowScaleLines);
+
+            Menu_AppendItem(menu, "Escala de valores: título da variável", (sender, e) =>
+            {
+                RecordUndoEvent("Toggle Value Scale Title");
+                ShowScaleTitle = !ShowScaleTitle;
+                ExpireSolution(true);
+            }, true, ShowScaleTitle);
+
             Menu_AppendSeparator(menu);
 
             var miModeGroup = Menu_AppendItem(menu, "Modo de Visualização do Heatmap");
@@ -1251,6 +1323,8 @@ namespace Buraqueira_Tools
             writer.SetBoolean("FollowPointsSlope", FollowPointsSlope);
             writer.SetBoolean("NormalizeElevation", NormalizeElevation);
             writer.SetBoolean("UseTargetMaskMode", UseTargetMaskMode);
+            writer.SetBoolean("ShowScaleLines", ShowScaleLines);
+            writer.SetBoolean("ShowScaleTitle", ShowScaleTitle);
             writer.SetInt32("DisplayMode", (int)DisplayMode);
             writer.SetDouble("TargetTolerance", TargetTolerance);
             writer.SetDrawingColor("TargetMaskColor", TargetMaskColor);
@@ -1265,6 +1339,10 @@ namespace Buraqueira_Tools
                 NormalizeElevation = reader.GetBoolean("NormalizeElevation");
             if (reader.ItemExists("UseTargetMaskMode"))
                 UseTargetMaskMode = reader.GetBoolean("UseTargetMaskMode");
+            if (reader.ItemExists("ShowScaleLines"))
+                ShowScaleLines = reader.GetBoolean("ShowScaleLines");
+            if (reader.ItemExists("ShowScaleTitle"))
+                ShowScaleTitle = reader.GetBoolean("ShowScaleTitle");
             if (reader.ItemExists("DisplayMode"))
                 DisplayMode = (HeatmapDisplayMode)reader.GetInt32("DisplayMode");
             if (reader.ItemExists("TargetTolerance"))
@@ -1948,6 +2026,56 @@ namespace Buraqueira_Tools
                     args.Display.DrawPoint(pt, PointStyle.RoundSimple, 4f, Color.FromArgb(240, 255, 255, 255));
                     args.Display.DrawPoint(pt, PointStyle.RoundControlPoint, 6f, Color.FromArgb(230, 41, 128, 185));
                 }
+            }
+
+            DrawValueScale(args);
+        }
+
+        // Escala lateral: só linhas e texto 2D do pipeline de preview (nada de Brep/objetos de documento).
+        // Texto em tamanho de tela constante (mesma convenção do Chart3DColumn), legível em qualquer zoom.
+        private void DrawValueScale(IGH_PreviewArgs args)
+        {
+            var s = _zScale;
+            if (s == null || s.Ticks.Count == 0) return;
+
+            Color ink = ScaleInkColor();
+            Color faint = Color.FromArgb(70, ink);
+            double zLo = s.HeightOf(s.ValueMin), zHi = s.HeightOf(s.ValueMax);
+
+            if (!s.IsDegenerate)
+                args.Display.DrawLine(new Point3d(s.AxisX, s.AxisY, zLo), new Point3d(s.AxisX, s.AxisY, zHi), ink, 2);
+
+            for (int i = 0; i < s.Ticks.Count; i++)
+            {
+                Point3d p = s.AxisPoint(s.Ticks[i]);
+                args.Display.DrawLine(p, new Point3d(p.X + s.TickLength, p.Y, p.Z), ink, 2);
+                if (ShowScaleLines)
+                    args.Display.DrawLine(new Point3d(p.X + s.TickLength, p.Y, p.Z), new Point3d(s.LineEndX, p.Y, p.Z), faint, 1);
+
+                // rótulo à esquerda do eixo, deslocado em pixels (independe do zoom)
+                var screen = args.Viewport.WorldToClient(p);
+                double w = s.Labels[i].Length * 6.6 + 8.0;
+                args.Display.Draw2dText(s.Labels[i], ink, new Point2d(screen.X - w * 0.5 - 4.0, screen.Y), true, 11);
+            }
+
+            if (ShowScaleTitle && !string.IsNullOrWhiteSpace(s.Title))
+            {
+                var top = args.Viewport.WorldToClient(new Point3d(s.AxisX, s.AxisY, Math.Max(zLo, zHi)));
+                args.Display.Draw2dText(s.Title, ink, new Point2d(top.X, top.Y - 22.0), true, 12);
+            }
+        }
+
+        private static Color ScaleInkColor()
+        {
+            try
+            {
+                Color bg = Rhino.ApplicationSettings.AppearanceSettings.ViewportBackgroundColor;
+                double lum = (0.299 * bg.R + 0.587 * bg.G + 0.114 * bg.B) / 255.0;
+                return lum < 0.45 ? Color.FromArgb(235, 240, 245) : Color.FromArgb(20, 28, 38);
+            }
+            catch
+            {
+                return Color.FromArgb(20, 28, 38);
             }
         }
 

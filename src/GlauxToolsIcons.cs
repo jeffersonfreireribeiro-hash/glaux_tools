@@ -293,6 +293,10 @@ namespace Buraqueira_Tools
 
         public static Bitmap Chart3DColumn => _chart3DColumn ?? (_chart3DColumn = DrawChart3DColumn());
 
+        private static Bitmap _marimekko;
+
+        public static Bitmap Marimekko => _marimekko ?? (_marimekko = DrawMarimekko());
+
         // ==========================================
 
         // MÉTODOS DE RENDERIZAÇÃO GDI+ (24x24 px)
@@ -6461,6 +6465,45 @@ namespace Buraqueira_Tools
                 using (var brush = new SolidBrush(Color.FromArgb(142, 68, 173)))
                 {
                     g.DrawString("S", font, brush, 1, 15);
+                }
+            }
+            return bmp;
+        }
+
+        // Marimekko: colunas de LARGURA variável, cada uma dividida em segmentos proporcionais (mesma paleta do gráfico)
+        private static Bitmap DrawMarimekko()
+        {
+            var bmp = new Bitmap(24, 24, PixelFormat.Format32bppArgb);
+            using (var g = InitGfx(bmp))
+            {
+                // x, largura | alturas relativas dos segmentos (de baixo para cima)
+                var cols = new[]
+                {
+                    new { X = 2.5f,  W = 8.0f, H = new[] { 0.45f, 0.30f, 0.25f } },
+                    new { X = 10.5f, W = 6.5f, H = new[] { 0.25f, 0.40f, 0.35f } },
+                    new { X = 17.0f, W = 4.5f, H = new[] { 0.55f, 0.20f, 0.25f } }
+                };
+                Color[] pal =
+                {
+                    Color.FromArgb(0, 220, 255),   // mesma ordem da paleta do Glaux Tools
+                    Color.FromArgb(255, 145, 40),
+                    Color.FromArgb(50, 225, 120)
+                };
+                const float top = 3f, bottom = 21f;
+                using (var edge = new Pen(Color.FromArgb(230, 20, 28, 38), 0.9f))
+                {
+                    foreach (var c in cols)
+                    {
+                        float y = bottom;
+                        for (int s = 0; s < c.H.Length; s++)
+                        {
+                            float h = (bottom - top) * c.H[s];
+                            using (var br = new SolidBrush(pal[s]))
+                                g.FillRectangle(br, c.X, y - h, c.W, h);
+                            g.DrawRectangle(edge, c.X, y - h, c.W, h);
+                            y -= h;
+                        }
+                    }
                 }
             }
             return bmp;

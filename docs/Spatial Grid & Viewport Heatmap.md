@@ -78,3 +78,20 @@ flowchart LR
 ### Escala automática e validade dos dados — 2026-09-24
 
 A escala automática usa mínimo/máximo completos; limites visuais reduzidos devem ser definidos explicitamente em Limits. A restrição automática por MAD foi retirada porque amplificava o contraste do ruído. Pts e V devem ter o mesmo tamanho. Pares não finitos são descartados juntos, com aviso; remover apenas valores pode deslocar receptores. IDW preenche espacialmente entre pares válidos, sem comprovar o TR dos receptores ausentes.
+
+### Escala lateral de valores — 2026-10-07 (v1.3.0)
+
+**Transformação auditada:** `valor interpolado v` → (sem normalização de cor: o gradiente usa `Limits`/faixa ativa) → **altura**, que é **linear e independente de `Limits`**:
+
+```
+Z normalizado ('0.2 To 2.5'):  altura = baseZ(nó) + zBase + (v − min)/(max − min) · zSpan
+Z por fator (ZScale = k):       altura = baseZ(nó) + (v − min) · k           (min/max = faixa da GRADE interpolada)
+```
+
+A escala só inverte essa relação (`ZScaleDefinition.HeightOf`): cada rótulo é o **valor dos dados** na altura exata que a malha usa para ele (**valor ≠ altura de exibição**: dados 0–100 com `ZScale = 0.1` → alturas 0–10, rótulos 0–100). Não altera malha, cores, interpolação nem saídas.
+
+* **Domínio:** faixa interpolada da grade (a mesma da malha); com `Value Limits` manual, usa o domínio de `Limits` (ticks onde a malha estaria para esses valores). Negativos: zero aparece na posição certa. `Min == Max`: uma só marca. Sem deformação (`ZScale = 0` ou normalização sem variação): escala oculta, só uma nota no relatório (sem aviso vermelho).
+* **Posição:** à esquerda da borda mínima de X da grade, ao longo de Y mínimo, ancorada na cota-base do canto (com *Follow Slope*, alturas relativas à superfície-base naquele canto). Este componente **não tem Base Plane**: a grade é alinhada aos eixos mundiais (bounding box dos pontos), então a escala acompanha rotação/translação dos pontos de entrada.
+* **Desenho:** só `DisplayPipeline` (linhas + `Draw2dText` em tamanho de tela constante, como o 3D Column); nenhum objeto no documento; `ClippingBox` inclui eixo, linhas e folga para rótulos. Cor do texto segue o fundo do viewport.
+* **Menu:** linhas de referência (padrão ligado) e título da variável (padrão desligado), ambos persistidos.
+* **Testes:** `tests/rhino/Test-SpatialHeatmapZScale.ps1` (45 + 6 de compatibilidade com componente da versão anterior) e `SpatialHeatmapZScaleTests.cs` (14). Desenho no viewport com janela **não testado**.

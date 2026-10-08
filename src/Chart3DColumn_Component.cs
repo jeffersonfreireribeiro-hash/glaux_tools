@@ -927,7 +927,7 @@ namespace Buraqueira_Tools
             }
         }
 
-        private static List<Color> ParseColors(List<object> rawList)
+        internal static List<Color> ParseColors(List<object> rawList)
         {
             if (rawList == null || rawList.Count == 0) return null;
             var list = new List<Color>();

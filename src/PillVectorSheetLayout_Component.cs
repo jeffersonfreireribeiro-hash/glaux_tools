@@ -107,8 +107,10 @@ namespace Buraqueira_Tools
 
             pManager.AddGenericParameter(
                 "North Direction", "N",
-                "Direção ou ângulo do Norte para desenhar a Rosa dos Ventos / Seta de Norte nas vistas. Aceita Vector3d (ex.: (0,1,0)) ou valor numérico em graus (0° = X, 90° = Y).",
-                GH_ParamAccess.item);
+                "Direção REAL do Norte de cada vista: Vector3d (ex.: (0,1,0)) ou ângulo em graus (0° = X, 90° = Y). Um único valor vale para todas as vistas; uma lista casa por índice (vista 0 → item 0...). " +
+                "Lista menor que o número de vistas repete o último valor (padrão Grasshopper; menu do componente: repetição cíclica); itens excedentes são ignorados; vazio/nulo/NaN/inválido = 90° (Norte para cima). " +
+                "Se o Norte aparece ou não é decidido por 'Show North'. (Compatibilidade: um booleano aqui ainda funciona como liga/desliga, combinado com 'Show North'.)",
+                GH_ParamAccess.list);
             pManager[5].Optional = true;
 
             pManager.AddGenericParameter(
@@ -135,6 +137,14 @@ namespace Buraqueira_Tools
                 GH_ParamAccess.item,
                 "");
             pManager[9].Optional = true;
+
+            // Acrescentada por último (índice 10) para não deslocar as entradas de arquivos .gh antigos.
+            pManager.AddBooleanParameter(
+                "Show North", "ShowN",
+                "Se a Rosa dos Ventos / Seta de Norte é desenhada em cada vista. True = desenha usando a direção correspondente de 'North Direction'; False = não gera o Norte, qualquer que seja 'North Direction'. " +
+                "Um único valor vale para todas as vistas; uma lista casa por índice (ex.: [True, False, True]); mesma regra de lista de 'North Direction'. Padrão: True (comportamento das versões anteriores).",
+                GH_ParamAccess.list);
+            pManager[10].Optional = true;
         }
 
         protected override void RegisterOutputParams(GH_OutputParamManager pManager)
@@ -165,9 +175,8 @@ namespace Buraqueira_Tools
             List<string> scales = new List<string>();
             DA.GetDataList(4, scales);
 
-            object northObj = null;
-            DA.GetData(5, ref northObj);
-            double northAngleDeg = ParseNorthAngle(northObj);
+            List<object> northList = new List<object>();
+            DA.GetDataList(5, northList);
 
             GH_Structure<IGH_Goo> stylesTree = null;
             DA.GetDataTree(6, out stylesTree);
@@ -181,6 +190,10 @@ namespace Buraqueira_Tools
             string customPath = "";
             DA.GetData(9, ref customPath);
 
+            // Entrada acrescentada depois das demais: arquivos .gh antigos abrem com ela vazia (= True)
+            var showNorthList = new List<GH_Boolean>();
+            if (Params.Input.Count > 10) DA.GetDataList(10, showNorthList);
+
             if (_forceExport)
             {
                 exportActive = true;
@@ -193,6 +206,19 @@ namespace Buraqueira_Tools
             // 3. Extrair e Processar Geometrias Universais (Curvas, Breps, Meshes, Pontos)
             List<List<StyledGeometryItem>> viewElements = ExtractUniversalGeometries(geomTree, styleMap);
             int numViews = Math.Max(1, viewElements.Count);
+
+            // Norte por vista = "Show North" (liga/desliga) E "North Direction" (ângulo), ambos com a mesma regra de
+            // list matching (item único vale para todas; lista casa por índice; menor repete o último; maior ignora o excesso).
+            var northSettings = ResolveNorthSettings(northList, showNorthList, numViews);
+            var matchNotes = new List<string>();
+            foreach (var note in new[]
+            {
+                GlauxListMatch.Describe("North Direction", northList.Count, numViews, ListMatch),
+                GlauxListMatch.Describe("Show North", showNorthList.Count, numViews, ListMatch)
+            })
+            {
+                if (note != null) matchNotes.Add(note);
+            }
 
             // 4. Carregar Template SVG Base (Nativo ou Customizado)
             SheetTemplateDef sheetDef = LoadSheetTemplate(ActiveTemplate);
@@ -226,6 +252,7 @@ namespace Buraqueira_Tools
             List<string> statusLog = new List<string>();
             statusLog.Add($"Prancha: {sheetDef.Name} ({sheetDef.WidthMm:0} x {sheetDef.HeightMm:0} mm)");
             statusLog.Add($"Distribuição: {effectiveDist} ({numViews} vistas)");
+            foreach (var note in matchNotes) statusLog.Add("  * " + note);
 
             for (int i = 0; i < viewports.Count; i++)
             {
@@ -235,10 +262,13 @@ namespace Buraqueira_Tools
                 string viewTitle = (i < names.Count && !string.IsNullOrWhiteSpace(names[i])) ? names[i] : $"0{i + 1} | VISTA {i + 1}";
                 string scaleSpec = (i < scales.Count && !string.IsNullOrWhiteSpace(scales[i])) ? scales[i] : "Fit";
 
-                string vpSvg = RenderViewportSvg(vp, elements, viewTitle, scaleSpec, northAngleDeg, i, out string resolvedScaleText);
+                // Quadros sem vista (preset com mais quadros que ramos) não recebem Norte
+                var nSet = (i < northSettings.Count) ? northSettings[i] : new NorthSetting(false, 90.0);
+                string vpSvg = RenderViewportSvg(vp, elements, viewTitle, scaleSpec, nSet.IsEnabled, nSet.AngleDeg, i, out string resolvedScaleText);
                 viewportsGroup.AppendLine(vpSvg);
 
-                statusLog.Add($"  [Vista {i + 1}] {viewTitle} -> Escala: {resolvedScaleText} ({elements.Count} elementos)");
+                string northStatus = nSet.IsEnabled ? $" | Norte: {nSet.AngleDeg:F0}°" : (i < northSettings.Count ? " | Norte: oculto" : "");
+                statusLog.Add($"  [Vista {i + 1}] {viewTitle} -> Escala: {resolvedScaleText}{northStatus} ({elements.Count} elementos)");
             }
 
             viewportsGroup.AppendLine("</g>");
@@ -326,7 +356,7 @@ namespace Buraqueira_Tools
         // ==========================================
         // MOTOR DE RENDERIZAÇÃO VETORIAL SVG UNIVERSAL
         // ==========================================
-        private string RenderViewportSvg(ViewportLayout vp, List<StyledGeometryItem> elements, string title, string scaleSpec, double northAngleDeg, int viewIdx, out string resolvedScaleText)
+        private string RenderViewportSvg(ViewportLayout vp, List<StyledGeometryItem> elements, string title, string scaleSpec, bool showNorth, double northAngleDeg, int viewIdx, out string resolvedScaleText)
         {
             StringBuilder sb = new StringBuilder();
             string clipId = $"clip_view_{viewIdx}_{vp.Box.X:0}_{vp.Box.Y:0}";
@@ -417,10 +447,13 @@ namespace Buraqueira_Tools
             string scaleBarSvg = GenerateGraphicScaleBarSvg(scaleBarX, scaleBarY, scaleFactor, resolvedScaleText);
             sb.AppendLine(scaleBarSvg);
 
-            float northX = vp.Box.Right - 8f;
-            float northY = footerY + (footerHeight * 0.5f);
-            string northSvg = GenerateNorthArrowSvg(northX, northY, northAngleDeg, 5.5f);
-            sb.AppendLine(northSvg);
+            if (showNorth)
+            {
+                float northX = vp.Box.Right - 8f;
+                float northY = footerY + (footerHeight * 0.5f);
+                string northSvg = GenerateNorthArrowSvg(northX, northY, northAngleDeg, 5.5f);
+                sb.AppendLine(northSvg);
+            }
 
             sb.AppendLine("</g>");
 
@@ -631,6 +664,18 @@ namespace Buraqueira_Tools
                         if (hCurves != null)
                         {
                             foreach (var hc in hCurves) viewItems.Add(new StyledGeometryItem { Geometry = hc, Style = itemStyle });
+                        }
+                    }
+                    else if (scriptObj is TextEntity textEnt)
+                    {
+                        var textCurves = textEnt.Explode();
+                        if (textCurves != null)
+                        {
+                            foreach (var tc in textCurves)
+                            {
+                                if (tc != null && tc.IsValid)
+                                    viewItems.Add(new StyledGeometryItem { Geometry = tc, Style = itemStyle });
+                            }
                         }
                     }
                     else
@@ -1068,21 +1113,121 @@ namespace Buraqueira_Tools
             if (!dict.ContainsKey("TITULO")) dict["TITULO"] = $"Estudo Gráfico - {numViews} Vistas";
         }
 
-        private double ParseNorthAngle(object northObj)
+        /// <summary>
+        /// Resolve, para cada vista, se o Norte aparece e com qual ângulo.
+        ///   aparece = Show North[i] E (North Direction[i] não for um "desligar" legado)
+        ///   ângulo  = North Direction[i] (vetor → atan2; número → graus); ausente/inválido = 90° (Norte para cima)
+        /// As duas listas usam o mesmo list matching (<see cref="GlauxListMatch"/>, modo em <see cref="ListMatch"/>).
+        /// </summary>
+        private List<NorthSetting> ResolveNorthSettings(List<object> directions, List<GH_Boolean> shows, int numViews)
         {
-            if (northObj == null) return 90.0;
-            if (northObj is GH_Vector ghVec) northObj = ghVec.Value;
-            if (northObj is Vector3d vec)
+            var result = new List<NorthSetting>(numViews);
+            for (int v = 0; v < numViews; v++)
             {
-                if (vec.Length < 1e-6) return 90.0;
-                double rad = Math.Atan2(vec.Y, vec.X);
-                return ((rad * (180.0 / Math.PI)) + 360.0) % 360.0;
+                object dirItem = GlauxListMatch.Get(directions, v, ListMatch);
+                GH_Boolean showItem = GlauxListMatch.Get(shows, v, ListMatch);
+
+                bool show = showItem == null || !showItem.IsValid || showItem.Value;   // vazio/nulo = True (padrão histórico)
+                NorthSetting dir = ParseNorthSetting(dirItem, v);
+                result.Add(new NorthSetting(show && dir.IsEnabled, dir.AngleDeg));
             }
-            if (northObj is GH_Number ghNum) return ghNum.Value;
-            if (double.TryParse(northObj.ToString(), NumberStyles.Any, CultureInfo.InvariantCulture, out double val)) return val;
-            return 90.0;
+            return result;
         }
 
+        private const double DefaultNorthAngle = 90.0;
+
+        /// <summary>
+        /// Interpreta um item de "North Direction". IsEnabled só é false para o uso legado de um booleano/palavra
+        /// "off" nessa entrada; a decisão normal de mostrar/ocultar pertence a "Show North".
+        /// </summary>
+        private NorthSetting ParseNorthSetting(object northObj, int index = 0)
+        {
+            if (northObj == null) return new NorthSetting(true, DefaultNorthAngle);
+
+            object v = northObj is IGH_Goo goo ? goo.ScriptVariable() : northObj;
+            switch (v)
+            {
+                case null:
+                    return new NorthSetting(true, DefaultNorthAngle);
+                case bool b:
+                    return new NorthSetting(b, DefaultNorthAngle);
+                case Vector3d vec:
+                    if (!vec.IsValid || vec.Length < 1e-6 || (Math.Abs(vec.X) < 1e-9 && Math.Abs(vec.Y) < 1e-9))
+                    {
+                        WarnNorth(index, vec.ToString());
+                        return new NorthSetting(true, DefaultNorthAngle);
+                    }
+                    return new NorthSetting(true, ((Math.Atan2(vec.Y, vec.X) * (180.0 / Math.PI)) + 360.0) % 360.0);
+                case double d: return NorthAngle(d, index);
+                case float f: return NorthAngle(f, index);
+                case int i: return NorthAngle(i, index);
+                case long l: return NorthAngle(l, index);
+            }
+
+            string s = v.ToString().Trim();
+            if (s.Length == 0) return new NorthSetting(true, DefaultNorthAngle);
+            if (bool.TryParse(s, out bool parsedBool)) return new NorthSetting(parsedBool, DefaultNorthAngle);
+            if (string.Equals(s, "none", StringComparison.OrdinalIgnoreCase) || string.Equals(s, "off", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(s, "no", StringComparison.OrdinalIgnoreCase))
+                return new NorthSetting(false, DefaultNorthAngle);
+            if (string.Equals(s, "on", StringComparison.OrdinalIgnoreCase) || string.Equals(s, "yes", StringComparison.OrdinalIgnoreCase))
+                return new NorthSetting(true, DefaultNorthAngle);
+
+            if (s.IndexOf(',') >= 0 && s.IndexOf('.') < 0) s = s.Replace(',', '.');
+            if (double.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out double val)) return NorthAngle(val, index);
+
+            WarnNorth(index, s);
+            return new NorthSetting(true, DefaultNorthAngle);
+        }
+
+        private NorthSetting NorthAngle(double deg, int index)
+        {
+            if (double.IsNaN(deg) || double.IsInfinity(deg))
+            {
+                WarnNorth(index, deg.ToString(CultureInfo.InvariantCulture));
+                return new NorthSetting(true, DefaultNorthAngle);
+            }
+            return new NorthSetting(true, deg);
+        }
+
+        private void WarnNorth(int index, string shown)
+        {
+            AddRuntimeMessage(GH_RuntimeMessageLevel.Warning,
+                $"North Direction (vista {index + 1}): '{shown}' é inválido (NaN, vetor nulo ou texto não numérico); usando 90° (Norte para cima).");
+        }
+
+        // ==========================================
+        // LIST MATCHING (menu + persistência)
+        // ==========================================
+
+        /// <summary>Padrão: lista menor repete o último valor (Grasshopper). Opt-in: repetição cíclica (i % N).</summary>
+        public GlauxListMatchMode ListMatch { get; set; } = GlauxListMatchMode.RepeatLast;
+
+        public override bool Write(GH_IO.Serialization.GH_IWriter writer)
+        {
+            writer.SetInt32("ListMatchMode", (int)ListMatch);
+            return base.Write(writer);
+        }
+
+        public override bool Read(GH_IO.Serialization.GH_IReader reader)
+        {
+            int mode = 0;
+            if (reader.TryGetInt32("ListMatchMode", ref mode))
+                ListMatch = mode == (int)GlauxListMatchMode.Cycle ? GlauxListMatchMode.Cycle : GlauxListMatchMode.RepeatLast;
+            return base.Read(reader);
+        }
+
+        protected override void AppendAdditionalComponentMenuItems(ToolStripDropDown menu)
+        {
+            base.AppendAdditionalComponentMenuItems(menu);
+            var item = Menu_AppendItem(menu, "Repetir listas de Norte ciclicamente (i % N)", (s, e) =>
+            {
+                RecordUndoEvent("Pill Vector Sheet Layout: list matching");
+                ListMatch = ListMatch == GlauxListMatchMode.Cycle ? GlauxListMatchMode.RepeatLast : GlauxListMatchMode.Cycle;
+                ExpireSolution(true);
+            }, true, ListMatch == GlauxListMatchMode.Cycle);
+            item.ToolTipText = "Aplica-se a 'North Direction' e 'Show North'.\nDesligado (padrão Grasshopper): lista menor que o número de vistas repete o ÚLTIMO valor.\nLigado: recomeça do primeiro valor (lista[i % N]).";
+        }
         public void OpenBrowserPreview(string svgContent, float widthMm, float heightMm)
         {
             try
@@ -1149,34 +1294,7 @@ namespace Buraqueira_Tools
 
         private bool CompileVectorPdf(string svgPath, string pdfPath, float widthMm, float heightMm)
         {
-            string[] browsers = new[]
-            {
-                @"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
-                @"C:\Program Files\Microsoft\Edge\Application\msedge.exe",
-                @"C:\Program Files\Google\Chrome\Application\chrome.exe"
-            };
-
-            string browserPath = browsers.FirstOrDefault(File.Exists);
-            if (string.IsNullOrEmpty(browserPath)) return false;
-
-            try
-            {
-                string uri = "file:///" + svgPath.Replace("\\", "/");
-                var psi = new ProcessStartInfo
-                {
-                    FileName = browserPath,
-                    Arguments = $"--headless --disable-gpu --no-pdf-header-footer --run-all-compositor-stages-before-draw --virtual-time-budget=2000 --print-to-pdf=\"{pdfPath}\" \"{uri}\"",
-                    UseShellExecute = false,
-                    CreateNoWindow = true
-                };
-
-                using (var proc = Process.Start(psi))
-                {
-                    proc?.WaitForExit(6000);
-                }
-                return File.Exists(pdfPath) && new FileInfo(pdfPath).Length > 0;
-            }
-            catch { return false; }
+            return GlauxVectorPdf.TryPrintToPdf(svgPath, pdfPath);
         }
 
         private string ResolveTargetDirectory(string customPath)
@@ -1218,6 +1336,18 @@ namespace Buraqueira_Tools
     // ==========================================
     // ESTRUTURAS AUXILIARES & DEFINIÇÃO DE PENAS
     // ==========================================
+    public struct NorthSetting
+    {
+        public bool IsEnabled;
+        public double AngleDeg;
+
+        public NorthSetting(bool isEnabled, double angleDeg)
+        {
+            IsEnabled = isEnabled;
+            AngleDeg = angleDeg;
+        }
+    }
+
     public class StyledGeometryItem
     {
         public GeometryBase Geometry { get; set; }
