@@ -67,4 +67,5 @@ contra o Rhino instalado (8.x) e o projeto de testes falha com CS1705 (versão d
 
 * `tests/Glaux_Tools.ChartTests` (xUnit, net48): modelo de dados do gráfico (pareamento X/Y, PCHIP sem overshoot, tendência, estatísticas, histograma, barras XY, mapeamento de tela e posição dos marcadores nos temas do canvas e do PNG). Referencia o `.gha` compilado e o Rhino 8 instalado: `dotnet build -c Release src/Glaux_Tools.csproj` e `dotnet test tests/Glaux_Tools.ChartTests`.
 * `tests/rhino/Test-ChartLine.ps1`: componente num `GH_Document` (Data Trees, erros de contagem, modos, saídas do Rhino, PNG, serialização). Compatibilidade com a versão anterior: `-Gha <gha antigo> -SaveOld arq.txt` e depois `-OpenOld arq.txt`.
+* `ChartLineSpatialTests` / seções [A]–[J] do `Test-ChartLine.ps1`: malhas espaciais (X repetido, tolerância, agregações, perfil ao longo de uma linha).
 * Não coberto: desenho no canvas e no viewport com janela do Rhino.

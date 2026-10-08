@@ -50,6 +50,11 @@ namespace Buraqueira_Tools
         public ChartLineKind Kind = ChartLineKind.Lines;
         public ChartLineMode LineMode = ChartLineMode.Raw;
         public int TrendWindow;
+        public ChartRepeatMode RepeatMode = ChartRepeatMode.Raw;   // tratamento de X repetido (malhas espaciais)
+        public bool ShowSamples = true;                              // com agregação: mostrar também as amostras originais
+        public bool ProfilePlan = true;                              // perfil: distâncias em planta (XY); false = 3D
+        public string RepeatNote = "";                               // texto informativo sobre X repetido / perfil (relatório e legenda)
+        public bool ProfileActive;                                   // X = distância ao longo da Section Curve
         public Bitmap CachedChartBmp;
 
         /// <summary>Compatibilidade com o contrato antigo (Mode 1 = colunas/histograma).</summary>
@@ -99,6 +104,12 @@ namespace Buraqueira_Tools
             pManager.AddBooleanParameter("Combined Curve", "Combined", "Linhas com 2 ou mais séries: sobrepõe a média agregada por X (curva tracejada). Distribution: sobrepõe a curva KDE. Sem conexão, vale a opção do menu.", GH_ParamAccess.item, true);
             pManager.AddGenericParameter("Target Value", "Target", "Valor alvo opcional ou faixa ideal (ex.: 1.40, ou Interval(1.2, 1.6), ou '1.2 To 1.6'). Plota a linha do alvo ('Id'), a faixa de tolerância ('Tol') e o badge de desvio 'Δ'.", GH_ParamAccess.item);
 
+            // Entradas adicionadas na v1.5.0 (no fim, compatíveis com arquivos antigos)
+            pManager.AddNumberParameter("Group Tolerance", "GTol", "Tolerância para considerar X iguais (mesma unidade de X). 0 ou omitida = automática (separa ruído numérico da estrutura da malha e nunca funde colunas distintas). Usada quando há X repetido.", GH_ParamAccess.item, 0.0);
+            pManager.AddPointParameter("Sample Points", "Pt", "Perfil espacial (opcional): posição 3D de cada amostra, mesma estrutura de Y (um ponto por valor). Com Section Curve conectada, X do gráfico = distância ao longo do perfil.", GH_ParamAccess.tree);
+            pManager.AddCurveParameter("Section Curve", "Sec", "Perfil espacial (opcional): linha/curva de seção. Só as amostras a menos de Section Tolerance da curva entram, ordenadas pela distância ao longo dela.", GH_ParamAccess.item);
+            pManager.AddNumberParameter("Section Tolerance", "STol", "Distância máxima da amostra à curva de seção (unidades do documento). 0 ou omitida = automática (metade do espaçamento típico da malha).", GH_ParamAccess.item, 0.0);
+
             for (int i = 0; i < pManager.ParamCount; i++) if (i != 1) pManager[i].Optional = true;
         }
 
@@ -110,6 +121,9 @@ namespace Buraqueira_Tools
             pManager.AddCurveParameter("Series Curves", "Crv", "Curva de cada série conforme o modo: Raw = polilinha dos pontos reais; Smooth = cadeia de Béziers PCHIP (passa pelos pontos, sem overshoot); Trend = polilinha da tendência. Distribution/XYBars: retângulos das barras.", GH_ParamAccess.tree);
             pManager.AddLineParameter("Reference Lines", "Refs", "Linhas de referência (Média, Mediana, Moda, +1σ, −1σ por série; com 2+ séries o ramo {998} traz as linhas do conjunto; Alvo no ramo {999}).", GH_ParamAccess.tree);
             pManager.AddCurveParameter("Combined Curve", "Trend", "1 série: curva de TENDÊNCIA (média móvel ponderada nos X originais). 2+ séries: média agregada por X (se Combined). Distribution: curva KDE. Polilinhas — sem interpolação cúbica.", GH_ParamAccess.item);
+            // Saídas adicionadas na v1.5.0 (no fim)
+            pManager.AddPointParameter("Group Points", "GPts", "Pontos AGREGADOS por X: (X do grupo, valor do modo Repeated X — média, mediana, mín., máx.), uma árvore por série. Os pontos ORIGINAIS continuam em Pts.", GH_ParamAccess.tree);
+            pManager.AddTextParameter("Group Table", "Groups", "Tabela CSV (;) por série dos grupos de X: Series;Group;X;Count;Mean;Median;Min;Max;StdDev;OriginalIndices (rastreia as amostras originais de cada grupo).", GH_ParamAccess.tree);
         }
 
         // ------------------------------------------------------------------------------------ Solve
@@ -137,8 +151,8 @@ namespace Buraqueira_Tools
             object rawMode = null;
             if (DA.GetData(8, ref rawMode) && rawMode != null)
             {
-                if (TryParseMode(rawMode, out ChartLineKind k, out ChartLineMode? lm)) { Kind = k; if (lm.HasValue) LineMode = lm.Value; }
-                else AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, $"Chart Mode '{rawMode}' não reconhecido; mantido '{Kind}'. Use Lines/Raw/Smooth/Trend, Histogram ou XY.");
+                if (TryParseMode(rawMode, out ChartLineKind? k, out ChartLineMode? lm, out ChartRepeatMode? rm)) { if (k.HasValue) Kind = k.Value; if (lm.HasValue) LineMode = lm.Value; if (rm.HasValue) RepeatMode = rm.Value; }
+                else AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, $"Chart Mode '{rawMode}' não reconhecido; mantido '{Kind}'. Use Lines/Raw/Smooth/Trend, Histogram, XY e, para X repetido, Mean/Median/Min/Max/Range/SD/Samples (combináveis: 'xy mean').");
             }
 
             double? targetVal = null; double tMin = 0, tMax = 0;
@@ -146,9 +160,15 @@ namespace Buraqueira_Tools
             if (DA.GetData(10, ref rawTarget) && rawTarget != null && TryParseTarget(rawTarget, out double pt, out double pMin, out double pMax)) { targetVal = pt; tMin = pMin; tMax = pMax; }
             TargetValue = targetVal; TargetMin = tMin; TargetMax = tMax;
 
-            // 1) pares X/Y validados, ordenados conjuntamente
+            double groupTol = 0; DA.GetData(11, ref groupTol); if (double.IsNaN(groupTol) || groupTol < 0) groupTol = 0;
+            DA.GetDataTree(12, out GH_Structure<GH_Point> ptTree);
+            Curve section = null; DA.GetData(13, ref section);
+            double sectionTol = 0; DA.GetData(14, ref sectionTol); if (double.IsNaN(sectionTol) || sectionTol < 0) sectionTol = 0;
+            RepeatNote = ""; ProfileActive = false;
+
+            // 1) pares X/Y validados (ou perfil espacial), ordenados conjuntamente
             var paths = new List<GH_Path>();
-            var seriesList = ReadSeries(xTree, yTree, Kind == ChartLineKind.Distribution, paths);
+            var seriesList = ReadSeries(xTree, yTree, Kind == ChartLineKind.Distribution, paths, ptTree, section, sectionTol);
             if (seriesList.Count == 0)
             {
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Nenhum dado numérico válido encontrado.");
@@ -159,15 +179,16 @@ namespace Buraqueira_Tools
             // 2) estatísticas / histograma (valores originais) e cena
             var allVals = seriesList.SelectMany(s => s.Y).ToList();
             HistogramData hist = Kind == ChartLineKind.Distribution ? ChartHistogram.Compute(allVals, targetVal, tMin, tMax) : null;
-            var opts = new ChartSceneOptions { Kind = Kind, Mode = LineMode, ShowStats = DisplayShowStats, Combined = ShowCombinedCurve, Target = targetVal, TargetMin = tMin, TargetMax = tMax };
+            var opts = new ChartSceneOptions { Kind = Kind, Mode = LineMode, ShowStats = DisplayShowStats, Combined = ShowCombinedCurve, Target = targetVal, TargetMin = tMin, TargetMax = tMax, RepeatMode = RepeatMode, ShowSamples = ShowSamples, GroupTolerance = groupTol };
             var scene = ChartSceneBuilder.Build(seriesList, opts, hist);
+            ReportRepeatedX(seriesList, scene);
 
             DisplaySeries = seriesList; CachedHistData = hist; Scene = scene;
             if (targetVal.HasValue) DeltaTarget = (Kind == ChartLineKind.Distribution && hist != null ? hist.Mode : scene.PooledMean) - targetVal.Value; else DeltaTarget = null;
             if (Kind == ChartLineKind.Lines && LineMode == ChartLineMode.Trend)
             {
-                ChartCurves.Collapse(seriesList[0].X, seriesList[0].Y, out double[] ux0, out double[] uy0);
-                ChartCurves.MovingTrend(ux0, uy0, opts.TrendSpan, out int win); TrendWindow = win;
+                var g0 = seriesList[0].Groups;
+                ChartCurves.MovingTrend(g0.Select(g => g.X).ToArray(), g0.Select(g => g.Value(RepeatMode)).ToArray(), opts.TrendSpan, out int win); TrendWindow = win;
             }
 
             // 3) PNG (mesma cena que o canvas)
@@ -176,6 +197,7 @@ namespace Buraqueira_Tools
             // 4) relatório + geometria do Rhino
             var rep = BuildReport(seriesList, hist, scene, title, targetVal, tMin, tMax);
             BuildRhinoOutputs(DA, seriesList, paths, hist, scene, opts, targetVal, out var outPts, out var outCrv, out var outRefs, out Curve outTrend);
+            BuildGroupOutputs(seriesList, paths, out var outGPts, out var outGroups);
 
             string sCount = seriesList.Count == 1 ? "1 Série" : $"{seriesList.Count} Séries";
             string head = Kind == ChartLineKind.Distribution ? "Histograma" : Kind == ChartLineKind.XYBars ? "Barras XY" : $"{sCount} · {LineMode}";
@@ -187,13 +209,52 @@ namespace Buraqueira_Tools
             DA.SetDataTree(3, outCrv);
             DA.SetDataTree(4, outRefs);
             if (outTrend != null) DA.SetData(5, outTrend);
+            DA.SetDataTree(6, outGPts);
+            DA.SetDataTree(7, outGroups);
+        }
+
+        /// <summary>Informação (não erro) sobre X repetido: comum em malhas espaciais. Registra grupos, tolerância e amostras retidas.</summary>
+        private void ReportRepeatedX(List<ChartSeries> series, ChartScene scene)
+        {
+            if (Kind == ChartLineKind.Distribution) return;
+            var sb = new StringBuilder();
+            foreach (var s in series.Where(x => x.HasRepeats))
+            {
+                string mode = RepeatMode == ChartRepeatMode.Raw ? "Raw (amostras preservadas; somente pontos)" : RepeatMode.ToString();
+                string msg = $"Ramo {s.Key}: coordenadas X repetidas detectadas. {s.RepeatedSamples} de {s.Count} amostras compartilham X com outras (comum em malhas espaciais; não é erro). " +
+                    $"Modo X repetido: {mode}. Grupos de X: {s.Groups.Count} (tolerância {s.GroupTolerance.ToString("0.#######", CultureInfo.InvariantCulture)}{(s.GroupToleranceAuto ? ", automática" : "")}). Amostras retidas: {s.Count}.";
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Remark, msg);
+                sb.AppendLine(msg);
+            }
+            RepeatNote = sb.ToString().Trim();
+        }
+
+        private void BuildGroupOutputs(List<ChartSeries> series, List<GH_Path> paths, out GH_Structure<GH_Point> gpts, out GH_Structure<GH_String> table)
+        {
+            gpts = new GH_Structure<GH_Point>(); table = new GH_Structure<GH_String>();
+            if (Kind == ChartLineKind.Distribution) return;
+            for (int si = 0; si < series.Count; si++)
+            {
+                var s = series[si]; var path = paths[si];
+                gpts.EnsurePath(path); table.EnsurePath(path);
+                table.Append(new GH_String(ChartCsv.GroupsHeader), path);
+                foreach (var g in s.Groups) gpts.Append(new GH_Point(new Point3d(g.X, g.Value(RepeatMode), 0)), path);
+                foreach (var row in ChartCsv.GroupRows(s)) table.Append(new GH_String(row), path);
+            }
         }
 
         /// <summary>Casamento X↔Y por ramo: mesmo caminho; um único ramo X vale para todos; mesma quantidade de ramos = por ordem. Contagens diferentes = erro explícito.</summary>
-        private List<ChartSeries> ReadSeries(GH_Structure<GH_Number> xTree, GH_Structure<GH_Number> yTree, bool ignoreX, List<GH_Path> outPaths)
+        private List<ChartSeries> ReadSeries(GH_Structure<GH_Number> xTree, GH_Structure<GH_Number> yTree, bool ignoreX, List<GH_Path> outPaths, GH_Structure<GH_Point> ptTree, Curve section, double sectionTol)
         {
+            bool profile = section != null && ptTree != null && !ptTree.IsEmpty && Kind != ChartLineKind.Distribution;
+            if (section != null && (ptTree == null || ptTree.IsEmpty) && Kind != ChartLineKind.Distribution)
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Section Curve conectada sem Sample Points: o perfil espacial precisa da posição de cada amostra. Usando X/Y normalmente.");
+            if (ptTree != null && !ptTree.IsEmpty && section == null)
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Remark, "Sample Points conectado sem Section Curve: ignorado (X do gráfico = X informado).");
             var result = new List<ChartSeries>();
             bool hasX = xTree != null && !xTree.IsEmpty;
+            if (profile && hasX) AddRuntimeMessage(GH_RuntimeMessageLevel.Remark, "Perfil espacial ativo: X do gráfico = distância ao longo da Section Curve; a entrada X é ignorada.");
+            if (profile) hasX = false;
             if (hasX && ignoreX) AddRuntimeMessage(GH_RuntimeMessageLevel.Remark, "Modo Distribution: os valores de X são ignorados (histograma estatístico usa só as observações Y). Para pares X/Y explícitos use o modo XY (barras) ou Lines.");
             if (ignoreX) hasX = false;
 
@@ -204,8 +265,25 @@ namespace Buraqueira_Tools
                 var yBranch = yTree.get_Branch(path);
                 if (yBranch == null || yBranch.Count == 0) continue;
                 var ys = ToDoubles(yBranch);
-                List<double?> xs = null;
-                if (hasX)
+                List<double?> xs = null; List<int> srcMap = null;
+                if (profile)
+                {
+                    System.Collections.IList pb = null;
+                    if (ptTree.PathExists(path)) pb = ptTree.get_Branch(path);
+                    else if (ptTree.PathCount == 1) pb = ptTree.get_Branch(ptTree.Paths[0]);
+                    else if (ptTree.PathCount == yTree.PathCount) pb = ptTree.get_Branch(ptTree.Paths[idx]);
+                    if (pb == null) { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, $"Ramo Y {path}: não há ramo de Sample Points correspondente (Pt tem {ptTree.PathCount} ramos, Y {yTree.PathCount}). Série ignorada."); continue; }
+                    if (pb.Count != yBranch.Count) { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, $"Ramo {path}: {pb.Count} pontos e {yBranch.Count} valores. Um ponto por valor é obrigatório; série ignorada."); continue; }
+                    var pts = new List<Point3d>(pb.Count);
+                    foreach (object o in pb) pts.Add(o is GH_Point gp ? gp.Value : Point3d.Unset);
+                    ChartProfile.Result pr;
+                    try { pr = ChartProfile.Extract(pts, ys, section, sectionTol, ProfilePlan); }
+                    catch (Exception ex) { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, $"Perfil espacial: {ex.Message}"); continue; }
+                    AddRuntimeMessage(GH_RuntimeMessageLevel.Remark, $"Perfil espacial, ramo {path}: {pr.Distance.Count} de {pts.Count} amostras a menos de {pr.Tolerance.ToString("0.####", CultureInfo.InvariantCulture)} da curva ({(ProfilePlan ? "distância em planta XY" : "distância 3D")}{(pr.ToleranceAuto ? ", tolerância automática" : "")}); {pr.Outside} fora do perfil (não entram no gráfico). Comprimento da seção: {pr.CurveLength.ToString("0.###", CultureInfo.InvariantCulture)}.");
+                    if (pr.Distance.Count == 0) { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, $"Ramo {path}: nenhuma amostra próxima à curva de seção. Aumente Section Tolerance."); continue; }
+                    xs = pr.Distance; ys = pr.Value; srcMap = pr.Source;
+                }
+                else if (hasX)
                 {
                     System.Collections.IList xb = null;
                     if (xTree.PathExists(path)) xb = xTree.get_Branch(path);
@@ -223,11 +301,11 @@ namespace Buraqueira_Tools
                     }
                     xs = ToDoubles(xb);
                 }
-                var s = ChartSeriesBuilder.Pair(path.ToString(), $"Série {path}", idx, xs, ys);
+                var s = ChartSeriesBuilder.Pair(path.ToString(), $"Série {path}", idx, xs, ys, srcMap);
+                if (profile) { s.XExplicit = true; ProfileActive = true; }
                 if (s.Count == 0) { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, $"Ramo {path}: nenhum par X/Y numérico válido."); continue; }
                 if (s.Dropped > 0) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, $"Ramo {path}: {s.Dropped} par(es) descartado(s) por X ou Y não numérico/não finito (o par inteiro é descartado, X e Y nunca desalinham).");
                 if (s.InputWasUnsorted) AddRuntimeMessage(GH_RuntimeMessageLevel.Remark, $"Ramo {path}: X fora de ordem na entrada — os pares (X,Y) foram ordenados juntos por X.");
-                if (s.DuplicateX > 0) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, $"Ramo {path}: {s.DuplicateX} ponto(s) com X repetido. Raw mantém todos os pontos; Smooth/Trend usam a média dos Y com X igual; XYBars divide o espaço da barra entre os repetidos.");
                 result.Add(s); outPaths.Add(path);
             }
             return result;
@@ -297,7 +375,24 @@ namespace Buraqueira_Tools
                 rep.AppendLine($"  Faixa [μ-σ, μ+σ]:    [{(s.Mean - s.StdDev).ToString("F4", ci)}, {(s.Mean + s.StdDev).ToString("F4", ci)}]");
                 if (s.Dropped > 0) rep.AppendLine($"  Pares descartados:   {s.Dropped}");
                 if (s.InputWasUnsorted) rep.AppendLine("  X fora de ordem na entrada: pares ordenados conjuntamente.");
-                if (s.DuplicateX > 0) rep.AppendLine($"  X repetidos:         {s.DuplicateX}");
+                if (s.Groups != null && Kind != ChartLineKind.Distribution)
+                {
+                    rep.AppendLine($"  Amostras originais:  {s.Count} (todas preservadas)");
+                    rep.AppendLine($"  Grupos de X:         {s.Groups.Count} (tolerância {s.GroupTolerance.ToString("0.#######", ci)}{(s.GroupToleranceAuto ? ", automática" : ", definida pelo usuário")})");
+                    if (s.HasRepeats)
+                    {
+                        var cnt = s.Groups.Select(g => g.Count).OrderBy(v => v).ToList();
+                        rep.AppendLine($"  Amostras por grupo:  mín {cnt.First()} | mediana {cnt[cnt.Count / 2]} | máx {cnt.Last()}  ({s.RepeatedSamples} amostras em grupos com X repetido)");
+                        rep.AppendLine($"  Modo X repetido:     {RepeatMode}{(RepeatMode == ChartRepeatMode.Raw ? " (amostras preservadas; somente pontos)" : "")}");
+                        rep.AppendLine($"  Média GLOBAL (todas as amostras):   {s.Mean.ToString("F4", ci)}");
+                        rep.AppendLine($"  Média das médias por X:             {s.Groups.Average(g => g.Mean).ToString("F4", ci)}  (difere da global quando os grupos têm quantidades diferentes de amostras)");
+                        int maxRows = 40;
+                        rep.AppendLine("  Grupos (X | N | média | mediana | mín | máx | σ):");
+                        foreach (var g in s.Groups.Take(maxRows))
+                            rep.AppendLine($"    {g.X.ToString("0.####", ci)} | {g.Count} | {g.Mean.ToString("F3", ci)} | {g.Median.ToString("F3", ci)} | {g.Min.ToString("F3", ci)} | {g.Max.ToString("F3", ci)} | {g.StdDev.ToString("F3", ci)}");
+                        if (s.Groups.Count > maxRows) rep.AppendLine($"    … +{s.Groups.Count - maxRows} grupos (tabela completa na saída Groups)");
+                    }
+                }
             }
             if (series.Count > 1)
                 rep.AppendLine($"\n  Conjunto (linhas de referência do gráfico): N = {scene.PooledCount}, μ = {scene.PooledMean.ToString("F4", ci)}, mediana = {scene.PooledMedian.ToString("F4", ci)}, σ = {scene.PooledStdDev.ToString("F4", ci)}");
@@ -343,9 +438,12 @@ namespace Buraqueira_Tools
                 else if (s.Count > 1)
                 {
                     Curve c = null;
-                    ChartCurves.Collapse(s.X, s.Y, out double[] ux, out double[] uy);
-                    if (LineMode == ChartLineMode.Smooth && ux.Length >= 2) c = BezierChain(ux, uy);
-                    else if (LineMode == ChartLineMode.Trend && ux.Length >= 2) { c = ToPolyline(ChartCurves.MovingTrend(ux, uy, opts.TrendSpan, out int _)); }
+                    bool rep = s.HasRepeats;
+                    double[] ux = s.Groups.Select(g => g.X).ToArray(), uy = s.Groups.Select(g => g.Value(RepeatMode)).ToArray();
+                    if (rep && RepeatMode == ChartRepeatMode.Raw && LineMode == ChartLineMode.Raw) c = null;     // X repetido em Raw: somente pontos (sem zigue-zague)
+                    else if (LineMode == ChartLineMode.Smooth && ux.Length >= 2) c = BezierChain(ux, uy);
+                    else if (LineMode == ChartLineMode.Trend && ux.Length >= 2) c = ToPolyline(ChartCurves.MovingTrend(ux, uy, opts.TrendSpan, out int _));
+                    else if (rep) c = ToPolyline(ux.Select((x, i) => new ChartPt(x, uy[i])).ToArray());
                     else c = ToPolyline(s.X.Select((x, i) => new ChartPt(x, s.Y[i])).ToArray());
                     if (c != null) crvs.Append(new GH_Curve(c), path);
                 }
@@ -371,11 +469,11 @@ namespace Buraqueira_Tools
             {
                 if (series.Count == 1 && series[0].Count > 1)
                 {
-                    ChartCurves.Collapse(series[0].X, series[0].Y, out double[] ux, out double[] uy);
+                    double[] ux = series[0].Groups.Select(g => g.X).ToArray(), uy = series[0].Groups.Select(g => g.Value(RepeatMode)).ToArray();
                     if (ux.Length >= 2) trend = ToPolyline(ChartCurves.MovingTrend(ux, uy, opts.TrendSpan, out int _));
                 }
                 else if (series.Count > 1 && ShowCombinedCurve)
-                    trend = ToPolyline(ChartCurves.Aggregate(series));
+                    trend = ToPolyline(scene.Polylines.Where(p => p.Role == ChartLineRole.Aggregate).Select(p => p.Pts).FirstOrDefault());
             }
         }
 
@@ -422,7 +520,7 @@ namespace Buraqueira_Tools
                 using (var f = new Font(fam, 9f, FontStyle.Regular)) using (var b = new SolidBrush(Color.FromArgb(71, 85, 105)))
                 using (var sf = new StringFormat { Alignment = StringAlignment.Center })
                 {
-                    string xl = Kind == ChartLineKind.Distribution && xLabel == "X Axis" ? "Valor (classes)" : xLabel;
+                    string xl = Kind == ChartLineKind.Distribution && xLabel == "X Axis" ? "Valor (classes)" : (ProfileActive && xLabel == "X Axis" ? "Distância ao longo do perfil" : xLabel);
                     string yl = Kind == ChartLineKind.Distribution && yLabel == "Y Axis" ? "Frequência (contagem)" : yLabel;
                     g.DrawString(xl, f, b, plot.Left + plot.Width / 2f, plot.Bottom + 26, sf);
                     var st = g.Save(); g.TranslateTransform(18, plot.Top + plot.Height / 2f); g.RotateTransform(-90); g.DrawString(yl, f, b, 0, 0, sf); g.Restore(st);
@@ -479,9 +577,17 @@ namespace Buraqueira_Tools
                 if (series.Count > 7) { g.DrawString($"… +{series.Count - 7} séries", fStat, sb, x, cy); cy += 14; }
                 cy += 4;
                 if (Kind == ChartLineKind.Lines)
-                    g.DrawString(LineMode == ChartLineMode.Raw ? "Linha: RAW (pontos reais)" : LineMode == ChartLineMode.Smooth ? "Linha: SMOOTH (PCHIP)" : "Linha: TREND (média móvel)", fStat, sb, x, cy);
-                else g.DrawString("Barras: base em Y = 0", fStat, sb, x, cy);
-                cy += 15;
+                {
+                    string ln = LineMode == ChartLineMode.Raw ? "RAW (pontos reais)" : LineMode == ChartLineMode.Smooth ? "SMOOTH (PCHIP)" : "TREND (média móvel)";
+                    if (scene.AnyPointsOnly) ln = "somente pontos (X repetido, Raw)";
+                    else if (scene.AnyAggregated) ln = $"{RepeatLabelShort(RepeatMode)} por X · {ln}";
+                    cy += (int)DrawNote(g, "Linha: " + ln, fStat, sb, x, cy, 150f) + 2;
+                }
+                else cy += (int)DrawNote(g, scene.AnyAggregated ? $"Barras: {RepeatLabelShort(RepeatMode)} por X; base em Y = 0" : "Barras: base em Y = 0", fStat, sb, x, cy, 150f) + 2;
+                if (scene.BandSeries.Count > 0) cy += (int)DrawNote(g, RepeatMode == ChartRepeatMode.Range ? "Faixa: mínimo–máximo" : "Faixa: média ± σ", fStat, sb, x, cy, 150f) + 2;
+                if (scene.AnyAggregated && ShowSamples && scene.SamplesTotal > 0) cy += (int)DrawNote(g, $"Pontos: amostras originais ({scene.SamplesTotal})", fStat, sb, x, cy, 150f) + 2;
+                else if (scene.AnyPointsOnly) cy += (int)DrawNote(g, $"Pontos: amostras ({scene.SamplesTotal})", fStat, sb, x, cy, 150f) + 2;
+                cy += 4;
                 if (scene.Polylines.Any(p => p.Role == ChartLineRole.Aggregate)) row(Color.FromArgb(2, 132, 199), "Média por X", "agregada das séries", DashStyle.Dash);
                 if (scene.Refs.Any(r => r.Kind == ChartRefKind.Mean))
                 {
@@ -490,6 +596,14 @@ namespace Buraqueira_Tools
                 }
                 if (TargetValue.HasValue) row(Color.FromArgb(16, 185, 129), $"Id = {TargetValue.Value.ToString("F2", ci)}", null, DashStyle.Dash);
             }
+        }
+
+        private static float DrawNote(Graphics g, string text, Font f, Brush b, float x, float y, float w)
+        {
+            var rect = new RectangleF(x, y, w, 200f);
+            SizeF sz = g.MeasureString(text, f, (int)w);
+            g.DrawString(text, f, b, new RectangleF(x, y, w, sz.Height + 2));
+            return sz.Height;
         }
 
         // ------------------------------------------------------------------------------------ Menu & serialização
@@ -507,8 +621,79 @@ namespace Buraqueira_Tools
             Menu_AppendItem(miLine.DropDown, "Smooth — PCHIP (passa pelos pontos, sem overshoot)", (s, e) => SetLineMode(ChartLineMode.Smooth), true, LineMode == ChartLineMode.Smooth);
             Menu_AppendItem(miLine.DropDown, "Trend — tendência (média móvel) sobre os dados", (s, e) => SetLineMode(ChartLineMode.Trend), true, LineMode == ChartLineMode.Trend);
 
+            var miRep = Menu_AppendItem(menu, "X repetido (malhas espaciais)");
+            foreach (ChartRepeatMode rm in Enum.GetValues(typeof(ChartRepeatMode)))
+            {
+                var mode = rm;
+                Menu_AppendItem(miRep.DropDown, RepeatLabel(mode), (s, e) => { RecordUndoEvent("Repeated X Mode"); RepeatMode = mode; ExpireSolution(true); }, true, RepeatMode == mode);
+            }
+            Menu_AppendItem(menu, "Mostrar amostras originais junto da agregação", (s, e) => { RecordUndoEvent("Show Samples"); ShowSamples = !ShowSamples; ExpireSolution(true); }, true, ShowSamples);
+            Menu_AppendItem(menu, "Perfil espacial: distância em planta (XY) — desmarcado = 3D", (s, e) => { RecordUndoEvent("Profile Plan"); ProfilePlan = !ProfilePlan; ExpireSolution(true); }, true, ProfilePlan);
+            Menu_AppendItem(menu, "Exportar amostras originais e grupos (CSV)…", (s, e) => ExportCsvDialog());
+            Menu_AppendSeparator(menu);
             Menu_AppendItem(menu, "Exibir Linhas Estatísticas (μ, Mediana, ±1σ)", (s, e) => { RecordUndoEvent("Toggle Show Stats"); DisplayShowStats = !DisplayShowStats; ExpireSolution(true); }, true, DisplayShowStats);
             Menu_AppendItem(menu, "Exibir Curva Combinada (média por X / KDE)", (s, e) => { RecordUndoEvent("Toggle Combined Curve"); ShowCombinedCurve = !ShowCombinedCurve; ExpireSolution(true); }, true, ShowCombinedCurve);
+        }
+
+        public static string RepeatLabel(ChartRepeatMode m)
+        {
+            switch (m)
+            {
+                case ChartRepeatMode.Raw: return "Raw — preserva as amostras (somente pontos)";
+                case ChartRepeatMode.Mean: return "Mean — média por X";
+                case ChartRepeatMode.Median: return "Median — mediana por X";
+                case ChartRepeatMode.Min: return "Minimum — menor valor por X";
+                case ChartRepeatMode.Max: return "Maximum — maior valor por X";
+                case ChartRepeatMode.Range: return "Range — média + faixa mínimo–máximo";
+                default: return "Standard Deviation — média ± σ";
+            }
+        }
+
+        public static string RepeatLabelShort(ChartRepeatMode m)
+        {
+            switch (m)
+            {
+                case ChartRepeatMode.Median: return "mediana";
+                case ChartRepeatMode.Min: return "mínimo";
+                case ChartRepeatMode.Max: return "máximo";
+                case ChartRepeatMode.Range: return "média+faixa";
+                case ChartRepeatMode.StdDev: return "média±σ";
+                default: return "média";
+            }
+        }
+
+        /// <summary>Grava duas tabelas CSV (;): amostras ORIGINAIS (com o grupo de cada uma) e grupos AGREGADOS. Retorna os dois caminhos.</summary>
+        public static string[] WriteCsv(string basePath, IList<ChartSeries> series)
+        {
+            var enc = new UTF8Encoding(true);
+            string sp = basePath + "_amostras.csv", gp = basePath + "_grupos.csv";
+            File.WriteAllLines(sp, new[] { ChartCsv.SamplesHeader }.Concat(series.SelectMany(s => ChartCsv.SampleRows(s))), enc);
+            File.WriteAllLines(gp, new[] { ChartCsv.GroupsHeader }.Concat(series.SelectMany(s => ChartCsv.GroupRows(s))), enc);
+            return new[] { sp, gp };
+        }
+
+        public string ExportCsvDialog()
+        {
+            if (DisplaySeries == null || DisplaySeries.Count == 0) return null;
+            try
+            {
+                using (var sfd = new SaveFileDialog())
+                {
+                    sfd.Title = "Exportar amostras e grupos - GLAUX Tools";
+                    sfd.Filter = "CSV (*.csv)|*.csv";
+                    string safe = DisplayTitle.Replace(":", "_").Replace("/", "_").Replace("\\", "_").Trim();
+                    sfd.FileName = safe + ".csv";
+                    if (sfd.ShowDialog() == DialogResult.OK)
+                    {
+                        string b = Path.Combine(Path.GetDirectoryName(sfd.FileName), Path.GetFileNameWithoutExtension(sfd.FileName));
+                        var paths = WriteCsv(b, DisplaySeries);
+                        Message = "CSV salvo!";
+                        return string.Join("; ", paths);
+                    }
+                }
+            }
+            catch (Exception ex) { Rhino.RhinoApp.WriteLine($"[ChartLine] Erro ao exportar CSV: {ex.Message}"); }
+            return null;
         }
 
         private void SetKind(ChartLineKind k) { RecordUndoEvent("Chart Kind"); Kind = k; ExpireSolution(true); }
@@ -521,6 +706,9 @@ namespace Buraqueira_Tools
             writer.SetInt32("LineMode", (int)LineMode);
             writer.SetBoolean("DisplayShowStats", DisplayShowStats);
             writer.SetBoolean("ShowCombinedCurve", ShowCombinedCurve);
+            writer.SetInt32("RepeatMode", (int)RepeatMode);
+            writer.SetBoolean("ShowSamples", ShowSamples);
+            writer.SetBoolean("ProfilePlan", ProfilePlan);
             return base.Write(writer);
         }
 
@@ -532,6 +720,9 @@ namespace Buraqueira_Tools
             else if (reader.ItemExists("IsColumnsMode")) Kind = reader.GetBoolean("IsColumnsMode") ? ChartLineKind.Distribution : ChartLineKind.Lines;
             if (reader.ItemExists("LineMode")) LineMode = (ChartLineMode)Math.Max(0, Math.Min(2, reader.GetInt32("LineMode")));
             else LineMode = ShowCombinedCurve ? ChartLineMode.Trend : ChartLineMode.Raw;   // arquivo antigo: "Linhas + Tendência" → Trend; sem curva combinada → Raw
+            if (reader.ItemExists("RepeatMode")) RepeatMode = (ChartRepeatMode)Math.Max(0, Math.Min(6, reader.GetInt32("RepeatMode"))); else RepeatMode = ChartRepeatMode.Raw;
+            ShowSamples = !reader.ItemExists("ShowSamples") || reader.GetBoolean("ShowSamples");
+            ProfilePlan = !reader.ItemExists("ProfilePlan") || reader.GetBoolean("ProfilePlan");
             return base.Read(reader);
         }
 
@@ -556,35 +747,65 @@ namespace Buraqueira_Tools
         public static FontFamily GetUIFontFamily() => Visual.PillVisualKit.UIFontFamily();
 
         // ------------------------------------------------------------------------------------ Parsing
-        /// <summary>Interpreta o input Mode. bool/0/1 = contrato antigo (false/0 = linhas; true/1 = histograma). 2 ou 'xy'/'bars' = barras XY.</summary>
-        public static bool TryParseMode(object raw, out ChartLineKind kind, out ChartLineMode? lineMode)
+        /// <summary>
+        /// Interpreta o input Mode. bool/0/1 = contrato antigo (false/0 = linhas; true/1 = histograma); 2 ou 'xy'/'xybars'/'bars' = barras XY.
+        /// Texto aceita vários termos (separados por espaço, vírgula, ; ou +): raw/smooth/trend (modo da linha), hist/xy/lines (tipo) e
+        /// mean/median/min/max/range/sd/samples (X repetido). Ex.: 'xy mean', 'smooth range'.
+        /// </summary>
+        public static bool TryParseMode(object raw, out ChartLineKind? kind, out ChartLineMode? lineMode, out ChartRepeatMode? repeat)
         {
-            kind = ChartLineKind.Lines; lineMode = null;
+            kind = null; lineMode = null; repeat = null;
             if (raw == null) return false;
             if (raw is IGH_Goo goo) raw = goo.SafeScriptVariable();
             if (raw is GH_ObjectWrapper wrap) raw = wrap.Value;
             if (raw is bool b) { kind = b ? ChartLineKind.Distribution : ChartLineKind.Lines; return true; }
             if (raw is string str)
             {
-                string t = str.Trim().ToLowerInvariant();
-                if (t == "raw") { lineMode = ChartLineMode.Raw; return true; }
-                if (t == "smooth") { lineMode = ChartLineMode.Smooth; return true; }
-                if (t == "trend") { lineMode = ChartLineMode.Trend; return true; }
-                if (t.Contains("xy") || t.Contains("bars")) { kind = ChartLineKind.XYBars; return true; }
-                if (t.Contains("hist") || t.Contains("col") || t.Contains("distrib") || t.Contains("bar")) { kind = ChartLineKind.Distribution; return true; }
-                if (t.Contains("line") || t.Contains("linh")) { kind = ChartLineKind.Lines; return true; }
-                if (!double.TryParse(t, NumberStyles.Any, CultureInfo.InvariantCulture, out double dd)) return false;
-                raw = dd;
+                bool any = false, bad = false;
+                foreach (string tok in str.Split(new[] { ' ', ',', ';', '+', '|' }, StringSplitOptions.RemoveEmptyEntries))
+                {
+                    string t = tok.Trim().ToLowerInvariant();
+                    switch (t)
+                    {
+                        case "raw": lineMode = ChartLineMode.Raw; any = true; continue;
+                        case "smooth": lineMode = ChartLineMode.Smooth; any = true; continue;
+                        case "trend": lineMode = ChartLineMode.Trend; any = true; continue;
+                        case "mean": case "media": case "média": repeat = ChartRepeatMode.Mean; any = true; continue;
+                        case "median": case "mediana": repeat = ChartRepeatMode.Median; any = true; continue;
+                        case "min": case "minimum": case "minimo": case "mínimo": repeat = ChartRepeatMode.Min; any = true; continue;
+                        case "max": case "maximum": case "maximo": case "máximo": repeat = ChartRepeatMode.Max; any = true; continue;
+                        case "range": case "faixa": repeat = ChartRepeatMode.Range; any = true; continue;
+                        case "sd": case "std": case "stddev": case "desvio": repeat = ChartRepeatMode.StdDev; any = true; continue;
+                        case "samples": case "rawsamples": case "amostras": repeat = ChartRepeatMode.Raw; any = true; continue;
+                    }
+                    if (t.Contains("xy") || t.Contains("bars")) { kind = ChartLineKind.XYBars; any = true; }
+                    else if (t.Contains("hist") || t.Contains("col") || t.Contains("distrib") || t.Contains("bar")) { kind = ChartLineKind.Distribution; any = true; }
+                    else if (t.Contains("line") || t.Contains("linh")) { kind = ChartLineKind.Lines; any = true; }
+                    else if (double.TryParse(t, NumberStyles.Any, CultureInfo.InvariantCulture, out double dn) && ParseKindNumber(dn, out ChartLineKind kn)) { kind = kn; any = true; }
+                    else bad = true;
+                }
+                if (bad || !any) { kind = null; lineMode = null; repeat = null; return false; }
+                if (lineMode.HasValue && !kind.HasValue) kind = ChartLineKind.Lines;
+                return true;
             }
-            if (GH_Convert.ToDouble(raw, out double d, GH_Conversion.Both))
-            {
-                int i = (int)Math.Round(d);
-                if (i < 0 || i > 2 || Math.Abs(d - i) > 0.1) return false;
-                kind = (ChartLineKind)i; return true;
-            }
+            if (GH_Convert.ToDouble(raw, out double d, GH_Conversion.Both) && ParseKindNumber(d, out ChartLineKind k)) { kind = k; return true; }
             return false;
         }
 
+        private static bool ParseKindNumber(double d, out ChartLineKind k)
+        {
+            k = ChartLineKind.Lines;
+            int i = (int)Math.Round(d);
+            if (i < 0 || i > 2 || Math.Abs(d - i) > 0.1) return false;
+            k = (ChartLineKind)i; return true;
+        }
+
+        /// <summary>Compatibilidade (tipo + modo da linha).</summary>
+        public static bool TryParseMode(object raw, out ChartLineKind kind, out ChartLineMode? lineMode)
+        {
+            bool ok = TryParseMode(raw, out ChartLineKind? k, out lineMode, out ChartRepeatMode? _);
+            kind = k ?? ChartLineKind.Lines; return ok;
+        }
         /// <summary>Compatibilidade: true quando o Mode representa histograma/colunas.</summary>
         public static bool IsColumnsModeInput(object raw) => TryParseMode(raw, out ChartLineKind k, out ChartLineMode? _) && k == ChartLineKind.Distribution;
 
@@ -733,7 +954,7 @@ namespace Buraqueira_Tools
                 {
                     string modeText = comp.Kind == ChartLineKind.Distribution ? "[Histograma · Distribuição]"
                         : comp.Kind == ChartLineKind.XYBars ? "[Barras XY]"
-                        : $"[Linhas · {comp.LineMode.ToString().ToUpperInvariant()} ({comp.DisplaySeries.Count}s)]";
+                        : $"[Linhas · {comp.LineMode.ToString().ToUpperInvariant()}{(comp.RepeatMode != ChartRepeatMode.Raw ? " · X:" + ChartLine_Component.RepeatLabelShort(comp.RepeatMode) : "")} ({comp.DisplaySeries.Count}s)]";
                     using (var bb = new SolidBrush(comp.Kind == ChartLineKind.Lines ? Color.FromArgb(0, 220, 255) : Color.FromArgb(255, 175, 40)))
                         graphics.DrawString(modeText, badgeFont, bb, m_btnExportRect.Left - 8, headerRect.Y + headerRect.Height * 0.5f, sfFar);
                 }
@@ -772,6 +993,7 @@ namespace Buraqueira_Tools
                 else if (comp.DisplaySeries.Count == 1)
                     info = $"N: {s0.Count} | Média: {s0.Mean.ToString("F2", ci)} | Mediana: {s0.Median.ToString("F2", ci)} | σ: {s0.StdDev.ToString("F2", ci)} | Mín/Máx: {s0.MinY.ToString("G4", ci)}/{s0.MaxY.ToString("G4", ci)}";
                 else info = $"{comp.DisplaySeries.Count} séries | N: {scene.PooledCount} | μ: {scene.PooledMean.ToString("F2", ci)} | σ: {scene.PooledStdDev.ToString("F2", ci)}";
+                if (s0.Groups != null && s0.HasRepeats && comp.Kind != ChartLineKind.Distribution) info += $" | {s0.Groups.Count} grupos X";
                 if (comp.TargetValue.HasValue) info += $" | Alvo: {comp.TargetValue.Value.ToString("F2", ci)} (Δ: {comp.DeltaTarget.Value.ToString("F2", ci)})";
                 graphics.DrawString(info, ff, fbr, footerRect.X + 8, footerRect.Y + 4);
             }

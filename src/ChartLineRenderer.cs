@@ -96,6 +96,20 @@ namespace Buraqueira_Tools
                     }
                 }
 
+                // faixas de dispersão por X (mín–máx ou média ± σ) das séries agregadas
+                foreach (var bs in sc.BandSeries)
+                {
+                    if (bs.Lo.Length < 1) continue;
+                    var poly = bs.Lo.Select(p => m.P(p)).Concat(bs.Hi.Reverse().Select(p => m.P(p))).ToArray();
+                    Color c = SeriesColor(bs.SeriesIndex);
+                    if (poly.Length >= 3)
+                        using (var br = new SolidBrush(Color.FromArgb(bs.IsStdDev ? 55 : 70, c))) g.FillPolygon(br, poly);
+                    using (var pen = new Pen(Color.FromArgb(150, c), 0.9f * th.LineScale) { DashStyle = bs.IsStdDev ? DashStyle.Dot : DashStyle.Solid })
+                    {
+                        if (bs.Lo.Length > 1) { g.DrawLines(pen, bs.Lo.Select(p => m.P(p)).ToArray()); g.DrawLines(pen, bs.Hi.Select(p => m.P(p)).ToArray()); }
+                    }
+                }
+
                 // barras (histograma ou XY): base em Y = Base; positivas para cima, negativas para baixo
                 foreach (var bar in sc.Bars)
                 {
@@ -112,6 +126,15 @@ namespace Buraqueira_Tools
                     {
                         g.FillRectangle(br, x, top, w, h);
                         g.DrawRectangle(pen, x, top, w, h);
+                    }
+                }
+
+                foreach (var wk in sc.Whiskers)
+                {
+                    float px = m.X(wk.X), y0 = m.Y(wk.Lo), y1 = m.Y(wk.Hi), cap = 3f * th.LineScale;
+                    using (var pen = new Pen(Color.FromArgb(235, th.TickText), 1.3f * th.LineScale))
+                    {
+                        g.DrawLine(pen, px, y0, px, y1); g.DrawLine(pen, px - cap, y0, px + cap, y0); g.DrawLine(pen, px - cap, y1, px + cap, y1);
                     }
                 }
 
@@ -137,14 +160,14 @@ namespace Buraqueira_Tools
                 foreach (var mk in sc.Markers)
                 {
                     Color c = SeriesColor(mk.SeriesIndex);
-                    float r = th.MarkerRadius;
-                    using (var br = new SolidBrush(Color.FromArgb(mk.Muted ? 150 : 255, c)))
+                    float r = mk.Dense ? Math.Max(1.2f, th.MarkerRadius * 0.55f) : th.MarkerRadius;
+                    using (var br = new SolidBrush(Color.FromArgb(mk.Dense ? (mk.Muted ? 120 : 170) : (mk.Muted ? 150 : 255), c)))
                     using (var ring = new Pen(Color.White, 1.1f))
                         foreach (var p in mk.Pts)
                         {
                             var s = m.P(p);
                             g.FillEllipse(br, s.X - r, s.Y - r, 2 * r, 2 * r);
-                            if (th.MarkerRing && !mk.Muted) g.DrawEllipse(ring, s.X - r, s.Y - r, 2 * r, 2 * r);
+                            if (th.MarkerRing && !mk.Muted && !mk.Dense) g.DrawEllipse(ring, s.X - r, s.Y - r, 2 * r, 2 * r);
                         }
                 }
             }
