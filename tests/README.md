@@ -63,3 +63,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tests\rhino\Test-PillBundleP
 **Neste Windows com Rhino:** o projeto de testes xUnit usa os pacotes NuGet da McNeel (Grasshopper 8.0). Para compilar o plugin com
 as mesmas referências, como no CI, rode `dotnet test tests/Glaux_Tools.Tests -p:GlauxUseRhinoInstall=false`. Sem isso, o plugin compila
 contra o Rhino instalado (8.x) e o projeto de testes falha com CS1705 (versão de referência mais nova).
+## Line Chart & Statistics / Histogram
+
+* `tests/Glaux_Tools.ChartTests` (xUnit, net48): modelo de dados do gráfico (pareamento X/Y, PCHIP sem overshoot, tendência, estatísticas, histograma, barras XY, mapeamento de tela e posição dos marcadores nos temas do canvas e do PNG). Referencia o `.gha` compilado e o Rhino 8 instalado: `dotnet build -c Release src/Glaux_Tools.csproj` e `dotnet test tests/Glaux_Tools.ChartTests`.
+* `tests/rhino/Test-ChartLine.ps1`: componente num `GH_Document` (Data Trees, erros de contagem, modos, saídas do Rhino, PNG, serialização). Compatibilidade com a versão anterior: `-Gha <gha antigo> -SaveOld arq.txt` e depois `-OpenOld arq.txt`.
+* Não coberto: desenho no canvas e no viewport com janela do Rhino.

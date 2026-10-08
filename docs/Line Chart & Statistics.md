@@ -1,59 +1,90 @@
 ---
 name: "Line Chart & Statistics"
 nickname: "ChartLine"
-category: "Buraqueira Tools"
+category: "Glaux Tools"
 subcategory: "Visual"
-class: ""
-file: "ChartLine_Component.cs"
-plugin: "Buraqueira Tools"
-status: "Compilado / Ativo"
-tags: [componente, grasshopper, buraqueira_tools, visual]
+class: "Buraqueira_Tools.ChartLine_Component"
+file: "ChartLine_Component.cs, ChartLineModel.cs, ChartLineRenderer.cs"
+plugin: "Glaux_Tools"
+status: "Compilado e testado headless (v1.4.0) — desenho no canvas/viewport com janela NÃO testado"
+tags: [componente, grasshopper, glaux_tools, visual, grafico, linhas, histograma, barras_xy, estatistica]
 ---
 
-# 🧩 Line Chart & Statistics (`ChartLine`)
+# 📈 Line Chart & Statistics (`ChartLine`) — também o "Histogram"
 
-**Categoria:** `Buraqueira Tools` ➔ `Visual`  
-**Arquivo C#:** `ChartLine_Component.cs`  
-**Classe:** ``
+**GUID:** `1c2d3e4f-5a6b-7c8d-9e0f-1a2b3c4d5e6f` (inalterado) · um único componente com três tipos de gráfico.
 
----
+> **Regra central:** o gráfico representa os dados, não os modifica. `X é X`, `Y é Y`; `RAW ≠ SMOOTH`; `interpolação ≠ tendência`; `histograma ≠ barras XY`; estatísticas usam os dados originais; **Canvas = PNG** (mesma cena).
 
-## 📝 Descrição
-Gera gráficos 2D de linhas ou colunas/histogramas de alta definição com suporte a curva agregada (Média/Moda/KDE), múltiplas curvas (DataTree), valor alvo (Target) com tolerância e sobreposição de indicadores estatísticos completos.
+## 🔗 Conexões & Compatibilidade de Pilhas (Pills)
 
----
+```mermaid
+flowchart LR
+    SL["Number Slider / Series / Panel"] -->|"X (D)"| CH
+    TREE["[[Tree Path Item]] / [[Tree Filter (Preserve Paths)]] / Data Tree {ramo}"] -->|"Y (D)"| CH
+    STAT["[[Standard Deviation]] · [[Weighted Mean]] · [[Target Deviation]]"] -->|"Target"| CH
+    CH["[[Line Chart & Statistics]]"] -->|"Img"| VIEW["Image Viewer / Save"]
+    CH -->|"Pts · Crv · Refs · Trend"| RH["Geometria no Rhino"]
+    CH -->|"Rep"| P["Panel"]
+```
 
-## 📥 Entradas (Inputs)
+## Fluxo de dados (um único caminho)
+
+`Entrada GH → pares X/Y validados (ChartSeries) → estatísticas (valores originais) → ChartScene → Canvas / PNG / saídas do Rhino`.
+
+* `ChartLineModel.cs` — pareamento, ordenação conjunta, estatísticas, PCHIP, tendência, histograma, ticks, **cena** e **mapeador** `ChartMapper` (`ScreenX = L + (X−Xmin)/(Xmax−Xmin)·W`, `ScreenY = B − (Y−Ymin)/(Ymax−Ymin)·H`).
+* `ChartLineRenderer.cs` — um único `DrawPlot` usado pelo Canvas (tema escuro) e pelo PNG (tema claro). A geometria nunca depende do tema.
+* `ChartLine_Component.cs` — entradas/saídas, mensagens, relatório, geometria do Rhino, menu e serialização.
+
+## Tipos e modos (menu de contexto ou entrada `Mode`)
+
+| Tipo (`Mode`) | Entrada | O que é desenhado |
+| :--- | :--- | :--- |
+| **Lines** (padrão; 0 / `lines`) | pares X/Y por ramo | **Raw** (padrão): pontos reais ordenados por X, sem suavização. **Smooth**: PCHIP (Fritsch–Carlson) — passa pelos pontos, monotônica por intervalo, **sem overshoot**, extremos locais preservados, sem extrapolar. **Trend**: dados reais sobrepostos + média móvel ponderada (kernel tricúbico, janela = 25 % dos pontos, mín. 5, máx. 2000) avaliada **só nos X originais** — combinação convexa dos Y, nunca excede o intervalo dos dados. `Mode` aceita `raw`/`smooth`/`trend`. |
+| **Distribution** = Histogram (1 / `hist`/`col`/`bar`; `true`) | **observações** em Y (X ignorado, com aviso informativo) | histograma estatístico: bins de largura igual `[e_b, e_{b+1})` (último fechado), contagens, KDE opcional, limites e contagens no relatório. |
+| **XYBars** (2 / `xy`/`xybars`/`bars`) | **pares explícitos** X/Y | barra em cada X com altura Y; base em Y = 0 (barras negativas crescem para baixo); largura do espaço por X = 0,8 × menor espaçamento entre X (não sobrepõe); várias séries lado a lado; X repetido divide o espaço. |
+
+## Entradas
 
 | Parâmetro | Tipo | Descrição |
 | :--- | :---: | :--- |
-| **X Values** (`X`) | `Number` | Valores do eixo X (Lista ou Árvore). Se omitido, utiliza índices incrementais 0, 1, 2... |
-| **Y Values** (`Y`) | `Number` | Valores do eixo Y (Lista ou Árvore). Cada ramo representa uma curva/série independente. |
-| **Title** (`T`) | `Text` | Título principal do gráfico. |
-| **X Label** (`XLab`) | `Text` | Rótulo/Nome do eixo X. |
-| **Y Label** (`YLab`) | `Text` | Rótulo/Nome do eixo Y. |
-| **Show Stats** (`Stats`) | `Boolean` | Exibir linhas de referência estatística (Média, Mediana, Moda e Faixa ±1σ). |
-| **Width** (`W`) | `Integer` | Largura da imagem exportada em pixels. |
-| **Height** (`H`) | `Integer` | Altura da imagem exportada em pixels. |
-| **Chart Mode** (`Mode`) | `Generic` | Modo do gráfico: 0 ou 'Lines' para Gráfico de Linhas; 1 ou 'Columns'/'Histogram' para Gráfico de Colunas/Histograma de distribuição com curva KDE suave (idêntico à referência). Padrão: 'Lines'. |
-| **Combined Curve** (`Combined`) | `Boolean` | Quando verdadeiro, calcula e plota a CURVA AGREGADA que junta todos os dados (Curva Média/Moda nas linhas, ou Curva KDE contínua nas colunas), atenuando as curvas individuais ao fundo como nuvem translúcida. Padrão: true. |
-| **Target Value** (`Target`) | `Generic` | Valor alvo opcional ou faixa ideal (ex.: 1.40, ou Interval(1.2, 1.6), ou '1.2 To 1.6'). Quando fornecido, plota a linha do alvo ('Id'), faixa sombreada de tolerância ('Tol') e badge de desvio 'Δ: (Valor - Alvo)' no topo. |
+| **X Values** (`X`) | Number (tree) | `X[i] ↔ Y[i]` por ramo; ordenados juntos. Sem X: índice 0,1,2... Um único ramo X vale para todos os Y. Contagens diferentes = **erro** (ramo e contagens); X informado sem ramo correspondente = erro (o índice nunca substitui X). |
+| **Y Values** (`Y`) | Number (tree) | Um ramo = uma série independente. No tipo Distribution são as observações. |
+| Title / X Label / Y Label | Text | Rótulos. |
+| **Show Stats** (`Stats`) | Boolean | Média, mediana e faixa ±1σ (valores originais). Sem conexão vale o menu. |
+| Width / Height (`W`/`H`) | Integer | Tamanho do PNG. |
+| **Chart Mode** (`Mode`) | Generic | Tipo/modo (ver acima). Sem conexão vale o menu. |
+| **Combined Curve** (`Combined`) | Boolean | 2+ séries: média agregada por X (tracejada); Distribution: curva KDE. |
+| **Target Value** (`Target`) | Generic | Valor, intervalo ou `'a To b'`: linha `Id`, faixa `Tol` e badge `Δ`. |
 
----
-
-## 📤 Saídas (Outputs)
+## Saídas
 
 | Parâmetro | Tipo | Descrição |
 | :--- | :---: | :--- |
-| **Chart Image** (`Img`) | `Generic` | Imagem renderizada do gráfico (System.Drawing.Bitmap). |
-| **Stats Report** (`Rep`) | `Text` | Relatório quantitativo com Média, Mediana, Moda, Desvio Padrão, Alvo e Extremos por série. |
-| **Series Points** (`Pts`) | `Point` | Árvore de pontos 3D (X, Y, 0) das curvas ou das colunas. |
-| **Series Curves** (`Crv`) | `Curve` | Curvas/Polilinhas das séries de dados no espaço do Rhino. |
-| **Reference Lines** (`Refs`) | `Line` | Linhas de referência estatística no Rhino (Média, Mediana, Moda, ±1σ e Alvo). |
-| **Combined Curve** (`Trend`) | `Curve` | Curva agregada sintetizada (Curva Média no modo Linhas ou Curva KDE no modo Colunas) no espaço 3D do Rhino. |
+| `Img` | Bitmap | PNG da mesma cena do canvas. |
+| `Rep` | Text | Estatísticas por série, modo de linha, pares descartados, X fora de ordem/repetidos, bins (limites e contagens). Moda = aproximada (informativa). |
+| `Pts` | Point (tree) | Pares (X,Y) por série, ordenados por X. Distribution: centro do bin × contagem. XYBars: topo das barras. |
+| `Crv` | Curve (tree) | Raw = polilinha dos pontos reais; Smooth = cadeia de Béziers PCHIP exatas; Trend = polilinha da tendência; barras = retângulos. |
+| `Refs` | Line (tree) | Média, mediana, moda, +σ, −σ por série; `{998}` = conjunto (2+ séries); `{999}` = alvo. |
+| `Trend` | Curve | 1 série: tendência. 2+ séries: média agregada por X. Distribution: KDE. Sempre polilinha (sem interpolação cúbica). |
 
----
+## Causas raiz corrigidas (v1.4.0)
 
-## 💡 Notas de Implementação & Uso
-* **Compilação:** Mapeado na suíte `Buraqueira Tools`.
-* **Testes recomendados:** Validar no Grasshopper com árvores de dados (`DataTree`) e verificar estabilidade do solver.
+1. A "curva azul" era a **tendência** de kernel gaussiano desenhada grossa com um anel/ponto em **cada** ponto, mais uma curva da "moda" local — a mistura visual parecia a série principal. A curva do Rhino era `CreateInterpolatedCurve(grau 3)` sobre esses pontos (overshoot possível).
+2. A série principal era desenhada **na ordem da entrada** (não por X) e translúcida; a ordenação só existia dentro do cálculo da tendência.
+3. X ausente/curto caía **silenciosamente** no índice; X e Y inválidos eram descartados independentemente.
+4. Histograma: o eixo Y de contagem mostrava rótulos `F0` de valores fracionários (ticks incorretos); Canvas e PNG tinham código de desenho, margens e domínios Y diferentes (8 % × 5 %).
+5. Não existia modo de barras com X/Y explícitos: pares X/Y só podiam ser lidos como observações.
+
+## Compatibilidade
+
+* GUID, ordem e tipos de entradas/saídas mantidos. Arquivos antigos: `IsColumnsMode=true` → Distribution; "Linhas + Tendência" (curva combinada ligada) → **Trend**; sem curva combinada → **Raw**. Novos componentes: **Raw**. O arquivo continua gravando `IsColumnsMode` (versões anteriores leem o tipo).
+* Mudanças de comportamento: X curto/ausente de ramo agora é erro; a curva da moda local foi removida do desenho (a moda continua no relatório e em `Refs`); `Show Stats`/`Combined` conectados vencem o menu, e sem conexão o menu passa a valer (antes o padrão persistente o sobrescrevia).
+
+## Limitações / não coberto
+
+* Desenho no canvas e no preview do Rhino com janela: **não testado** (o canvas usa o mesmo `DrawPlot`, verificado apenas por teste de pixels do renderizador).
+* Sem eixo categórico, sem domínio manual de eixos, sem largura manual de barras, sem exportação SVG/PDF (só PNG, como antes); histograma só em contagem (não densidade/relativa).
+* Trend: janela fixa de 25 % dos pontos (até 2000).
+
+Testes: `Glaux_Tools\tests\Glaux_Tools.ChartTests` (24, modelo) e `tests\rhino\Test-ChartLine.ps1` (65 + 14 de compatibilidade com a v1.3.0). Ver [[DevLog - 2026-10-08 - Line Chart e Histogram]].

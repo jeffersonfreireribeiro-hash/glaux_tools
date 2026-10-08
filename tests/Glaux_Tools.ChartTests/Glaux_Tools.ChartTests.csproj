@@ -1,0 +1,31 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Testes do modelo do Line Chart & Statistics / Histogram (xUnit, net48).
+    Projeto isolado: referencia o Glaux_Tools.gha compilado e as DLLs do Rhino 8 instalado, sem depender do restante do projeto Glaux_Tools.Tests.
+    Uso: dotnet test tests\Glaux_Tools.ChartTests   (compile antes: dotnet build -c Release src\Glaux_Tools.csproj)
+  -->
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <RhinoDir>C:\Program Files\Rhino 8</RhinoDir>
+    <GlauxGhaPath>$(MSBuildThisFileDirectory)..\..\src\bin\Release\net48\Glaux_Tools.gha</GlauxGhaPath>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
+    <Reference Include="Glaux_Tools"><HintPath>$(GlauxGhaPath)</HintPath></Reference>
+    <Reference Include="RhinoCommon"><HintPath>$(RhinoDir)\System\RhinoCommon.dll</HintPath><Private>true</Private></Reference>
+    <Reference Include="Grasshopper"><HintPath>$(RhinoDir)\Plug-ins\Grasshopper\Grasshopper.dll</HintPath><Private>true</Private></Reference>
+    <Reference Include="GH_IO"><HintPath>$(RhinoDir)\Plug-ins\Grasshopper\GH_IO.dll</HintPath><Private>true</Private></Reference>
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
+  </ItemGroup>
+  <!-- o host .NET Framework só resolve .dll: copia o .gha como Glaux_Tools.dll para a pasta de saída -->
+  <Target Name="CopyGlauxGha" AfterTargets="Build">
+    <Copy SourceFiles="$(GlauxGhaPath)" DestinationFiles="$(OutDir)Glaux_Tools.dll" />
+  </Target>
+</Project>
+
